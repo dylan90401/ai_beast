@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Beast Typed Resource Graph",
+  "type": "object",
+  "required": [
+    "generated_at",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": "string"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "state",
+              "pack",
+              "extension",
+              "service",
+              "asset_pack",
+              "model",
+              "workflow"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "rel"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "rel": {
+            "type": "string",
+            "enum": [
+              "wants",
+              "needs",
+              "contains",
+              "provides",
+              "maps_to"
+            ]
+          },
+          "meta": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

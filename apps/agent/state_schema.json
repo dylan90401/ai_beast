@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ai-beast agent state",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "integer"
+    },
+    "last_run": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "ollama_url": {
+          "type": "string"
+        },
+        "apply": {
+          "type": "boolean"
+        },
+        "task": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "verification": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_touched": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "timestamp",
+        "model",
+        "ollama_url",
+        "apply",
+        "task"
+      ]
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "version"
+  ]
+}

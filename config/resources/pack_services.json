@@ -1,0 +1,33 @@
+{
+  "note": "Optional mapping from packs to docker-compose service names (for explainable drift).",
+  "pack_services": {
+    "open_webui": [
+      "open-webui"
+    ],
+    "rag": [
+      "qdrant"
+    ],
+    "observability": [
+      "uptime-kuma",
+      "grafana",
+      "prometheus"
+    ],
+
+    "agent_builders": [
+      "langflow",
+      "flowise",
+      "dify"
+    ],
+    "rag_ingest_pro": [
+      "apache-tika",
+      "unstructured-api"
+    ],
+    "observability_otel": [
+      "otel-collector"
+    ],
+    "artifact_store_minio": [
+      "minio"
+    ],
+    "mlx_runtime": []
+  }
+}

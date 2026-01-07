@@ -1,0 +1,37 @@
+{
+  "models": {
+    "sdxl_base": {
+      "sha256": "",
+      "source": "official",
+      "tier": "trusted",
+      "notes": "Fill with real sha256 after download; enforced by beast trust"
+    }
+  },
+  "nodes": {
+    "comfyui_manager": {
+      "source": "official",
+      "tier": "community",
+      "repo": "https://github.com/Comfy-Org/ComfyUI-Manager",
+      "notes": "Example entry"
+    }
+  },
+  "containers": {
+    "qdrant": {
+      "image": "qdrant/qdrant",
+      "tag_policy": "pinned",
+      "tier": "community"
+    },
+    "open_webui": {
+      "image": "ghcr.io/open-webui/open-webui",
+      "tag_policy": "pinned",
+      "tier": "community"
+    }
+  },
+  "binaries": {
+    "ffmpeg": {
+      "source": "homebrew",
+      "tier": "trusted",
+      "notes": "Installed via brew"
+    }
+  }
+}

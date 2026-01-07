@@ -1,0 +1,10 @@
+services:
+  unstructured-api:
+    # STUB ONLY. Not a real Unstructured API in this version.
+    image: nginx:alpine
+    profiles: ["rag_ingest_pro"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_UNSTRUCTURED:-8000}:80"
+    volumes:
+      - "./extensions/unstructured_api/stub:/usr/share/nginx/html:ro"
+    restart: unless-stopped

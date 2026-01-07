@@ -1,0 +1,7 @@
+name: docs
+phases:
+  - role: supervisor
+    prompt: apps/agent/prompts/kryptos_builder.supervisor.md
+  - role: docs
+    prompt: apps/agent/prompts/kryptos_builder.docs.md
+    tool_loop: true

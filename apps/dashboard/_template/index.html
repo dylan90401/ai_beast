@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>AI Beast Dashboard</title>
+  <style>
+    body { font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial; margin: 18px; }
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    button{padding:10px 12px; border-radius:10px; border:1px solid #ccc; background:#fff; cursor:pointer;}
+    button:hover{border-color:#666;}
+    .card{border:1px solid #ddd; border-radius:14px; padding:14px; margin-top:12px;}
+    pre{background:#0b0b0b; color:#eaeaea; padding:12px; border-radius:12px; overflow:auto;}
+    input{padding:10px 12px; border-radius:10px; border:1px solid #ccc; width:380px; max-width:100%;}
+    .muted{color:#666; font-size:12px;}
+    .ok{color:#0a7; font-weight:600;}
+    .bad{color:#c33; font-weight:600;}
+  </style>
+</head>
+<body>
+  <h1>AI Beast Dashboard</h1>
+  <div class="muted">Local-only control plane. Calls <code>bin/beast</code>. Token is stored locally in your browser.</div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="muted">Token</div>
+        <input id="token" placeholder="Paste dashboard token"/>
+      </div>
+      <button onclick="saveToken()">Save</button>
+      <button onclick="loadConfig()">Reload Config</button>
+      <span id="health" class="muted"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Actions</h3>
+    <div class="row">
+      <button onclick="run('preflight')">Preflight</button>
+      <button onclick="run('bootstrap_dry')">Bootstrap (Dry)</button>
+      <button onclick="run('bootstrap_apply')">Bootstrap (Apply)</button>
+      <button onclick="run('up')">Up</button>
+      <button onclick="run('down')">Down</button>
+      <button onclick="run('status')">Status</button>
+      <button onclick="run('doctor')">Doctor</button>
+      <button onclick="run('urls')">URLs</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Config</h3>
+    <pre id="config">(not loaded)</pre>
+  </div>
+
+  <div class="card">
+    <h3>Output</h3>
+    <div class="muted" id="meta"></div>
+    <pre id="out">(run something)</pre>
+  </div>
+
+  <script>
+    const tokenEl=document.getElementById('token');
+    const healthEl=document.getElementById('health');
+    const configEl=document.getElementById('config');
+    const outEl=document.getElementById('out');
+    const metaEl=document.getElementById('meta');
+
+    function getToken(){ return (localStorage.getItem('beastToken')||'').trim(); }
+    function saveToken(){ localStorage.setItem('beastToken', tokenEl.value.trim()); ping(); }
+    async function api(path){
+      const headers={};
+      const t=getToken(); if(t) headers['X-Beast-Token']=t;
+      const res=await fetch(path,{headers});
+      const json=await res.json().catch(()=>({}));
+      return {res,json};
+    }
+    function setStatus(ok,msg){ healthEl.innerHTML = ok? `<span class="ok">OK</span> ${msg}` : `<span class="bad">NOPE</span> ${msg}`; }
+
+    async function ping(){
+      const {res,json}=await api('/api/health');
+      setStatus(res.ok, res.ok ? `Connected (${json.base_dir||'?'})` : 'Backend unreachable');
+    }
+    async function loadConfig(){
+      const {res,json}=await api('/api/config');
+      configEl.textContent = JSON.stringify(json, null, 2);
+    }
+    async function run(cmd){
+      outEl.textContent='Running...'; metaEl.textContent='';
+      const {res,json}=await api('/api/run?cmd='+encodeURIComponent(cmd));
+      metaEl.textContent = json.cmd ? ('Command: '+json.cmd.join(' ')) : '';
+      outEl.textContent = JSON.stringify(json, null, 2);
+    }
+
+    tokenEl.value=getToken();
+    ping(); loadConfig();
+  </script>
+</body>
+</html>

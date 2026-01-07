@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "services": {
+    "qdrant": {
+      "tier": "core",
+      "profiles": [
+        "qdrant"
+      ],
+      "image": "qdrant/qdrant:latest",
+      "ports": [
+        "127.0.0.1:${PORT_QDRANT:-6333}:6333",
+        "127.0.0.1:6334:6334"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/qdrant:/qdrant/storage"
+      ],
+      "restart": "unless-stopped"
+    },
+    "open-webui": {
+      "tier": "core",
+      "profiles": [
+        "webui"
+      ],
+      "image": "ghcr.io/open-webui/open-webui:main",
+      "ports": [
+        "127.0.0.1:${PORT_WEBUI:-3000}:8080"
+      ],
+      "environment": [
+        "OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}",
+        "WEBUI_AUTH=false"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/openwebui:/app/backend/data"
+      ],
+      "restart": "unless-stopped"
+    },
+    "uptime-kuma": {
+      "tier": "ops",
+      "profiles": [
+        "kuma"
+      ],
+      "image": "louislam/uptime-kuma:latest",
+      "ports": [
+        "127.0.0.1:${PORT_KUMA:-3001}:3001"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/uptime-kuma:/app/data"
+      ],
+      "restart": "unless-stopped"
+    },
+    "n8n": {
+      "tier": "ops",
+      "profiles": [
+        "n8n"
+      ],
+      "image": "n8nio/n8n:latest",
+      "ports": [
+        "127.0.0.1:${PORT_N8N:-5678}:5678"
+      ],
+      "environment": [
+        "N8N_HOST=127.0.0.1",
+        "N8N_PORT=5678",
+        "N8N_PROTOCOL=http"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/n8n:/home/node/.n8n"
+      ],
+      "restart": "unless-stopped"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+Install templates with: ./bin/beast workflows install --apply

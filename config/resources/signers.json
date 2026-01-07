@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "namespace": "ai-beast-manifest",
+  "allowed_signers": [
+    {
+      "name": "local_dev_example",
+      "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFAKEKEYREPLACEWITHYOURS ai-beast-dev",
+      "principals": [
+        "ai-beast-dev"
+      ],
+      "enabled": false,
+      "notes": "Replace with your real public key. Enable to require signed manifests."
+    }
+  ]
+}

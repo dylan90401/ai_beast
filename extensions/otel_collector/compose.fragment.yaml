@@ -1,0 +1,11 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    profiles: ["observability_otel"]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_OTEL_GRPC:-4317}:4317"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_OTEL_HTTP:-4318}:4318"
+    volumes:
+      - "./extensions/otel_collector/otel-collector.config.yaml:/etc/otelcol/config.yaml:ro"
+    restart: unless-stopped

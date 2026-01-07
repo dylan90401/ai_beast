@@ -1,0 +1,5 @@
+services:
+  example-echo:
+    image: alpine:latest
+    command: ["sh","-lc","while true; do echo example_extension_alive; sleep 30; done"]
+    restart: unless-stopped

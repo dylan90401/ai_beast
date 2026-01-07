@@ -1,0 +1,24 @@
+{
+  "packs": {
+    "agent_builders": {
+      "enabled": false,
+      "description": "Langflow / Flowise / Dify (stub)"
+    },
+    "rag_ingest_pro": {
+      "enabled": false,
+      "description": "Unstructured + Apache Tika ingestion (stub)"
+    },
+    "observability_otel": {
+      "enabled": false,
+      "description": "OpenTelemetry collector pipeline (stub)"
+    },
+    "artifact_store_minio": {
+      "enabled": false,
+      "description": "MinIO artifact store + offline mirrors (stub)"
+    },
+    "mlx_runtime": {
+      "enabled": false,
+      "description": "Apple Silicon MLX runtime lane (stub)"
+    }
+  }
+}

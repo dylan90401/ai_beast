@@ -1,0 +1,87 @@
+{
+  "packs": {
+    "sdxl_core": {
+      "desc": "SDXL core: base checkpoint + example workflows + optional LoRA slots.",
+      "depends_packs": [
+        "media_synth",
+        "defsec"
+      ],
+      "models": [
+        {
+          "name": "SDXL_Base",
+          "kind": "checkpoint",
+          "dest_subdir": "checkpoints",
+          "filename": "sdxl_base.safetensors",
+          "url": "https://huggingface.co/<org>/<repo>/resolve/main/sdxl_base.safetensors",
+          "sha256": "",
+          "license": "Check upstream model license.",
+          "notes": "Fill in the URL + sha256 for your chosen SDXL base model."
+        }
+      ],
+      "loras": [
+        {
+          "name": "Example_LoRA",
+          "kind": "lora",
+          "dest_subdir": "loras",
+          "filename": "example_lora.safetensors",
+          "url": "https://huggingface.co/<org>/<repo>/resolve/main/example_lora.safetensors",
+          "sha256": "",
+          "license": "Check upstream LoRA license.",
+          "notes": "Optional; remove or replace."
+        }
+      ],
+      "workflows": [
+        {
+          "name": "sdxl_text2img_basic",
+          "filename": "sdxl_text2img_basic.json",
+          "url": "https://raw.githubusercontent.com/<org>/<repo>/main/workflows/sdxl_text2img_basic.json",
+          "sha256": "",
+          "notes": "Example workflow. Replace with your preferred workflow JSON."
+        }
+      ],
+      "register_rag": true,
+      "rag_collection": "ai_beast"
+    },
+    "sd15_legacy": {
+      "desc": "Stable Diffusion 1.5 legacy pack (for older workflows/nodes).",
+      "depends_packs": [
+        "media_synth",
+        "defsec"
+      ],
+      "models": [
+        {
+          "name": "SD15_Base",
+          "kind": "checkpoint",
+          "dest_subdir": "checkpoints",
+          "filename": "sd15_base.safetensors",
+          "url": "https://huggingface.co/<org>/<repo>/resolve/main/sd15_base.safetensors",
+          "sha256": "",
+          "license": "Check upstream model license.",
+          "notes": "Fill in URL + sha256."
+        }
+      ],
+      "workflows": [],
+      "register_rag": true,
+      "rag_collection": "ai_beast"
+    },
+    "video_tools": {
+      "desc": "Workflow + directory scaffolding for video pipelines; pair with media_synth pack nodes.",
+      "depends_packs": [
+        "media_synth"
+      ],
+      "models": [],
+      "loras": [],
+      "workflows": [
+        {
+          "name": "video_img2vid_placeholder",
+          "filename": "video_img2vid_placeholder.json",
+          "url": "https://raw.githubusercontent.com/<org>/<repo>/main/workflows/video_img2vid_placeholder.json",
+          "sha256": "",
+          "notes": "Replace with a real ComfyUI video workflow."
+        }
+      ],
+      "register_rag": true,
+      "rag_collection": "ai_beast"
+    }
+  }
+}

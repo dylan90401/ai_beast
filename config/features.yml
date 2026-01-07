@@ -1,0 +1,40 @@
+# AI Beast feature toggles (flat keys for simple parsing)
+# Edit then run: ./bin/beast features sync --apply
+
+# Native (macOS)
+native.ollama: true
+native.comfyui: true
+native.dashboard: true
+
+# Docker services (optional)
+docker.qdrant: true
+docker.open_webui: true
+docker.uptime_kuma: true
+docker.n8n: false
+
+# Modules
+modules.rag_ingest: true
+
+# Extensions (install separately via ./bin/beast ext install <name> --apply)
+extensions.comfyui_manager: true
+extensions.comfyui_video: true
+
+# Extra Docker services via extensions
+docker.searxng: false
+extensions.searxng: true
+
+# Feature packs (install via ./bin/beast packs install <name> --apply)
+packs.networking: false
+packs.defsec: false
+packs.osint: false
+packs.mapping: false
+packs.media_synth: false
+packs.dataviz_ml: false
+packs.research_hegel_esoteric: false
+
+# v17 high-ROI packs (registered; disabled by default)
+packs.agent_builders: false
+packs.rag_ingest_pro: false
+packs.observability_otel: false
+packs.artifact_store_minio: false
+packs.mlx_runtime: false

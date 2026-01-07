@@ -1,0 +1,171 @@
+- name: AI Beast (Kryptos) dev configuration
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    version: "2.0"
+
+    project:
+      name: "AI Beast (Kryptos)"
+      directive: "KRYPTOS v4.8"
+
+      strategy:
+        native_guts: true
+        docker_support_services: true
+
+      portability:
+        base_dir: "{{ BASE_DIR }}"
+        heavy_roots: ["MODELS_DIR", "DATA_DIR", "OUTPUTS_DIR", "CACHE_DIR", "BACKUP_DIR"]
+
+      defaults:
+        bind_addr: "127.0.0.1"
+        dry_run: true
+
+    profiles:
+      lite:
+        docker: false
+        components: ["ollama", "comfyui", "dashboard"]
+
+      full:
+        docker: true
+        components:
+          [
+            "ollama",
+            "comfyui",
+            "dashboard",
+            "openwebui",
+            "qdrant",
+            "uptime_kuma",
+            "n8n",
+            "redis",
+            "postgres",
+          ]
+
+      prodish:
+        docker: true
+        components:
+          [
+            "ollama",
+            "comfyui",
+            "dashboard",
+            "openwebui",
+            "qdrant",
+            "uptime_kuma",
+            "n8n",
+            "redis",
+            "postgres",
+            "minio",
+            "traefik",
+          ]
+
+    components:
+      ollama:
+        type: native
+        install: scripts/20_bootstrap_macos.sh --apply --ollama
+
+      comfyui:
+        type: native
+        install: scripts/20_bootstrap_macos.sh --apply --comfyui --manager
+
+      dashboard:
+        type: native
+        install: scripts/35_dashboard_install.sh --apply
+
+      openwebui:
+        type: docker
+        service: open-webui
+
+      qdrant:
+        type: docker
+        service: qdrant
+
+      uptime_kuma:
+        type: docker
+        service: uptime-kuma
+
+      n8n:
+        type: docker
+        service: n8n
+
+      redis:
+        type: docker
+        service: redis
+
+      postgres:
+        type: docker
+        service: postgres
+
+      minio:
+        type: docker
+        service: minio
+
+      traefik:
+        type: docker
+        service: traefik
+
+      offsec:
+        type: native
+        install: scripts/20_bootstrap_macos.sh --apply --offsec
+
+      defcon:
+        type: native
+        install: scripts/20_bootstrap_macos.sh --apply --defcon
+
+      sigin:
+        type: native
+        install: scripts/20_bootstrap_macos.sh --apply --sigin
+
+      text2pic:
+        type: docker
+        service: text2pic
+
+      text2video:
+        type: docker
+        service: text2video
+
+      text2music:
+        type: docker
+        service: text2music
+
+      text2audio:
+        type: docker
+        service: text2audio
+
+      security:
+        type: native
+        install: scripts/20_bootstrap_macos.sh --apply --security
+
+      counter_offensive:
+        type: native
+        install: scripts/20_bootstrap_macos.sh --apply --counter_offensive
+
+    extensions:
+      dir: extensions
+      contract:
+        - "install.sh is required; DRYRUN by default; supports --apply"
+        - "must not hardcode paths; source config/paths.env"
+
+    # ─────────────────────────────────────────────────────────────
+    # Feature switches (see config/features.yml)
+    # ─────────────────────────────────────────────────────────────
+    features:
+      config: config/features.yml
+      generated_env: config/features.env
+      notes:
+        - "Flat key YAML -> env exports FEATURE_* for bash scripts"
+        - "Docker services use compose profiles (qdrant/webui/kuma/n8n)"
+
+    modules:
+      rag:
+        path: modules/rag
+        qdrant: docker.qdrant
+        webui: docker.openwebui
+        ingest_cmd: "./bin/beast rag ingest --dir \"$DATA_DIR/inbox\" --apply"
+
+    # Optional: keep for future explicit service overrides
+    services: {}
+
+  tasks:
+    - name: Confirm playbook vars loaded
+      ansible.builtin.debug:
+        msg: "Loaded AI Beast dev vars (dry_run={{ project.defaults.dry_run }})"

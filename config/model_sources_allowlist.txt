@@ -1,0 +1,5 @@
+https://huggingface.co/
+https://cdn-lfs.huggingface.co/
+https://civitai.com/
+https://objects.githubusercontent.com/
+https://github.com/

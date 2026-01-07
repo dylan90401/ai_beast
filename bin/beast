@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd="${1:-help}"; shift || true
+
+die(){ echo "[beast] ERROR: $*" >&2; exit 1; }
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="${BASE_DIR:-$(cd "$script_dir/.." && pwd)}"
+PY_AGENT="$BASE_DIR/apps/agent/.venv/bin/python"
+if [[ -x "$PY_AGENT" ]]; then :; else PY_AGENT="python3"; fi
+
+help(){
+  cat <<EOT
+AI Beast CLI
+
+UX (most-used):
+  init                  Initialize workspace (paths/env/templates)
+  preflight             Check system deps, ports, disk, permissions
+  bootstrap             Install macOS deps + prep runtimes (brew/python/docker)
+  up                    Start native + docker services (alias: services up)
+  down                  Stop services (alias: services down)
+  status                Show URLs + health summary
+  logs <service>         Tail logs (native or docker)
+agent "<task>"          Run single builder agent (DRYRUN default)
+agent-multi "<task>"    Run multi-agent pipeline (default: build)
+agent-pipeline <p> "<task>"  Run named pipeline (build|harden|docs)
+audit                  Run harden pipeline (read-only audit)
+verify                 Deterministic verification (no LLM)
+
+Power-user:
+  doctor                Environment diagnostics
+  install               Full install (bootstrap + optional packs/extensions/assets)
+  compose gen           Generate docker-compose.yml (state→services→fragments)
+  services up|down      Start/stop native + docker services
+  state plan|apply      Desired-state reconciler (packs/extensions/assets/services)
+  graph [typed]         Resource graph + "why"
+  drift status|apply    Compose drift detection + minimal reconcile
+  packs list|enable|disable
+  extensions list|enable|disable|install
+  assets list|install
+  trust                 Trust tools (xattr, scans, reports)
+  manifest              Manifest sign/verify (optional)
+  secrets               Secrets helper (Keychain + env templates)
+  backup                Backup workspace
+  restore               Restore from backup
+  comfy postinstall     ComfyUI post-install actions (nodes, allowlist, audits)
+  rag ingest            Ingest docs into vector DB (Qdrant)
+
+Examples:
+  ./bin/beast init --apply
+  ./bin/beast preflight
+  ./bin/beast bootstrap --apply
+  ./bin/beast up --apply
+  ./bin/beast status
+  ./bin/beast logs comfyui
+  ./bin/beast compose gen --apply
+  ./bin/beast state plan
+EOT
+}
+
+case "$cmd" in
+  help|-h|--help) help ;;
+
+  init) "$BASE_DIR/scripts/10_init_wizard.sh" "${@:-}" ;;
+  preflight) "$BASE_DIR/scripts/00_preflight.sh" "${@:-}" ;;
+  bootstrap) "$BASE_DIR/scripts/20_bootstrap_macos.sh" "${@:-}" ;;
+  status) "$BASE_DIR/scripts/32_status.sh" "${@:-}" ;;
+  logs) "$BASE_DIR/scripts/33_logs.sh" "${@:-}" ;;
+
+  up) "$BASE_DIR/scripts/30_services.sh" up "${@:-}" ;;
+  down) "$BASE_DIR/scripts/30_services.sh" down "${@:-}" ;;
+
+  doctor) "$BASE_DIR/scripts/91_doctor.sh" "${@:-}" ;;
+  install) "$BASE_DIR/scripts/90_install_all.sh" "${@:-}" ;;
+  upgrade) "$BASE_DIR/scripts/90_upgrade.sh" "${@:-}" ;;
+
+  compose)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      gen|generate) "$BASE_DIR/scripts/25_compose_generate.sh" gen "${@:-}" ;;
+  agent)
+    # Run the KRYPTOS builder agent (single-agent)
+    shift || true
+    APPLY_FLAG=""
+    MODEL_FLAG=""
+    while [[ "${1:-}" =~ ^-- ]]; do
+      case "$1" in
+        --apply) APPLY_FLAG="--apply"; shift ;;
+        --model) MODEL_FLAG="--model ${2:-}"; shift 2 ;;
+        *) break ;;
+      esac
+    done
+    TASK="${*:-}"
+    [[ -n "$TASK" ]] || { echo "Usage: beast agent \"task...\" [--apply] [--model MODEL]"; exit 2; }
+    $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent.py" $APPLY_FLAG $MODEL_FLAG "$TASK"
+    ;;
+
+agent-multi|agentx)
+  # Multi-agent pipeline runner (default pipeline: build)
+  shift || true
+  APPLY_FLAG=""
+  MODEL_FLAG=""
+  PIPELINE="build"
+  while [[ "${1:-}" =~ ^-- ]]; do
+    case "$1" in
+      --apply) APPLY_FLAG="--apply"; shift ;;
+      --model) MODEL_FLAG="--model ${2:-}"; shift 2 ;;
+      --pipeline) PIPELINE="${2:-build}"; shift 2 ;;
+      *) break ;;
+    esac
+  done
+  TASK="${*:-}"
+  [[ -n "$TASK" ]] || { echo "Usage: beast agent-multi "task..." [--apply] [--model MODEL] [--pipeline build|harden|docs]"; exit 2; }
+  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $APPLY_FLAG $MODEL_FLAG --pipeline "$PIPELINE" "$TASK"
+  ;;
+
+agent-pipeline|agentp)
+  # Alias for agent-multi with explicit pipeline
+  shift || true
+  APPLY_FLAG=""
+  MODEL_FLAG=""
+  PIPELINE="${1:-build}"; shift || true
+  while [[ "${1:-}" =~ ^-- ]]; do
+    case "$1" in
+      --apply) APPLY_FLAG="--apply"; shift ;;
+      --model) MODEL_FLAG="--model ${2:-}"; shift 2 ;;
+      *) break ;;
+    esac
+  done
+  TASK="${*:-}"
+  [[ -n "$PIPELINE" && -n "$TASK" ]] || { echo "Usage: beast agent-pipeline <pipeline> "task..." [--apply] [--model MODEL]"; exit 2; }
+  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $APPLY_FLAG $MODEL_FLAG --pipeline "$PIPELINE" "$TASK"
+  ;;
+
+audit)
+  # Convenience: run harden pipeline (read-only unless --apply for implementer/docs)
+  shift || true
+  MODEL_FLAG=""
+  while [[ "${1:-}" =~ ^-- ]]; do
+    case "$1" in
+      --model) MODEL_FLAG="--model ${2:-}"; shift 2 ;;
+      *) break ;;
+    esac
+  done
+  TASK="${*:-Audit the workspace for hardcoded ports/paths, secret leaks, unsafe shell patterns, and missing verification/rollback steps. Provide a prioritized fix plan.}"
+  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $MODEL_FLAG --pipeline harden "$TASK"
+  ;;
+
+verify)
+  # Deterministic verification (no LLM)
+  "$PY_AGENT" "$BASE_DIR/apps/agent/verifier_strict.py"
+  ;;
+
+      *) die "Usage: beast compose gen [--apply] [--no-ops] [--out=FILE]" ;;
+    esac
+    ;;
+
+  services)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      up|down) "$BASE_DIR/scripts/30_services.sh" "$sub" "${@:-}" ;;
+      *) die "Usage: beast services {up|down}" ;;
+    esac
+    ;;
+
+  packs)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      list) "$BASE_DIR/scripts/80_packs.sh" list ;;
+      enable) "$BASE_DIR/scripts/80_packs.sh" enable "${@:-}" ;;
+      disable) "$BASE_DIR/scripts/80_packs.sh" disable "${@:-}" ;;
+      *) die "Usage: beast packs {list|enable|disable} ..." ;;
+    esac
+    ;;
+
+  extensions|ext)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      list) "$BASE_DIR/scripts/85_extensions.sh" list ;;
+      enable) "$BASE_DIR/scripts/85_extensions.sh" enable "${@:-}" ;;
+      disable) "$BASE_DIR/scripts/85_extensions.sh" disable "${@:-}" ;;
+      install) "$BASE_DIR/scripts/85_extensions.sh" install "${@:-}" ;;
+      *) die "Usage: beast extensions {list|enable|disable|install} ..." ;;
+    esac
+    ;;
+
+  assets)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      list) "$BASE_DIR/scripts/82_assets.sh" list ;;
+      install) "$BASE_DIR/scripts/82_assets.sh" install "${@:-}" ;;
+      *) die "Usage: beast assets {list|install} ..." ;;
+    esac
+    ;;
+
+  manifest) "$BASE_DIR/scripts/18_manifest_sign.sh" "${@:-}" ;;
+  trust) "$BASE_DIR/scripts/13_trust.sh" "${@:-}" ;;
+  secrets|secret) "$BASE_DIR/scripts/12_secrets_keychain.sh" "${@:-}" ;;
+
+  backup) "$BASE_DIR/scripts/80_backup.sh" backup "${@:-}" ;;
+  restore) "$BASE_DIR/scripts/81_restore.sh" restore "${@:-}" ;;
+
+  live) "$BASE_DIR/scripts/92_live.sh" "${@:-}" ;;
+  state) "$BASE_DIR/scripts/93_state.sh" "${@:-}" ;;
+  speech) "$BASE_DIR/scripts/96_speech.sh" "${@:-}" ;;
+  graph) "$BASE_DIR/scripts/94_graph.sh" "${@:-}" ;;
+  drift) "$BASE_DIR/scripts/95_drift.sh" "${@:-}" ;;
+
+  comfy)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      postinstall) "$BASE_DIR/scripts/72_comfyui_postinstall.sh" "${@:-}" ;;
+      *) die "Usage: beast comfy postinstall" ;;
+    esac
+    ;;
+
+  rag)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      ingest) "$BASE_DIR/scripts/75_rag_ingest.sh" "${@:-}" ;;
+      *) die "Usage: beast rag ingest ..." ;;
+    esac
+    ;;
+
+  smoke) "$BASE_DIR/scripts/41_smoke_tests.sh" "${@:-}" ;;
+
+  *) die "Unknown command: $cmd (run: ./bin/beast help)" ;;
+esac

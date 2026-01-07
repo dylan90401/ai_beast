@@ -1,0 +1,11 @@
+services:
+  dify:
+    # STUB ONLY. This is *not* the real Dify deployment.
+    # When ready, replace with upstream Dify compose (multi-container) and persistence.
+    image: nginx:alpine
+    profiles: ["agent_builders"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_DIFY:-3004}:80"
+    volumes:
+      - "./extensions/dify/stub:/usr/share/nginx/html:ro"
+    restart: unless-stopped

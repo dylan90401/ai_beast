@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "name": "AI Beast Desired State",
+    "version": "v10",
+    "generated_at_utc": "2026-01-06T02:35:56Z"
+  },
+  "desired": {
+    "packs_enabled": [
+      "networking",
+      "defsec",
+      "osint",
+      "mapping",
+      "media_synth",
+      "dataviz_ml",
+      "research_hegel_esoteric"
+    ],
+    "extensions_enabled": [
+      "example_segment"
+    ],
+    "asset_packs": [
+      {
+        "pack": "sdxl_core",
+        "only": "all",
+        "strict": true,
+        "rag": false
+      }
+    ],
+    "trust_modes": {
+      "nodes": "official_only",
+      "models": "vendor_author",
+      "manifests": "signed_optional"
+    }
+  },
+  "runtime": {
+    "compose_regen": true,
+    "compose_up": true,
+    "remove_orphans": true
+  },
+  "options": {
+    "mirror": "",
+    "strict_url_allowlist_default": true
+  }
+}

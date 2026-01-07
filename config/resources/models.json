@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "models": {
+    "example_sdxl_checkpoint": {
+      "type": "checkpoint",
+      "family": "sdxl",
+      "target_dir": "models/checkpoints",
+      "source": {
+        "url": "https://example.invalid/model.safetensors",
+        "sha256": "PUT_REAL_SHA256_HERE"
+      },
+      "notes": "Typed model record. v15 uses this as a source-of-truth catalog; installers can materialize it."
+    }
+  }
+}

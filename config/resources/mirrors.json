@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "mirrors": {
+    "minio_local": {
+      "desc": "Example: local MinIO artifact store mirror (edit base_url)",
+      "base_url": "http://127.0.0.1:9000/ai-beast-artifacts",
+      "modes": [
+        {
+          "type": "sha256_path",
+          "template": "{base}/{sha256}/{filename}"
+        },
+        {
+          "type": "sha256_flat",
+          "template": "{base}/{sha256}"
+        }
+      ],
+      "types": [
+        "models",
+        "loras",
+        "workflows",
+        "nodes"
+      ],
+      "enabled": false
+    },
+    "http_prefix": {
+      "desc": "Example: simple prefix replacement mirror",
+      "prefix_from": "https://huggingface.co/",
+      "prefix_to": "https://my-mirror.example/hf/",
+      "modes": [
+        {
+          "type": "prefix_replace"
+        }
+      ],
+      "types": [
+        "models",
+        "loras"
+      ],
+      "enabled": false
+    }
+  },
+  "defaults": {
+    "mirror": "",
+    "head_timeout_seconds": 6
+  }
+}

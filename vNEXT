@@ -1,0 +1,27 @@
+.
+├── bin/
+│   └── beast
+├── beast/
+│   ├── __init__.py
+│   ├── cli.py
+│   └── runtime.py
+├── compose/
+│   ├── base.yml
+│   ├── packs/
+│   │   ├── agent_builders.yml
+│   │   ├── rag_ingest_pro.yml
+│   │   ├── observability_otel.yml
+│   │   ├── artifact_store_minio.yml
+│   │   └── mlx_runtime.yml
+│   └── local.override.yml.example
+├── packs/
+│   └── registry.json
+├── scripts/
+│   ├── 20_bootstrap_macos.sh
+│   ├── 21_bootstrap_linux.sh
+│   └── lib/
+│       ├── deps.sh
+│       ├── ux.sh
+│       └── docker.sh
+├── pyproject.toml
+└── README.md

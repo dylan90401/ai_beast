@@ -1,0 +1,22 @@
+services:
+  uptime-kuma:
+    profiles: ["kuma"]
+    image: louislam/uptime-kuma:latest
+    ports:
+      - "127.0.0.1:${PORT_KUMA:-3001}:3001"
+    volumes:
+      - "${DATA_DIR:-./data}/uptime-kuma:/app/data"
+    restart: unless-stopped
+
+  n8n:
+    profiles: ["n8n"]
+    image: n8nio/n8n:latest
+    ports:
+      - "127.0.0.1:${PORT_N8N:-5678}:5678"
+    environment:
+      - N8N_HOST=127.0.0.1
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+    volumes:
+      - "${DATA_DIR:-./data}/n8n:/home/node/.n8n"
+    restart: unless-stopped

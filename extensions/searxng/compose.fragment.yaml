@@ -1,0 +1,11 @@
+services:
+  searxng:
+    profiles: ["searxng"]
+    image: searxng/searxng:latest
+    ports:
+      - "127.0.0.1:${PORT_SEARXNG:-8088}:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://127.0.0.1:${PORT_SEARXNG:-8088}/
+    volumes:
+      - "${DATA_DIR:-./data}/searxng:/etc/searxng"
+    restart: unless-stopped

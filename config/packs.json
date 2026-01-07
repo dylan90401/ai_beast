@@ -1,0 +1,343 @@
+{
+  "packs": {
+    "networking": {
+      "desc": "Networking & diagnostics (LAN/WAN sanity, perf, packet tooling).",
+      "brew": {
+        "formulae": [
+          "iperf3",
+          "mtr",
+          "nmap",
+          "openssl",
+          "wget",
+          "curl",
+          "jq",
+          "yq",
+          "socat",
+          "tmux"
+        ],
+        "casks": []
+      },
+      "pip": [
+        "scapy",
+        "rich"
+      ],
+      "notes": "Use responsibly; avoid scanning networks you don't own or have authorization to test.",
+      "depends": [],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+    "defsec": {
+      "desc": "Defensive security & integrity tooling (SCA, secrets, scanning).",
+      "brew": {
+        "formulae": [
+          "clamav",
+          "yara",
+          "trivy",
+          "gitleaks",
+          "semgrep",
+          "syft",
+          "grype"
+        ],
+        "casks": []
+      },
+      "pip": [
+        "bandit",
+        "detect-secrets",
+        "pip-audit"
+      ],
+      "notes": "Defensive posture: code + artifact scanning, SBOM, secrets detection.",
+      "depends": [],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+    "osint": {
+      "desc": "OSINT + research utilities (local search, scraping helpers, metadata).",
+      "brew": {
+        "formulae": [
+          "ripgrep",
+          "fd",
+          "pandoc",
+          "exiftool",
+          "whois",
+          "httrack",
+          "lynx"
+        ],
+        "casks": []
+      },
+      "pip": [
+        "beautifulsoup4",
+        "requests",
+        "lxml",
+        "readability-lxml",
+        "trafilatura"
+      ],
+      "docker": {
+        "extensions": [
+          "searxng"
+        ],
+        "feature_flags": {
+          "docker.searxng": true
+        }
+      },
+      "notes": "Designed for lawful research. Respect robots.txt and local laws.",
+      "depends": [
+        "networking"
+      ],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+    "mapping": {
+      "desc": "Mapping/GIS + geospatial Python stack.",
+      "brew": {
+        "formulae": [
+          "gdal",
+          "geos",
+          "proj",
+          "tippecanoe"
+        ],
+        "casks": [
+          "qgis"
+        ]
+      },
+      "pip": [
+        "geopandas",
+        "shapely",
+        "pyproj",
+        "rasterio",
+        "folium",
+        "osmnx"
+      ],
+      "notes": "Geospatial deps can be heavy; brew first, then pip in pack venv.",
+      "depends": [
+        "networking"
+      ],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+    "media_synth": {
+      "desc": "Media toolchain for text\u2194image\u2194video\u2194audio pipelines (supporting ComfyUI + CLI).",
+      "brew": {
+        "formulae": [
+          "ffmpeg",
+          "imagemagick",
+          "sox",
+          "flac",
+          "lame"
+        ],
+        "casks": []
+      },
+      "pip": [
+        "openai-whisper",
+        "faster-whisper",
+        "pydub",
+        "librosa",
+        "soundfile",
+        "moviepy"
+      ],
+      "notes": "Whisper/faster-whisper are for transcription; generation happens via ComfyUI + models you install.",
+      "depends": [
+        "networking",
+        "defsec"
+      ],
+      "comfyui_nodes": [
+        {
+          "name": "ComfyUI-VideoHelperSuite",
+          "repo": "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git",
+          "pip_requirements": true
+        },
+        {
+          "name": "ComfyUI-Advanced-ControlNet",
+          "repo": "https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet.git",
+          "pip_requirements": true
+        },
+        {
+          "name": "comfyui_controlnet_aux",
+          "repo": "https://github.com/Fannovel16/comfyui_controlnet_aux.git",
+          "pip_requirements": true
+        },
+        {
+          "name": "ComfyUI_UltimateSDUpscale",
+          "repo": "https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git",
+          "pip_requirements": true
+        },
+        {
+          "name": "ComfyUI-Impact-Pack",
+          "repo": "https://github.com/ltdrdata/ComfyUI-Impact-Pack.git",
+          "pip_requirements": true
+        }
+      ],
+      "comfyui_allowlist_add": [
+        "https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git",
+        "https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet.git",
+        "https://github.com/Fannovel16/comfyui_controlnet_aux.git",
+        "https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git",
+        "https://github.com/ltdrdata/ComfyUI-Impact-Pack.git"
+      ]
+    },
+    "dataviz_ml": {
+      "desc": "Data viz + ML notebook stack (local analytics, charts, embeddings).",
+      "brew": {
+        "formulae": [
+          "duckdb",
+          "sqlite",
+          "graphviz"
+        ],
+        "casks": []
+      },
+      "pip": [
+        "jupyterlab",
+        "pandas",
+        "numpy",
+        "matplotlib",
+        "plotly",
+        "altair",
+        "scikit-learn",
+        "polars",
+        "pyarrow",
+        "networkx",
+        "umap-learn"
+      ],
+      "notes": "Creates a dedicated venv for notebooks + analysis.",
+      "depends": [
+        "networking"
+      ],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+    "research_hegel_esoteric": {
+      "desc": "Research workstation tooling (corpus building, citation, RAG ingestion, longform).",
+      "brew": {
+        "formulae": [
+          "pandoc",
+          "ripgrep",
+          "fd",
+          "sqlite"
+        ],
+        "casks": [
+          "zotero",
+          "obsidian"
+        ]
+      },
+      "pip": [
+        "pymupdf",
+        "pypdf",
+        "markdown",
+        "python-frontmatter"
+      ],
+      "notes": "Creates data/research/{hegel,esoterica,notes} and integrates with RAG ingest.",
+      "depends": [
+        "osint",
+        "dataviz_ml"
+      ],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+    "speech_stack": {
+      "desc": "Local speech stack: STT (whisper.cpp + optional faster-whisper API) + simple TTS bridge.",
+      "depends": [
+        "networking"
+      ],
+      "brew": {
+        "formulae": [
+          "cmake",
+          "ffmpeg",
+          "libsndfile",
+          "pkg-config"
+        ],
+        "casks": []
+      },
+      "pip": [
+        "fastapi",
+        "uvicorn[standard]",
+        "python-multipart",
+        "faster-whisper",
+        "soundfile",
+        "pydub"
+      ],
+      "notes": "Builds whisper.cpp (Metal on macOS) and provides a local HTTP API for transcription/TTS."
+    },
+
+    "agent_builders": {
+      "desc": "Low-code agent builders (choose from Langflow / Flowise / Dify). Stubs only in v17.",
+      "docker": {
+        "extensions": [
+          "langflow",
+          "flowise",
+          "dify"
+        ],
+        "feature_flags": {
+          "packs.agent_builders": true
+        }
+      },
+      "notes": "Registered but disabled by default. Compose fragments are stubs; enable and flesh out when ready.",
+      "depends": [
+        "networking"
+      ],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+
+    "rag_ingest_pro": {
+      "desc": "RAG ingestion muscle: Apache Tika + Unstructured (stub) for robust parsing.",
+      "docker": {
+        "extensions": [
+          "apache_tika",
+          "unstructured_api"
+        ],
+        "feature_flags": {
+          "packs.rag_ingest_pro": true
+        }
+      },
+      "notes": "Registered but disabled by default. Services are stubs; wire into ingest pipeline later.",
+      "depends": [
+        "networking"
+      ],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    },
+
+    "observability_otel": {
+      "desc": "OpenTelemetry Collector pipeline (stub) for tracing/log export across services.",
+      "docker": {
+        "extensions": [
+          "otel_collector"
+        ],
+        "feature_flags": {
+          "packs.observability_otel": true
+        }
+      },
+      "notes": "Stub only. Later: add exporters (OTLP, Loki, Tempo, Jaeger) and service instrumentation.",
+      "depends": [
+        "networking"
+      ]
+    },
+
+    "artifact_store_minio": {
+      "desc": "Local S3-compatible artifact store (MinIO) for offline mirrors and airgapped installs (stub).",
+      "docker": {
+        "extensions": [
+          "minio"
+        ],
+        "feature_flags": {
+          "packs.artifact_store_minio": true
+        }
+      },
+      "notes": "Stub only. Later: mirror models/datasets and integrate with manifests + backup.",
+      "depends": [
+        "networking"
+      ]
+    },
+
+    "mlx_runtime": {
+      "desc": "Apple Silicon fast lane (MLX / MLX-LM) for local inference experiments.",
+      "pip": [
+        "mlx",
+        "mlx-lm"
+      ],
+      "notes": "Registered but disabled by default. Adds Python packages only; integrate into runtimes later.",
+      "depends": [],
+      "comfyui_nodes": [],
+      "comfyui_allowlist_add": []
+    }
+  }
+}

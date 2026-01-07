@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "defaults": {
+    "models": {
+      "tier_required": "vendor",
+      "require_sha256": true,
+      "require_provenance": true
+    },
+    "nodes": {
+      "tier_required": "official",
+      "require_sha256": true,
+      "require_provenance": true
+    },
+    "containers": {
+      "scan": "warn",
+      "allow_unpinned_tags": false
+    },
+    "binaries": {
+      "tier_required": "trusted",
+      "require_sha256": true
+    },
+    "workflows": {
+      "tier_required": "community",
+      "require_sha256": true,
+      "require_provenance": true
+    },
+    "macos": {
+      "quarantine_clear_on_install": true
+    },
+    "manifests": {
+      "require_signature": false,
+      "signature_namespace": "ai-beast-manifest",
+      "require_for": [
+        "asset_packs.json"
+      ]
+    }
+  },
+  "tiers": {
+    "trusted": {
+      "min_sources": [
+        "official",
+        "vendor",
+        "author"
+      ]
+    },
+    "community": {
+      "min_sources": [
+        "official",
+        "vendor",
+        "author",
+        "community"
+      ]
+    },
+    "experimental": {
+      "min_sources": [
+        "any"
+      ]
+    }
+  },
+  "sources": {
+    "official": {
+      "notes": "Project official release or org-owned repo"
+    },
+    "vendor": {
+      "notes": "Known model vendor / registry"
+    },
+    "author": {
+      "notes": "Original creator release"
+    },
+    "community": {
+      "notes": "Community mirrors; requires checksums + provenance"
+    },
+    "any": {
+      "notes": "No constraint"
+    }
+  },
+  "url_classifiers": [
+    {
+      "match": "https://huggingface.co/",
+      "source": "community"
+    },
+    {
+      "match": "https://civitai.com/",
+      "source": "community"
+    },
+    {
+      "match": "https://raw.githubusercontent.com/",
+      "source": "community"
+    },
+    {
+      "match": "https://github.com/Comfy-Org/",
+      "source": "official"
+    },
+    {
+      "match": "https://github.com/comfyanonymous/",
+      "source": "official"
+    },
+    {
+      "match": "https://github.com/",
+      "source": "community"
+    }
+  ],
+  "modes": {
+    "nodes": {
+      "official_only": {
+        "tier_required": "official",
+        "min_sources": [
+          "official"
+        ]
+      },
+      "community_ok": {
+        "tier_required": "community",
+        "min_sources": [
+          "official",
+          "vendor",
+          "author",
+          "community"
+        ]
+      }
+    },
+    "models": {
+      "vendor_author": {
+        "tier_required": "vendor",
+        "min_sources": [
+          "official",
+          "vendor",
+          "author"
+        ]
+      },
+      "community_ok": {
+        "tier_required": "community",
+        "min_sources": [
+          "official",
+          "vendor",
+          "author",
+          "community"
+        ]
+      }
+    },
+    "manifests": {
+      "signed_required": {
+        "require_signature": true
+      },
+      "signed_optional": {
+        "require_signature": false
+      }
+    }
+  }
+}

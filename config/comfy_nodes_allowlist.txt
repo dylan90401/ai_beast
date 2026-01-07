@@ -1,0 +1,6 @@
+https://github.com/Comfy-Org/ComfyUI-Manager.git
+https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git
+https://github.com/Kosinkadink/ComfyUI-Advanced-ControlNet.git
+https://github.com/Fannovel16/comfyui_controlnet_aux.git
+https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git
+https://github.com/ltdrdata/ComfyUI-Impact-Pack.git

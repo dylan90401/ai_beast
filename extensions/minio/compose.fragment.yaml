@@ -1,0 +1,14 @@
+services:
+  minio:
+    image: minio/minio:latest
+    profiles: ["artifact_store_minio"]
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_MINIO:-9001}:9000"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_MINIO_CONSOLE:-9002}:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - "${DATA_DIR:-./data}/minio:/data"
+    restart: unless-stopped

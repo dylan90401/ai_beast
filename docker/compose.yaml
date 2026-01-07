@@ -1,0 +1,22 @@
+services:
+  qdrant:
+    profiles: ["qdrant"]
+    image: qdrant/qdrant:latest
+    ports:
+      - "127.0.0.1:${PORT_QDRANT:-6333}:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - "${DATA_DIR:-./data}/qdrant:/qdrant/storage"
+    restart: unless-stopped
+
+  open-webui:
+    profiles: ["webui"]
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - "127.0.0.1:${PORT_WEBUI:-3000}:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}
+      - WEBUI_AUTH=false
+    volumes:
+      - "${DATA_DIR:-./data}/openwebui:/app/backend/data"
+    restart: unless-stopped

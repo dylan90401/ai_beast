@@ -1,0 +1,5 @@
+services:
+  example_hello:
+    image: alpine:3.20
+    command: ["sh","-lc","while true; do echo '[example_segment] hello from extension'; sleep 60; done"]
+    restart: unless-stopped

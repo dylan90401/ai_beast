@@ -1,0 +1,15 @@
+name: harden
+phases:
+  - role: supervisor
+    prompt: apps/agent/prompts/kryptos_builder.supervisor.md
+  - role: implementer
+    prompt: apps/agent/prompts/kryptos_builder.system.md
+    tool_loop: true
+  - role: auditor
+    prompt: apps/agent/prompts/kryptos_builder.auditor.md
+    tool_loop: true
+    apply_forced: false
+  - role: verifier_strict
+    prompt: apps/agent/prompts/kryptos_builder.verifier_strict.md
+    tool_loop: true
+    apply_forced: false

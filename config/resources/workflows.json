@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "workflows": {
+    "example_comfy_workflow": {
+      "type": "comfyui_workflow",
+      "target_dir": "workflows/comfyui",
+      "source": {
+        "url": "https://example.invalid/workflow.json",
+        "sha256": "PUT_REAL_SHA256_HERE"
+      },
+      "notes": "Typed workflow record. v15 catalogs workflows for install/verify/provenance."
+    }
+  }
+}

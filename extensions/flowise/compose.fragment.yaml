@@ -1,0 +1,14 @@
+services:
+  flowise:
+    # Stub only: verify upstream image + version pin when enabling.
+    image: flowiseai/flowise:latest
+    profiles: ["agent_builders"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_FLOWISE:-3003}:3000"
+    environment:
+      - PORT=3000
+      - FLOWISE_USERNAME=${FLOWISE_USERNAME:-}
+      - FLOWISE_PASSWORD=${FLOWISE_PASSWORD:-}
+    volumes:
+      - "${DATA_DIR:-./data}/flowise:/root/.flowise"
+    restart: unless-stopped

@@ -1,0 +1,32 @@
+{
+  "last_node_id": 1,
+  "last_link_id": 1,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "Note",
+      "pos": [
+        50,
+        50
+      ],
+      "size": [
+        560,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": "AI Beast template: img2img_min\n\nAdd LoadImage \u2192 VAEEncode \u2192 KSampler \u2192 VAEDecode \u2192 SaveImage."
+      }
+    }
+  ],
+  "links": [],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "workspace": "ai-beast"
+  }
+}
