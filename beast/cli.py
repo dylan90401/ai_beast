@@ -138,9 +138,14 @@ def cmd_pack_disable(name: str) -> None:
 
 def cmd_eval(category: str | None, output_format: str, save_path: str | None) -> None:
     """Run workspace evaluation."""
-    # Import here to avoid issues if module not available
-    sys.path.insert(0, str(ROOT))
-    from modules.evaluation import Evaluator
+    # Dynamic import to avoid issues if module not installed in development mode
+    try:
+        from modules.evaluation import Evaluator
+    except ImportError:
+        # Fallback for non-package installation
+        import sys
+        sys.path.insert(0, str(ROOT))
+        from modules.evaluation import Evaluator
     
     evaluator = Evaluator(ROOT)
     

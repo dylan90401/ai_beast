@@ -7,6 +7,8 @@ workspace configurations, docker services, extensions, and overall health.
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -71,6 +73,7 @@ class EvaluationResult:
         failed = sum(1 for m in self.metrics if m.status == MetricStatus.FAIL)
         warnings = sum(1 for m in self.metrics if m.status == MetricStatus.WARN)
         skipped = sum(1 for m in self.metrics if m.status == MetricStatus.SKIP)
+        evaluated_count = total - skipped
         
         self.summary = {
             "total": total,
@@ -78,7 +81,7 @@ class EvaluationResult:
             "failed": failed,
             "warnings": warnings,
             "skipped": skipped,
-            "pass_rate": passed / (total - skipped) if (total - skipped) > 0 else 0.0
+            "pass_rate": passed / evaluated_count if evaluated_count > 0 else 0.0
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -118,7 +121,6 @@ class Evaluator:
         result = EvaluationResult(category="system_health")
 
         # Check Python version
-        import sys
         python_version = sys.version_info
         if python_version >= (3, 11):
             result.add_metric(MetricResult(
@@ -172,7 +174,6 @@ class Evaluator:
 
     def evaluate_docker_services(self) -> EvaluationResult:
         """Evaluate Docker services and containers."""
-        import subprocess
         start_time = time.time()
         result = EvaluationResult(category="docker_services")
 
