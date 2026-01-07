@@ -28,6 +28,31 @@ cp config/ai-beast.env.example config/ai-beast.env
 ./bin/beast dashboard   # local control panel UI
 ```
 
+## Workspace Evaluation
+
+Evaluate workspace health, configuration, and services:
+
+```bash
+# Run all evaluations
+./bin/beast eval
+
+# Run specific category
+./bin/beast eval --category system
+./bin/beast eval --category docker
+./bin/beast eval --category config
+./bin/beast eval --category extensions
+
+# Output formats
+./bin/beast eval --format text   # Human-readable (default)
+./bin/beast eval --format json   # Machine-readable
+
+# Save report
+./bin/beast eval --save .cache/evaluation-report.txt
+./bin/beast eval --format json --save .cache/evaluation-report.json
+```
+
+See [modules/evaluation/README.md](modules/evaluation/README.md) for detailed documentation.
+
 ## launchd auto-start (optional, macOS)
 
 ```bash
