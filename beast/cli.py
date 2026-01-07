@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -135,6 +136,45 @@ def cmd_pack_disable(name: str) -> None:
     print(f"OK: disabled {name}")
 
 
+def cmd_eval(category: str | None, output_format: str, save_path: str | None) -> None:
+    """Run workspace evaluation."""
+    # Dynamic import to avoid issues if module not installed in development mode
+    try:
+        from modules.evaluation import Evaluator
+    except ImportError:
+        # Fallback for non-package installation
+        import sys
+        sys.path.insert(0, str(ROOT))
+        from modules.evaluation import Evaluator
+    
+    evaluator = Evaluator(ROOT)
+    
+    if category:
+        # Run specific category
+        if category == "system":
+            evaluator.evaluate_system_health()
+        elif category == "docker":
+            evaluator.evaluate_docker_services()
+        elif category == "config":
+            evaluator.evaluate_configuration()
+        elif category == "extensions":
+            evaluator.evaluate_extensions()
+        else:
+            raise RuntimeError(f"Unknown evaluation category: {category}")
+    else:
+        # Run all evaluations
+        evaluator.run_all_evaluations()
+    
+    # Generate and display report
+    report = evaluator.generate_report(output_format)
+    print(report)
+    
+    # Save if requested
+    if save_path:
+        evaluator.save_report(save_path, output_format)
+        print(f"\nReport saved to: {save_path}")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(prog="beast")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -162,6 +202,23 @@ def main() -> None:
     dis = pack_sub.add_parser("disable")
     dis.add_argument("name")
 
+    eval_parser = sub.add_parser("eval", help="Run workspace evaluation")
+    eval_parser.add_argument(
+        "--category",
+        choices=["system", "docker", "config", "extensions"],
+        help="Specific category to evaluate (default: all)"
+    )
+    eval_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)"
+    )
+    eval_parser.add_argument(
+        "--save",
+        help="Save report to file"
+    )
+
     args = p.parse_args()
 
     try:
@@ -185,6 +242,8 @@ def main() -> None:
                 cmd_pack_enable(args.name)
             elif args.pack_cmd == "disable":
                 cmd_pack_disable(args.name)
+        elif args.cmd == "eval":
+            cmd_eval(args.category, args.format, args.save)
     except Exception as e:
         # clean, agent-friendly failure
         raise SystemExit(f"ERROR: {e}") from e

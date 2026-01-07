@@ -1,0 +1,49 @@
+{
+  "evaluation_config": {
+    "version": "1.0",
+    "categories": {
+      "system_health": {
+        "enabled": true,
+        "description": "Evaluates system prerequisites and dependencies",
+        "checks": [
+          "python_version",
+          "directory_structure",
+          "pyproject_toml"
+        ]
+      },
+      "docker_services": {
+        "enabled": true,
+        "description": "Evaluates Docker availability and compose setup",
+        "checks": [
+          "docker_available",
+          "docker_compose_available",
+          "compose_files"
+        ]
+      },
+      "configuration": {
+        "enabled": true,
+        "description": "Evaluates workspace configuration files",
+        "checks": [
+          "config_directory",
+          "resource_configs"
+        ]
+      },
+      "extensions": {
+        "enabled": true,
+        "description": "Evaluates installed extensions",
+        "checks": [
+          "extensions_directory",
+          "extensions_count"
+        ]
+      }
+    },
+    "thresholds": {
+      "pass_rate_warning": 0.7,
+      "pass_rate_fail": 0.5
+    },
+    "output": {
+      "default_format": "text",
+      "report_directory": ".cache/evaluation"
+    }
+  }
+}
