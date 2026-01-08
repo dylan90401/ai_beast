@@ -1,0 +1,13 @@
+# AI Beast Python Requirements
+# Install with: pip install -r requirements.txt
+# Or with pipx: pipx install -r requirements.txt
+
+# Core dependencies
+pyyaml>=6.0
+requests>=2.31.0
+
+# Optional: Better YAML parsing
+# ruamel.yaml>=0.17.0
+
+# Development dependencies (also in pyproject.toml)
+# Install separately or use: pip install -e .[dev]
