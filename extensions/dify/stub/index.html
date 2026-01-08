@@ -2,20 +2,20 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Dify (stub)</title>
+  <title>Dify (legacy stub)</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
     code { background: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <h1>Dify (stub)</h1>
-  <p>This is a placeholder container. The Dify stack is <strong>not implemented</strong> in this version.</p>
-  <p>Next steps when ready:</p>
+  <h1>Dify (legacy stub)</h1>
+  <p>This page is a legacy placeholder. The Dify stack is now dockerized.</p>
+  <p>Use:</p>
   <ol>
-    <li>Replace this extension with an upstream Dify multi-service compose.</li>
-    <li>Move secrets into <code>{{BASE_DIR}}/config/secrets</code> or Keychain-backed envs.</li>
-    <li>Wire persistence volumes under <code>{{BASE_DIR}}/docker/volumes</code>.</li>
+    <li><code>./bin/beast extensions enable dify --apply</code></li>
+    <li><code>./bin/beast compose gen --apply</code></li>
+    <li><code>./bin/beast up</code></li>
   </ol>
 </body>
 </html>

@@ -92,7 +92,7 @@ case "$ACTION" in
     [[ -n "$SIG" ]] || SIG="${FILE}.sig"
     [[ -f "$SIG" ]] || die "Signature not found: $SIG"
     load_signers
-    local allowed="$BASE_DIR/.cache/allowed_signers"
+    allowed="$BASE_DIR/.cache/allowed_signers"
     if [[ "$APPLY" -ne 1 ]]; then
       log "DRYRUN: would verify $FILE against $SIG using $allowed (namespace=$NAMESPACE)"
       exit 0

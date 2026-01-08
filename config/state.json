@@ -15,7 +15,8 @@
       "research_hegel_esoteric"
     ],
     "extensions_enabled": [
-      "example_segment"
+      "example_segment",
+      "jupyter"
     ],
     "asset_packs": [
       {

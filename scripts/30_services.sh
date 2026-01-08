@@ -14,7 +14,6 @@ source "$BASE_DIR/scripts/lib/common.sh"
 # shellcheck disable=SC1091
 source "$BASE_DIR/scripts/lib/docker_runtime.sh"
 
-AI_BEAST_LOG_PREFIX="services"
 parse_common_flags "${@:-}"
 
 paths_env="$BASE_DIR/config/paths.env"
@@ -33,7 +32,7 @@ start_native(){
   # Ollama (best-effort)
   if have_cmd ollama; then
     if ! pgrep -x ollama >/dev/null 2>&1; then
-      if [[ "${APPLY:-0}" -eq 1 ]]; then
+      if [[ "${DRYRUN:-1}" -eq 0 ]]; then
         log "Starting Ollama (ollama serve)"
         nohup ollama serve >/dev/null 2>&1 &
       else
@@ -46,7 +45,7 @@ start_native(){
   if [[ -n "${COMFYUI_DIR:-}" && -d "${COMFYUI_DIR:-}" && -n "${VENV_DIR:-}" && -d "${VENV_DIR:-}" ]]; then
     local port="${PORT_COMFYUI:-8188}"
     if ! pgrep -f "python .*main.py.*--port ${port}" >/dev/null 2>&1; then
-      if [[ "${APPLY:-0}" -eq 1 ]]; then
+      if [[ "${DRYRUN:-1}" -eq 0 ]]; then
         log "Starting ComfyUI on ${AI_BEAST_BIND_ADDR:-127.0.0.1}:${port}"
         mkdir -p "$BASE_DIR/logs"
         nohup /bin/bash -lc "source \"$VENV_DIR/bin/activate\" && cd \"$COMFYUI_DIR\" && python main.py --listen ${AI_BEAST_BIND_ADDR:-127.0.0.1} --port ${port}" \
@@ -60,7 +59,7 @@ start_native(){
 
 stop_native(){
   local port="${PORT_COMFYUI:-8188}"
-  if [[ "${APPLY:-0}" -eq 1 ]]; then
+  if [[ "${DRYRUN:-1}" -eq 0 ]]; then
     pkill -f "python .*main.py.*--port ${port}" >/dev/null 2>&1 || true
   else
     log "DRYRUN: would pkill ComfyUI process (port=${port})"
@@ -77,7 +76,7 @@ ensure_compose_file(){
 
   # If we have extensions enabled or a state file, generate it.
   if find "$BASE_DIR/extensions" -type f -name enabled -print -quit 2>/dev/null | grep -q . || [[ -f "$BASE_DIR/config/state.json" ]]; then
-    if [[ "${APPLY:-0}" -eq 1 ]]; then
+    if [[ "${DRYRUN:-1}" -eq 0 ]]; then
       "$BASE_DIR/scripts/25_compose_generate.sh" gen --apply --out="$out" >/dev/null
       echo "$out"; return 0
     fi
@@ -92,28 +91,66 @@ ensure_compose_file(){
 docker_up(){
   docker_runtime_ensure || { warn "Docker runtime not ready; skipping docker services"; return 0; }
 
-  local profiles=()
-  [[ "${FEATURE_DOCKER_QDRANT:-1}" -eq 1 ]] && profiles+=("qdrant")
-  [[ "${FEATURE_DOCKER_OPEN_WEBUI:-1}" -eq 1 ]] && profiles+=("webui")
-  [[ "${FEATURE_DOCKER_UPTIME_KUMA:-0}" -eq 1 ]] && profiles+=("kuma")
-  [[ "${FEATURE_DOCKER_N8N:-0}" -eq 1 ]] && profiles+=("n8n")
-  [[ "${FEATURE_DOCKER_SEARXNG:-0}" -eq 1 ]] && profiles+=("searxng")
-
-  if [[ "${#profiles[@]}" -eq 0 ]]; then
-    log "No docker profiles enabled (see config/features.yml)."
-    return 0
-  fi
-
   local cf; cf="$(ensure_compose_file)"
   local args=()
+  local compose_files=()
   if [[ "$cf" == *";"* ]]; then
     IFS=';' read -r a b <<<"$cf"
     args=( -f "$a" -f "$b" )
+    compose_files=( "$a" "$b" )
   else
     args=( -f "$cf" )
+    compose_files=( "$cf" )
   fi
 
+  mapfile -t profiles < <(python3 - "${compose_files[@]}" <<'PY'
+import re
+import sys
+
+def parse_profiles(text):
+    out=set()
+    lines=text.splitlines()
+    i=0
+    while i < len(lines):
+        line=lines[i]
+        m=re.search(r'^\s*profiles:\s*\[(.*)\]\s*$', line)
+        if m:
+            body=m.group(1)
+            for item in body.split(","):
+                item=item.strip().strip("'\"")
+                if item:
+                    out.add(item)
+            i += 1
+            continue
+        if re.search(r'^\s*profiles:\s*$', line):
+            i += 1
+            while i < len(lines) and re.search(r'^\s*-\s*', lines[i]):
+                item=re.sub(r'^\s*-\s*', '', lines[i]).strip().strip("'\"")
+                if item:
+                    out.add(item)
+                i += 1
+            continue
+        i += 1
+    return out
+
+profiles=set()
+for path in sys.argv[1:]:
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+            profiles |= parse_profiles(fh.read())
+    except FileNotFoundError:
+        continue
+
+for p in sorted(profiles):
+    print(p)
+PY
+)
+
+if [[ "${#profiles[@]}" -eq 0 ]]; then
+  log "No docker profiles found in compose file(s)."
+else
   for p in "${profiles[@]}"; do args+=( --profile "$p" ); done
+fi
   run docker compose "${args[@]}" up -d
 }
 

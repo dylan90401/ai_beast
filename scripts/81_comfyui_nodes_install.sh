@@ -50,7 +50,7 @@ pip_reqs_if_any(){
     return 0
   fi
 
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1091
   source "$VENV_DIR/bin/activate"
   python -m pip install -U pip wheel setuptools >/dev/null
   python -m pip install -r "$req" || log "WARN: pip install failed for $req"

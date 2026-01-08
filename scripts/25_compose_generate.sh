@@ -39,8 +39,7 @@ source "$BASE_DIR/scripts/lib/common.sh"
 source "$BASE_DIR/scripts/lib/docker_runtime.sh"
 # libs
 source "$BASE_DIR/scripts/lib/compose_utils.sh"
-
-AI_BEAST_LOG_PREFIX="compose-gen"
+load_env_if_exists "$BASE_DIR/config/features.env"
 
 dbg(){ [[ "$VERBOSE" -eq 1 ]] && echo "[compose-gen][dbg] $*" || true; }
 
@@ -90,12 +89,19 @@ PY
 
 # Pack dependency closure and services union (packs -> services)
 desired_services_json="$(python3 - <<PY
-import json, pathlib
+import json, os, pathlib
 desired=json.loads('''$desired_json''')
 packs_cfg=json.loads(pathlib.Path("$packs_file").read_text(encoding="utf-8")).get("packs", {})
 svcmap=json.loads(pathlib.Path("$pack_services_file").read_text(encoding="utf-8")).get("pack_services", {}) or {}
 
 wanted=list(desired.get("packs_enabled",[]) or [])
+for k, v in os.environ.items():
+    if not k.startswith("FEATURE_PACKS_"):
+        continue
+    val = str(v).strip().lower()
+    if val in ("1", "true", "yes", "on"):
+        name = k[len("FEATURE_PACKS_"):].lower()
+        wanted.append(name)
 seen=set(); closure=[]
 def dfs(p):
     if p in seen: return
@@ -109,16 +115,35 @@ for p in closure:
     for s in (svcmap.get(p,[]) or []):
         svc.add(s)
 
+docker_map = {
+    "FEATURE_DOCKER_QDRANT": "qdrant",
+    "FEATURE_DOCKER_OPEN_WEBUI": "open-webui",
+    "FEATURE_DOCKER_UPTIME_KUMA": "uptime-kuma",
+    "FEATURE_DOCKER_N8N": "n8n",
+    "FEATURE_DOCKER_SEARXNG": "searxng",
+}
+for env, name in docker_map.items():
+    val = str(os.environ.get(env, "0")).strip().lower()
+    if val in ("1", "true", "yes", "on"):
+        svc.add(name)
+
 print(json.dumps(sorted(svc)))
 PY
 )"
 
 # Extensions: include state + enabled markers (unless strict)
 desired_exts_json="$(python3 - <<PY
-import json, pathlib
+import json, os, pathlib
 desired=json.loads('''$desired_json''')
 root=pathlib.Path("$ext_root")
 exts=set(desired.get("extensions_enabled",[]) or [])
+for k, v in os.environ.items():
+    if not k.startswith("FEATURE_EXTENSIONS_"):
+        continue
+    val = str(v).strip().lower()
+    if val in ("1", "true", "yes", "on"):
+        name = k[len("FEATURE_EXTENSIONS_"):].lower()
+        exts.add(name)
 strict=int("$STRICT_STATE")
 if strict==0:
     for m in root.glob("*/enabled"):
@@ -201,12 +226,7 @@ if [[ "$MODE" == "legacy" ]]; then
   fi
   selected_frags=("${frags[@]:-}")
   if [[ "$APPLY" -eq 1 ]]; then
-    FRAGS_JSON="$(printf '%s\n' "${selected_frags[@]:-}" | python3 - <<'PY'
-import sys, json
-arr=[l.strip() for l in sys.stdin if l.strip()]
-print(json.dumps(arr))
-PY
-)"
+    FRAGS_JSON="$(printf '%s\n' "${selected_frags[@]:-}" | python3 -c 'import sys, json; arr=[l.strip() for l in sys.stdin if l.strip()]; print(json.dumps(arr))')"
     python3 - <<PY
 import json, pathlib
 p=pathlib.Path("$selection_json"); p.parent.mkdir(parents=True, exist_ok=True)
@@ -219,6 +239,9 @@ import json, pathlib, re
 root=pathlib.Path("$ext_root")
 exts=set(json.loads('''$desired_exts_json'''))
 desired=set(json.loads('''$desired_services_json'''))
+reg=json.loads(pathlib.Path("$services_registry").read_text(encoding="utf-8")).get("services", {}) or {}
+registry_services=set(reg.keys())
+desired_non_registry = desired - registry_services
 
 def list_services(text):
     out=set(); in_services=False
@@ -237,7 +260,7 @@ for f in sorted(root.glob("*/compose.fragment.yaml")) + sorted(root.glob("*/*/co
     ex=f.parent.name
     sv=list_services(f.read_text(errors="ignore"))
     by_ext = ex in exts
-    hits = sorted(list(sv & desired))
+    hits = sorted(list(sv & desired_non_registry))
     by_svc = len(hits)>0
     if by_ext or by_svc:
         selected.append(str(f))

@@ -2,6 +2,15 @@
 
 ## Quick Setup
 
+### 0. Configure External SSD for Models/Data (Recommended)
+
+Use `./bin/beast init --apply` (or `./bin/beast init --apply --heavy-dir=/Volumes/SSD/AI_Beast_Heavy --guts-dir=/path`) to set `HEAVY_DIR` on an external SSD. This drives:
+- `MODELS_DIR`, `LLM_MODELS_DIR`, `OLLAMA_MODELS`
+- `DATA_DIR`, `OUTPUTS_DIR`, `CACHE_DIR`, `BACKUP_DIR`
+- Hugging Face and Torch caches (`HF_HOME`, `TRANSFORMERS_CACHE`, `TORCH_HOME`)
+
+You can edit `config/paths.env` directly if you want to relocate later, or update paths from the Dashboard → Storage Paths.
+
 ### 1. Apply Critical Patches
 
 ```bash

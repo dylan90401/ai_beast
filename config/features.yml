@@ -29,6 +29,7 @@ packs.defsec: false
 packs.osint: false
 packs.mapping: false
 packs.media_synth: false
+packs.speech_stack: false
 packs.dataviz_ml: false
 packs.research_hegel_esoteric: false
 

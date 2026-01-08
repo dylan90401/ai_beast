@@ -16,14 +16,28 @@ fail(){ echo "[doctor] FAIL: $*"; }
 cmd(){ command -v "$1" >/dev/null 2>&1; }
 
 echo "== AI Beast Doctor =="
-[[ -f "$BASE_DIR/config/paths.env" ]] && ok "paths.env present" || fail "missing config/paths.env (run beast init --apply)"
-cmd git && ok "git" || warn "git missing"
-cmd python3 && ok "python3" || warn "python3 missing"
-cmd docker && ok "docker" || warn "docker missing (only needed for docker services)"
-cmd ollama && ok "ollama" || warn "ollama missing"
+if [[ -f "$BASE_DIR/config/paths.env" ]]; then
+  ok "paths.env present"
+else
+  fail "missing config/paths.env (run beast init --apply)"
+fi
 
-[[ -d "${COMFYUI_DIR:-}" ]] && ok "ComfyUI dir: $COMFYUI_DIR" || warn "ComfyUI not installed at COMFYUI_DIR"
-[[ -d "${VENV_DIR:-}" ]] && ok "venv: $VENV_DIR" || warn "venv missing (run beast bootstrap --apply)"
+if cmd git; then ok "git"; else warn "git missing"; fi
+if cmd python3; then ok "python3"; else warn "python3 missing"; fi
+if cmd docker; then ok "docker"; else warn "docker missing (only needed for docker services)"; fi
+if cmd ollama; then ok "ollama"; else warn "ollama missing"; fi
+
+if [[ -d "${COMFYUI_DIR:-}" ]]; then
+  ok "ComfyUI dir: $COMFYUI_DIR"
+else
+  warn "ComfyUI not installed at COMFYUI_DIR"
+fi
+
+if [[ -d "${VENV_DIR:-}" ]]; then
+  ok "venv: $VENV_DIR"
+else
+  warn "venv missing (run beast bootstrap --apply)"
+fi
 
 curl_check(){
   local name="$1" url="$2"

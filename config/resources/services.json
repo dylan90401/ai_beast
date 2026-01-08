@@ -66,6 +66,28 @@
         "${DATA_DIR:-./data}/n8n:/home/node/.n8n"
       ],
       "restart": "unless-stopped"
+    },
+    "apache-tika": {
+      "tier": "optional",
+      "profiles": [
+        "rag_ingest_pro"
+      ],
+      "image": "apache/tika:latest",
+      "ports": [
+        "127.0.0.1:${PORT_TIKA:-9998}:9998"
+      ],
+      "restart": "unless-stopped"
+    },
+    "unstructured-api": {
+      "tier": "optional",
+      "profiles": [
+        "rag_ingest_pro"
+      ],
+      "image": "quay.io/unstructured-io/unstructured-api:latest",
+      "ports": [
+        "127.0.0.1:${PORT_UNSTRUCTURED:-8000}:8000"
+      ],
+      "restart": "unless-stopped"
     }
   }
 }

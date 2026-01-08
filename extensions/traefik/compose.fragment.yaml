@@ -1,0 +1,29 @@
+# Traefik - Reverse proxy and load balancer (prodish profile)
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: ai_beast_traefik
+    profiles: ["traefik", "prodish"]
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--log.level=INFO"
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_HTTP:-80}:80"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_HTTPS:-443}:443"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_DASHBOARD:-8080}:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/etc/traefik
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+
+volumes:
+  traefik_data:

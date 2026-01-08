@@ -1,0 +1,23 @@
+# PostgreSQL - Relational database for metadata and state
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai_beast_postgres
+    profiles: ["postgres", "full", "prodish"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_POSTGRES:-5432}:5432"
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-aibeast}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-aibeast_dev}"
+      POSTGRES_DB: "${POSTGRES_DB:-aibeast}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aibeast}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

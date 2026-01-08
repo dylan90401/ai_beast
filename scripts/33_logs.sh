@@ -14,8 +14,12 @@ source "$BASE_DIR/scripts/lib/common.sh"
 # shellcheck disable=SC1091
 source "$BASE_DIR/scripts/lib/docker_runtime.sh"
 
-AI_BEAST_LOG_PREFIX="logs"
 parse_common_flags "${@:-}"
+
+[[ -f "$BASE_DIR/config/paths.env" ]] || die "Missing config/paths.env (run: ./bin/beast init --apply)"
+# shellcheck disable=SC1090
+source "$BASE_DIR/config/paths.env"
+LOG_DIR="${LOG_DIR:-$BASE_DIR/logs}"
 
 # lightweight arg parse
 TAIL=200

@@ -12,7 +12,6 @@ ROLLBACK_ON_FAIL=1
 PACK=""
 MIRROR=""
 ONLY="" # models|workflows|all
-YES=0
 
 for arg in "${@:-}"; do
   case "$arg" in
@@ -25,7 +24,6 @@ for arg in "${@:-}"; do
     --trust=*) TRUST_MODE="${arg#--trust=}" ;;
     --no-quarantine-clear) QUAR_CLEAR=0 ;;
     --no-rollback) ROLLBACK_ON_FAIL=0 ;;
-    --yes) YES=1 ;;
   esac
 done
 
@@ -47,7 +45,6 @@ verify_manifest_sig(){
   local sig="${2:-${file}.sig}"
 
   local policy="$BASE_DIR/config/resources/trust_policy.json"
-  local state="$BASE_DIR/config/state.json"
   [[ -f "$policy" ]] || return 0
 
   local req
@@ -290,14 +287,12 @@ download_one(){
     done
   fi
 
-
-  local url="$1" out="$2"
   if [[ -f "$out" ]]; then
     log "Already downloaded: $(basename "$out")"
     return 0
   fi
   if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN: curl -L --fail --retry 5 --retry-delay 2 -o "$out" "$url""
+    log "DRYRUN: curl -L --fail --retry 5 --retry-delay 2 -o \"$out\" \"$url\""
     return 0
   fi
   log "Downloading: $url"
@@ -309,7 +304,7 @@ maybe_clamav_scan(){
   local f="$1"
   if command -v clamscan >/dev/null 2>&1; then
     if [[ "$APPLY" -ne 1 ]]; then
-      log "DRYRUN: clamscan "$f""
+      log "DRYRUN: clamscan \"$f\""
       return 0
     fi
     log "ClamAV scan: $(basename "$f")"
@@ -395,9 +390,12 @@ install_models_array(){
     note="$(jq -r --arg p "$pack" "${arrpath}[$i].notes // \"\"" "$cfg")"
 
     [[ -n "$url" && "$url" != "null" ]] || die "Missing URL for $pack/$name"
-        trust_enforce "model" "$name" "$url" "$wantsha"
+    if [[ "$url" == *"<org>"* || "$url" == *"<repo>"* ]]; then
+      die "Placeholder URL for $pack/$name (edit config/asset_packs.json)"
+    fi
+    trust_enforce "model" "$name" "$url" "$wantsha"
 
-if [[ "$STRICT" -eq 1 ]] && ! is_allowlisted "$url" "$allow_models"; then
+    if [[ "$STRICT" -eq 1 ]] && ! is_allowlisted "$url" "$allow_models"; then
       die "Model URL not allowlisted (strict): $url"
     fi
     if [[ -f "$allow_models" ]] && ! is_allowlisted "$url" "$allow_models"; then
@@ -465,9 +463,12 @@ install_workflows(){
     note="$(jq -r --arg p "$pack" ".packs[$p].workflows[$i].notes // """ "$cfg")"
 
     [[ -n "$url" && "$url" != "null" ]] || die "Missing workflow URL for $pack/$name"
-        trust_enforce "workflow" "$name" "$url" "$wantsha"
+    if [[ "$url" == *"<org>"* || "$url" == *"<repo>"* ]]; then
+      die "Placeholder workflow URL for $pack/$name (edit config/asset_packs.json)"
+    fi
+    trust_enforce "workflow" "$name" "$url" "$wantsha"
 
-if [[ "$STRICT" -eq 1 ]] && ! is_allowlisted "$url" "$allow_workflows"; then
+    if [[ "$STRICT" -eq 1 ]] && ! is_allowlisted "$url" "$allow_workflows"; then
       die "Workflow URL not allowlisted (strict): $url"
     fi
     if [[ -f "$allow_workflows" ]] && ! is_allowlisted "$url" "$allow_workflows"; then
@@ -554,7 +555,8 @@ register_rag(){
   local col
   col="$(jq -r --arg p "$apack" '.packs[$p].rag_collection // "ai_beast"' "$cfg")"
 
-  local note="$DATA_DIR/research/notes/asset_pack_${apack}_$(date -u +%Y%m%d_%H%M%S).md"
+  local note
+  note="$DATA_DIR/research/notes/asset_pack_${apack}_$(date -u +%Y%m%d_%H%M%S).md"
   local reg_dir="$DATA_DIR/registry/assets/$apack"
   if [[ "$APPLY" -ne 1 ]]; then
     log "DRYRUN: would write RAG note: $note"
@@ -788,7 +790,7 @@ maybe_clamav_scan(){
   local f="$1"
   if command -v clamscan >/dev/null 2>&1; then
     if [[ "$APPLY" -ne 1 ]]; then
-      log "DRYRUN: clamscan "$f""
+      log "DRYRUN: clamscan \"$f\""
       return 0
     fi
     log "ClamAV scan: $(basename "$f")"
@@ -1011,7 +1013,8 @@ register_rag(){
   local col
   col="$(jq -r --arg p "$apack" '.packs[$p].rag_collection // "ai_beast"' "$cfg")"
 
-  local note="$DATA_DIR/research/notes/asset_pack_${apack}_$(date -u +%Y%m%d_%H%M%S).md"
+  local note
+  note="$DATA_DIR/research/notes/asset_pack_${apack}_$(date -u +%Y%m%d_%H%M%S).md"
   local reg_dir="$DATA_DIR/registry/assets/$apack"
   if [[ "$APPLY" -ne 1 ]]; then
     log "DRYRUN: would write RAG note: $note"
@@ -1043,4 +1046,3 @@ EOF
     log "RAG note written (or planned). To ingest: re-run with --rag"
   fi
 }
-

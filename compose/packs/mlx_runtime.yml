@@ -1,0 +1,3 @@
+# pack: mlx_runtime
+# Pip-only pack; no docker services.
+services: {}

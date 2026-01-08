@@ -11,7 +11,7 @@ from pathlib import Path
 
 def run_command(
     cmd: list, cwd: Path | None = None, timeout: int = 300
-) -> tuple[int, str, str]:
+) -> dict[str, str | int]:
     """
     Run a shell command and return results.
 
@@ -21,7 +21,7 @@ def run_command(
         timeout: Timeout in seconds
 
     Returns:
-        Tuple of (return_code, stdout, stderr)
+        Dict with return code, stdout, and stderr
     """
     try:
         result = subprocess.run(
@@ -31,11 +31,19 @@ def run_command(
             text=True,
             timeout=timeout,
         )
-        return result.returncode, result.stdout, result.stderr
+        return {
+            "returncode": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+        }
     except subprocess.TimeoutExpired:
-        return -1, "", f"Command timed out after {timeout}s"
+        return {
+            "returncode": -1,
+            "stdout": "",
+            "stderr": f"Command timed out after {timeout}s",
+        }
     except Exception as e:
-        return -1, "", str(e)
+        return {"returncode": -1, "stdout": "", "stderr": str(e)}
 
 
 def get_base_dir() -> Path:
@@ -105,14 +113,18 @@ def read_config_file(config_path: Path) -> dict:
     return {}
 
 
-def ensure_dir(path: Path) -> None:
+def ensure_dir(path: Path) -> dict[str, str | bool]:
     """
     Ensure a directory exists, creating it if necessary.
 
     Args:
         path: Directory path
     """
-    path.mkdir(parents=True, exist_ok=True)
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        return {"success": False, "error": str(exc)}
+    return {"success": True, "path": str(path)}
 
 
 def safe_remove(path: Path) -> bool:
@@ -149,8 +161,12 @@ def format_bytes(bytes_val: int) -> str:
     Returns:
         Formatted string (e.g., "1.5 GB")
     """
-    for unit in ["B", "KB", "MB", "GB", "TB"]:
-        if bytes_val < 1024.0:
-            return f"{bytes_val:.1f} {unit}"
-        bytes_val /= 1024.0
-    return f"{bytes_val:.1f} PB"
+    if bytes_val < 1024:
+        return f"{bytes_val} B"
+
+    value = float(bytes_val)
+    for unit in ["KB", "MB", "GB", "TB", "PB"]:
+        value /= 1024.0
+        if value < 1024.0:
+            return f"{value:.2f} {unit}"
+    return f"{value:.2f} PB"

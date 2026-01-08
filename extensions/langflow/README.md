@@ -1,6 +1,6 @@
-# langflow (stub)
+# langflow
 
-Adds a Langflow container via a compose fragment. **Stub only** in this revision.
+Adds a Langflow container via a compose fragment with persistent storage.
 
 Enable via:
 
@@ -10,3 +10,6 @@ Enable via:
 ./bin/beast compose gen --apply
 ./bin/beast up --apply
 ```
+
+## Configuration
+- Data stored in `${DATA_DIR}/langflow`.

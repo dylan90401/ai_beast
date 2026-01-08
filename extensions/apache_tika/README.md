@@ -1,9 +1,8 @@
-# apache_tika (stub)
+# apache_tika
 
-Stub surface area for Apache Tika.
+Apache Tika server for document parsing/normalization.
 
 - Service name: `apache-tika`
-- Intended role: document parsing/normalization for RAG ingestion.
-- Current version: **stub placeholder** (nginx static). Not a real Tika server.
+- Port: `${PORT_TIKA:-9998}`
 
-When ready, swap the image to an Apache Tika server image and update your ingestion pipeline.
+Use this service as a pre-processor for your RAG ingestion pipeline.

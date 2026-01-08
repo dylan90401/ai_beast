@@ -24,6 +24,13 @@ log(){ echo "[state] $*"; }
 dbg(){ [[ "$VERBOSE" -eq 1 ]] && echo "[state][dbg] $*" || true; }
 die(){ echo "[state] ERROR: $*" >&2; exit 1; }
 need_cmd(){ command -v "$1" >/dev/null 2>&1 || die "Missing '$1'"; }
+run(){
+  if [[ "$APPLY" -ne 1 ]]; then
+    printf '[state] DRYRUN:'; printf ' %q' "$@"; printf '\n'
+  else
+    "$@"
+  fi
+}
 
 need_cmd jq
 need_cmd python3
@@ -49,17 +56,23 @@ plan_md="$cache/state.plan.md"
 actual_packs(){
   # enabled packs are exported into config/features.env as FEATURE_PACKS_<name>=true|false
   if [[ ! -f "$BASE_DIR/config/features.env" ]]; then return 0; fi
-  grep -E '^FEATURE_PACKS_' "$BASE_DIR/config/features.env" | while IFS='=' read -r k v; do
+  grep -E 'FEATURE_PACKS_' "$BASE_DIR/config/features.env" | while IFS='=' read -r k v; do
+    k="${k#export }"
     name="${k#FEATURE_PACKS_}"
     name="${name,,}"
-    if [[ "$v" == "true" ]]; then echo "$name"; fi
+    v="${v,,}"
+    if [[ "$v" == "1" || "$v" == "true" || "$v" == "yes" || "$v" == "on" ]]; then
+      echo "$name"
+    fi
   done | sort -u
 }
 
 actual_extensions(){
   local ext="$BASE_DIR/extensions"
   [[ -d "$ext" ]] || return 0
-  find "$ext" -mindepth 2 -maxdepth 2 -type f -name enabled -print 2>/dev/null     | while read -r f; do basename "$(dirname "$f")"; done | sort -u
+  find "$ext" -mindepth 2 -maxdepth 3 -type f -name enabled -print 2>/dev/null | while read -r f; do
+    basename "$(dirname "$f")"
+  done | sort -u
 }
 
 actual_assets_installed(){
@@ -216,12 +229,10 @@ apply_plan(){
   mapfile -t pd < <(jq -r '.diff.packs_disable[]?' "$plan_json")
 
   if [[ "${#pe[@]}" -gt 0 ]]; then
-    cmd=""$BASE_DIR/bin/beast" packs enable ${pe[*]} --apply"
-    if [[ "$APPLY" -ne 1 ]]; then log "DRYRUN $cmd"; else eval "$cmd"; fi
+    run "$BASE_DIR/bin/beast" packs enable "${pe[@]}" --apply
   fi
   if [[ "${#pd[@]}" -gt 0 ]]; then
-    cmd=""$BASE_DIR/bin/beast" packs disable ${pd[*]} --apply"
-    if [[ "$APPLY" -ne 1 ]]; then log "DRYRUN $cmd"; else eval "$cmd"; fi
+    run "$BASE_DIR/bin/beast" packs disable "${pd[@]}" --apply
   fi
 
   # Extensions
@@ -229,12 +240,10 @@ apply_plan(){
   mapfile -t ed < <(jq -r '.diff.extensions_disable[]?' "$plan_json")
 
   if [[ "${#ee[@]}" -gt 0 ]]; then
-    cmd=""$BASE_DIR/bin/beast" extensions enable ${ee[*]} --apply"
-    if [[ "$APPLY" -ne 1 ]]; then log "DRYRUN $cmd"; else eval "$cmd"; fi
+    run "$BASE_DIR/bin/beast" extensions enable "${ee[@]}" --apply
   fi
   if [[ "${#ed[@]}" -gt 0 ]]; then
-    cmd=""$BASE_DIR/bin/beast" extensions disable ${ed[*]} --apply"
-    if [[ "$APPLY" -ne 1 ]]; then log "DRYRUN $cmd"; else eval "$cmd"; fi
+    run "$BASE_DIR/bin/beast" extensions disable "${ed[@]}" --apply
   fi
 
   # Assets
@@ -247,14 +256,13 @@ apply_plan(){
     strict="$(jq -r '.strict // empty' <<<"$spec")"
     rag="$(jq -r '.rag // false' <<<"$spec")"
 
-    flags="--apply"
-    if [[ "$only" != "all" && "$only" != "" ]]; then flags="$flags --only=$only"; fi
-    if [[ "$strict" == "true" || ( "$strict" == "" && "$strict_default" == "true" ) ]]; then flags="$flags --strict"; fi
-    if [[ "$rag" == "true" ]]; then flags="$flags --rag"; fi
-    if [[ -n "$mirror" && "$mirror" != "null" ]]; then flags="$flags --mirror=$mirror"; fi
+    flags=(--apply)
+    if [[ "$only" != "all" && "$only" != "" ]]; then flags+=("--only=$only"); fi
+    if [[ "$strict" == "true" || ( "$strict" == "" && "$strict_default" == "true" ) ]]; then flags+=(--strict); fi
+    if [[ "$rag" == "true" ]]; then flags+=(--rag); fi
+    if [[ -n "$mirror" && "$mirror" != "null" ]]; then flags+=("--mirror=$mirror"); fi
 
-    cmd=""$BASE_DIR/bin/beast" assets install "$pack" $flags"
-    if [[ "$APPLY" -ne 1 ]]; then log "DRYRUN $cmd"; else eval "$cmd"; fi
+    run "$BASE_DIR/bin/beast" assets install "$pack" "${flags[@]}"
   done < <(jq -c '.diff.assets_install[]?' "$plan_json")
 
   # Apply runtime steps only if packs/exts changed OR force
@@ -265,12 +273,10 @@ apply_plan(){
 
   if [[ "$FORCE" -eq 1 || "$packs_or_exts_changed" -eq 1 ]]; then
     if [[ "$regen" == "true" ]]; then
-      cmd=""$BASE_DIR/bin/beast" compose gen --apply"
-      if [[ "$APPLY" -ne 1 ]]; then log "DRYRUN $cmd"; else eval "$cmd"; fi
+      run "$BASE_DIR/bin/beast" compose gen --apply
     fi
     if [[ "$up" == "true" ]]; then
-      cmd=""$BASE_DIR/bin/beast" up"
-      if [[ "$APPLY" -ne 1 ]]; then log "DRYRUN $cmd"; else eval "$cmd"; fi
+      run "$BASE_DIR/bin/beast" up
     fi
   else
     log "No pack/extension changes; skipping compose regen/up (use --force to force)."

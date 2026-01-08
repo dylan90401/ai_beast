@@ -20,7 +20,7 @@ mkdir -p "$COMFYUI_WORKFLOWS_DIR" || true
 
 ensure_dir(){
   if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN: would mkdir -p "$1""
+    log "DRYRUN: would mkdir -p \"$1\""
   else
     mkdir -p "$1"
   fi
@@ -38,8 +38,9 @@ link_models_dir(){
     return 0
   fi
 
-  if [[ -d "$target" && "$(ls -A "$target" 2>/dev/null | wc -l | tr -d ' ')" -gt 0 ]]; then
-    local backup="$target.backup_$(date +%Y%m%d_%H%M%S)"
+  if [[ -d "$target" ]] && find "$target" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
+    local backup
+    backup="$target.backup_$(date +%Y%m%d_%H%M%S)"
     if [[ "$APPLY" -ne 1 ]]; then
       log "DRYRUN: would move existing models dir to $backup"
     else
@@ -49,7 +50,7 @@ link_models_dir(){
   fi
 
   if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN: would ln -s "$src" "$target""
+    log "DRYRUN: would ln -s \"$src\" \"$target\""
   else
     rm -rf "$target" 2>/dev/null || true
     ln -s "$src" "$target"

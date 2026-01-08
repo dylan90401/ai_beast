@@ -5,13 +5,11 @@ TYPE="${1:-}"; NAME="${2:-}"; URL="${3:-}"; SHA="${4:-}"
 shift 4 || true
 
 MODE="enforce"   # enforce|warn|off
-APPLY=0
 VERBOSE=0
 
 for arg in "${@:-}"; do
   case "$arg" in
     --mode=*) MODE="${arg#--mode=}" ;;
-    --apply) APPLY=1 ;;
     --verbose) VERBOSE=1 ;;
   esac
 done

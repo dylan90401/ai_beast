@@ -1,10 +1,16 @@
 <!doctype html>
 <html><head><meta charset="utf-8" />
-<title>Apache Tika (stub)</title>
+<title>Apache Tika (legacy stub)</title>
 <style>body{font-family:system-ui;margin:2rem}</style>
 </head>
 <body>
-<h1>Apache Tika (stub)</h1>
-<p>This is a placeholder container. No Tika API is running yet.</p>
+<h1>Apache Tika (legacy stub)</h1>
+<p>This page is a legacy placeholder. Apache Tika is now dockerized.</p>
+<p>Use:</p>
+<ol>
+  <li><code>./bin/beast extensions enable apache_tika --apply</code></li>
+  <li><code>./bin/beast compose gen --apply</code></li>
+  <li><code>./bin/beast up</code></li>
+</ol>
 <p>When you enable the real Tika service, your ingest pipeline can call it to extract text/metadata from PDFs, Office docs, and more.</p>
 </body></html>

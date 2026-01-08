@@ -233,7 +233,7 @@
       "comfyui_allowlist_add": []
     },
     "speech_stack": {
-      "desc": "Local speech stack: STT (whisper.cpp + optional faster-whisper API) + simple TTS bridge.",
+      "desc": "Local speech stack: STT (whisper.cpp + optional faster-whisper API) + TTS for text→audio.",
       "depends": [
         "networking"
       ],
@@ -258,7 +258,7 @@
     },
 
     "agent_builders": {
-      "desc": "Low-code agent builders (choose from Langflow / Flowise / Dify). Stubs only in v17.",
+      "desc": "Low-code agent builders (choose from Langflow / Flowise / Dify).",
       "docker": {
         "extensions": [
           "langflow",
@@ -269,7 +269,7 @@
           "packs.agent_builders": true
         }
       },
-      "notes": "Registered but disabled by default. Compose fragments are stubs; enable and flesh out when ready.",
+      "notes": "Registered but disabled by default. Langflow, Flowise, and Dify are dockerized.",
       "depends": [
         "networking"
       ],
@@ -278,17 +278,14 @@
     },
 
     "rag_ingest_pro": {
-      "desc": "RAG ingestion muscle: Apache Tika + Unstructured (stub) for robust parsing.",
+      "desc": "RAG ingestion muscle: Apache Tika + Unstructured for robust parsing.",
       "docker": {
-        "extensions": [
-          "apache_tika",
-          "unstructured_api"
-        ],
+        "extensions": [],
         "feature_flags": {
           "packs.rag_ingest_pro": true
         }
       },
-      "notes": "Registered but disabled by default. Services are stubs; wire into ingest pipeline later.",
+      "notes": "Registered but disabled by default. Wire into ingest pipeline when ready.",
       "depends": [
         "networking"
       ],
@@ -297,7 +294,7 @@
     },
 
     "observability_otel": {
-      "desc": "OpenTelemetry Collector pipeline (stub) for tracing/log export across services.",
+      "desc": "OpenTelemetry Collector pipeline for tracing/log export across services.",
       "docker": {
         "extensions": [
           "otel_collector"
@@ -306,14 +303,14 @@
           "packs.observability_otel": true
         }
       },
-      "notes": "Stub only. Later: add exporters (OTLP, Loki, Tempo, Jaeger) and service instrumentation.",
+      "notes": "Minimal collector only. Add exporters (OTLP, Loki, Tempo, Jaeger) and service instrumentation as needed.",
       "depends": [
         "networking"
       ]
     },
 
     "artifact_store_minio": {
-      "desc": "Local S3-compatible artifact store (MinIO) for offline mirrors and airgapped installs (stub).",
+      "desc": "Local S3-compatible artifact store (MinIO) for offline mirrors and airgapped installs.",
       "docker": {
         "extensions": [
           "minio"
@@ -322,7 +319,7 @@
           "packs.artifact_store_minio": true
         }
       },
-      "notes": "Stub only. Later: mirror models/datasets and integrate with manifests + backup.",
+      "notes": "Service is ready; integrate with mirrors/manifests/backup as needed.",
       "depends": [
         "networking"
       ]

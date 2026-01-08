@@ -8,6 +8,8 @@ Integrates with OpenTelemetry collector when enabled.
 import json
 import logging
 import time
+import urllib.error
+import urllib.request
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -38,9 +40,19 @@ class Tracer:
             logger.info("OTEL disabled, using local trace storage")
 
     def _setup_otel(self):
-        """Setup OpenTelemetry exporter (stub)."""
+        """Setup OpenTelemetry exporter (best-effort JSON export)."""
+        if not self.otel_endpoint:
+            self.otel_enabled = False
+            return
+        if not self.otel_endpoint.startswith(("http://", "https://")):
+            logger.warning("OTEL endpoint must be http(s), disabling OTEL export")
+            self.otel_enabled = False
+            return
+        self._otel_headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "ai-beast-tracer/1.0",
+        }
         logger.info(f"OTEL endpoint configured: {self.otel_endpoint}")
-        logger.warning("OTEL export not yet implemented - using local storage")
 
     @contextmanager
     def trace_operation(
@@ -84,8 +96,24 @@ class Tracer:
             self._export_to_otel(span)
 
     def _export_to_otel(self, span: dict[str, Any]):
-        """Export span to OTEL collector (stub)."""
-        pass
+        """Export span to OTEL collector (best-effort JSON)."""
+        payload = {
+            "service": self.service_name,
+            "span": span,
+        }
+        data = json.dumps(payload).encode("utf-8")
+        try:
+            req = urllib.request.Request(
+                self.otel_endpoint,
+                data=data,
+                headers=self._otel_headers,
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status >= 400:
+                    logger.warning("OTEL export failed: HTTP %s", resp.status)
+        except urllib.error.URLError as exc:
+            logger.warning("OTEL export failed: %s", exc)
 
 
 _tracer: Tracer | None = None

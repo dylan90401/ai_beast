@@ -1,10 +1,7 @@
 services:
   apache-tika:
-    # STUB ONLY. Not a real Tika server in this version.
-    image: nginx:alpine
+    image: apache/tika:latest
     profiles: ["rag_ingest_pro"]
     ports:
-      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TIKA:-9998}:80"
-    volumes:
-      - "./extensions/apache_tika/stub:/usr/share/nginx/html:ro"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TIKA:-9998}:9998"
     restart: unless-stopped

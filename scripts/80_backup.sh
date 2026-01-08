@@ -34,6 +34,18 @@ BASE_DIR="$(cd "$script_dir/.." && pwd)"
 # shellcheck disable=SC1090
 source "$BASE_DIR/config/paths.env"
 
+case "$ACTION" in
+  backup) ;;
+  help|--help|-h)
+    cat <<'EOF'
+Usage:
+  ./bin/beast backup [--profile=min|standard|full|appliance] [--chunk-size=2g] [--out=DIR] [--name=NAME] [--with-volumes] [--apply]
+EOF
+    exit 0
+    ;;
+  *) die "Usage: beast backup [--profile=min|standard|full|appliance] [--apply]" ;;
+esac
+
 BACKUP_ROOT="${OUT_DIR:-$BACKUP_DIR}"
 mkdir -p "$BACKUP_ROOT"
 
@@ -141,12 +153,16 @@ PY
     local outp="${out_prefix}.tar.gz.part."
     log "writing $DEST/${outp}* (chunk=$CHUNK_SIZE)"
     tar -C "$src_dir" -cf - . | gzip -9 | split -b "$CHUNK_SIZE" - "$DEST/${outp}"
-    parts_list="$(ls -1 "$DEST/${outp}"* 2>/dev/null | xargs -n1 basename | sort -V)"
-    parts_json="$(DEST="$DEST" FILES="$(python3 - <<PY
-import json, sys
-print(json.dumps(sys.stdin.read().split()))
+    files_json="$(DEST="$DEST" PATTERN="${outp}*" python3 - <<'PY'
+import json, os, glob, pathlib
+dest=pathlib.Path(os.environ["DEST"])
+pattern=os.environ["PATTERN"]
+paths=[pathlib.Path(p) for p in glob.glob(str(dest / pattern))]
+rel=[str(p.relative_to(dest)) for p in paths]
+print(json.dumps(sorted(rel)))
 PY
-<<<"$parts_list")" hash_parts)"
+)"
+    parts_json="$(DEST="$DEST" FILES="$files_json" hash_parts)"
   fi
 
   add_component "$cname" "$out_prefix" "$src_dir" "$parts_json"
@@ -178,12 +194,16 @@ if [[ "$WITH_CORE" -eq 1 ]]; then
       outp="core.tar.gz.part."
       log "writing $DEST/${outp}* (chunk=$CHUNK_SIZE)"
       tar -C "$BASE_DIR" -cf - "${core_list[@]}" | gzip -9 | split -b "$CHUNK_SIZE" - "$DEST/${outp}"
-      parts_list="$(ls -1 "$DEST/${outp}"* 2>/dev/null | xargs -n1 basename | sort -V)"
-      parts_json="$(DEST="$DEST" FILES="$(python3 - <<PY
-import json, sys
-print(json.dumps(sys.stdin.read().split()))
+      files_json="$(DEST="$DEST" PATTERN="${outp}*" python3 - <<'PY'
+import json, os, glob, pathlib
+dest=pathlib.Path(os.environ["DEST"])
+pattern=os.environ["PATTERN"]
+paths=[pathlib.Path(p) for p in glob.glob(str(dest / pattern))]
+rel=[str(p.relative_to(dest)) for p in paths]
+print(json.dumps(sorted(rel)))
 PY
-<<<"$parts_list")" hash_parts)"
+)"
+      parts_json="$(DEST="$DEST" FILES="$files_json" hash_parts)"
     fi
     add_component "core" "core" "$BASE_DIR" "$parts_json"
   fi
@@ -253,15 +273,16 @@ PY
           outp="volumes/${v}.tar.gz.part."
           log "exporting volume $v chunked -> $DEST/${outp}* (chunk=$CHUNK_SIZE)"
           docker run --rm -v "${v}:/data:ro" alpine:3.20 sh -lc 'cd /data && tar -cf - . | gzip -9' | split -b "$CHUNK_SIZE" - "$DEST/${outp}" || true
-          parts_list="$(ls -1 "$DEST/${outp}"* 2>/dev/null | xargs -n1 basename | sort -V)"
-          # prefix with volumes/
-          parts_json="$(DEST="$DEST" FILES="$(python3 - <<PY
-import json, sys
-items=sys.stdin.read().split()
-items=["volumes/"+i for i in items]
-print(json.dumps(items))
+          files_json="$(DEST="$DEST" PATTERN="${outp}*" python3 - <<'PY'
+import json, os, glob, pathlib
+dest=pathlib.Path(os.environ["DEST"])
+pattern=os.environ["PATTERN"]
+paths=[pathlib.Path(p) for p in glob.glob(str(dest / pattern))]
+rel=[str(p.relative_to(dest)) for p in paths]
+print(json.dumps(sorted(rel)))
 PY
-<<<"$parts_list")" hash_parts)"
+)"
+          parts_json="$(DEST="$DEST" FILES="$files_json" hash_parts)"
         fi
         add_component "volume:$v" "volumes/$v" "$v" "$parts_json"
       done

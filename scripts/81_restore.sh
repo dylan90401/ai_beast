@@ -27,6 +27,18 @@ die(){ echo "[restore] ERROR: $*" >&2; exit 1; }
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(cd "$script_dir/.." && pwd)"
 
+case "$ACTION" in
+  restore) ;;
+  help|--help|-h)
+    cat <<'EOF'
+Usage:
+  ./bin/beast restore <backup_dir|manifest|archive.tar.gz> [--target=/path] [--apply] [--no-reconcile] [--no-prebackup]
+EOF
+    exit 0
+    ;;
+  *) die "Usage: beast restore <backup_dir|manifest|archive.tar.gz> [--apply]" ;;
+esac
+
 [[ -n "$SRC" ]] || die "Usage: $0 <backup_dir|manifest|archive.tar.gz> [--target=/path] [--apply]"
 
 TARGET="${TARGET:-$BASE_DIR}"
@@ -68,8 +80,17 @@ fi
 # Restore helpers
 cat_parts(){
   local dir="$1" pattern="$2"
-  # shellcheck disable=SC2012
-  ls -1 "$dir"/$pattern 2>/dev/null | sort -V | xargs cat
+  python3 - "$dir" "$pattern" <<'PY'
+import shutil
+import sys
+from pathlib import Path
+
+base = Path(sys.argv[1])
+pattern = sys.argv[2]
+for path in sorted(base.glob(pattern), key=lambda p: p.name):
+    with path.open("rb") as handle:
+        shutil.copyfileobj(handle, sys.stdout.buffer)
+PY
 }
 
 extract_stream(){
@@ -100,7 +121,7 @@ if [[ -z "$MANIFEST" ]]; then
   tar -C "$tmp" -xzf "$SRC"
   for d in config docker scripts bin docs extensions workflows provenance .cache data downloads; do
     if [[ -e "$tmp/$d" ]]; then
-      rm -rf "$TARGET/$d" 2>/dev/null || true
+      rm -rf "${TARGET:?}/$d" 2>/dev/null || true
       cp -a "$tmp/$d" "$TARGET/" || true
     fi
   done

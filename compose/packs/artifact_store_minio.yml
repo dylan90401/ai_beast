@@ -1,0 +1,3 @@
+# pack: artifact_store_minio
+# Services are provided via extensions/minio/compose.fragment.yaml
+services: {}

@@ -22,12 +22,26 @@ status(){
 }
 
 doctor(){
+  list_recent_logs(){
+    local logs_dir="$BASE_DIR/logs"
+    [[ -d "$logs_dir" ]] || return 0
+    if stat -f "%m" "$logs_dir" >/dev/null 2>&1; then
+      while IFS= read -r -d '' file; do
+        printf '%s %s\n' "$(stat -f "%m" "$file")" "$file"
+      done < <(find "$logs_dir" -maxdepth 1 -type f -print0 2>/dev/null)
+    else
+      while IFS= read -r -d '' file; do
+        printf '%s %s\n' "$(stat -c "%Y" "$file")" "$file"
+      done < <(find "$logs_dir" -maxdepth 1 -type f -print0 2>/dev/null)
+    fi | sort -rn | head -n 10 | cut -d' ' -f2- | sed 's/^/[doctor] /'
+  }
+
   echo "[doctor] Listening ports:"
   for p in "${PORT_DASHBOARD:-8787}" "${PORT_COMFYUI:-8188}" "${PORT_OLLAMA:-11434}" "${PORT_WEBUI:-3000}" "${PORT_QDRANT:-6333}"; do
     lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | sed "s/^/[doctor] /" || echo "[doctor] port $p: not listening"
   done
   echo "[doctor] Recent logs:"
-  ls -1t "$BASE_DIR/logs" 2>/dev/null | head -n 10 | sed 's/^/[doctor] /' || true
+  list_recent_logs || true
 }
 
 case "$mode" in

@@ -13,12 +13,10 @@ source "$BASE_DIR/scripts/lib/common.sh"
 source "$BASE_DIR/scripts/lib/deps.sh"
 # shellcheck disable=SC1091
 source "$BASE_DIR/scripts/lib/docker_runtime.sh"
-
+# shellcheck disable=SC1091
 source "$BASE_DIR/scripts/lib/ux.sh"
-
+# shellcheck disable=SC1091
 source "$BASE_DIR/scripts/lib/docker.sh"
-
-AI_BEAST_LOG_PREFIX="bootstrap"
 
 parse_common_flags "${@:-}"
 

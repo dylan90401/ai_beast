@@ -109,14 +109,62 @@ class Evaluator:
     - Resource availability
     """
 
-    def __init__(self, root_dir: Path | str):
+    def __init__(
+        self, root_dir: Path | str | None = None, config: dict[str, Any] | None = None
+    ):
         """Initialize evaluator.
 
         Args:
             root_dir: Root directory of the AI Beast workspace
+            config: Optional evaluation configuration
         """
-        self.root_dir = Path(root_dir)
+        self.root_dir = Path(root_dir) if root_dir else Path.cwd()
+        self.config = config or {"metrics": ["accuracy", "exact_match"]}
+        self.metrics = {
+            "accuracy": self._accuracy,
+            "exact_match": self._exact_match,
+        }
         self.results: list[EvaluationResult] = []
+
+    def evaluate(
+        self, predictions: list[dict], ground_truth: list[dict]
+    ) -> dict[str, float]:
+        """Evaluate predictions against ground truth."""
+        if len(predictions) != len(ground_truth):
+            raise ValueError("Predictions and ground truth must have same length")
+
+        metric_names = self.config.get("metrics", list(self.metrics.keys()))
+        scores: dict[str, float] = {}
+        for name in metric_names:
+            metric_fn = self.metrics.get(name)
+            if metric_fn is None:
+                continue
+            scores[name] = metric_fn(predictions, ground_truth)
+        return scores
+
+    def _accuracy(self, predictions: list[dict], ground_truth: list[dict]) -> float:
+        """Compute accuracy by comparing 'value' fields."""
+        if not predictions:
+            return 0.0
+        matches = 0
+        for pred, truth in zip(predictions, ground_truth, strict=True):
+            if pred.get("value") == truth.get("value"):
+                matches += 1
+        return matches / len(predictions)
+
+    def _exact_match(self, predictions: list[dict], ground_truth: list[dict]) -> float:
+        """Return 1.0 if all values match, otherwise 0.0."""
+        if not predictions:
+            return 0.0
+        for pred, truth in zip(predictions, ground_truth, strict=True):
+            if pred.get("value") != truth.get("value"):
+                return 0.0
+        return 1.0
+
+    def save_results(self, results: dict[str, Any], output_path: Path) -> None:
+        """Save evaluation results to disk."""
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(results, indent=2))
 
     def evaluate_system_health(self) -> EvaluationResult:
         """Evaluate system health and dependencies."""

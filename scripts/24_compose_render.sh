@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ACTION="${1:-render}"; shift || true
+ACTION="render"
+if [[ "${1:-}" != "" && "${1:-}" != --* ]]; then
+  ACTION="$1"
+  shift || true
+fi
 
 APPLY=0
 VERBOSE=0
@@ -34,6 +38,11 @@ meta="$out_dir/compose.render.meta.json"
 hashes="$BASE_DIR/.cache/compose.service_hashes.json"
 
 mkdir -p "$out_dir" "$BASE_DIR/.cache"
+
+case "$ACTION" in
+  render) ;;
+  *) die "Usage: 24_compose_render.sh render [--apply] [--out=DIR] [--only-services=a,b]";;
+esac
 
 if [[ "$APPLY" -ne 1 ]]; then
   log "DRYRUN: would render compose from $reg"

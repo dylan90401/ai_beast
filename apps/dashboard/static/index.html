@@ -1,1 +1,1154 @@
-<!-- created by installer -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>AI Beast Control Room</title>
+  <style>
+    :root {
+      --bg-1: #0f1b2b;
+      --bg-2: #1b2b3a;
+      --card: #101826;
+      --card-2: #121f30;
+      --ink: #e7eef8;
+      --muted: #94a3b8;
+      --accent: #f6b93b;
+      --accent-2: #00d2d3;
+      --danger: #ff6b6b;
+      --ok: #2dd4bf;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 18px 50px rgba(8,12,20,0.45);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(1200px 800px at 10% -20%, #243b55 0%, transparent 60%),
+                  radial-gradient(800px 600px at 90% 0%, #1f4037 0%, transparent 55%),
+                  linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 28px 28px 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 44px);
+      letter-spacing: -0.02em;
+    }
+
+    .sub {
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      padding: 0 24px 40px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid.two { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .grid.three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+    .card {
+      background: linear-gradient(160deg, var(--card), var(--card-2));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      animation: rise 0.6s ease both;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      top: -80px;
+      right: -80px;
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .spacer { flex: 1 1 auto; }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--ink);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.2); }
+    .btn.primary { background: var(--accent); color: #1b1b1b; }
+    .btn.ghost { background: transparent; }
+
+    .token-input {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      color: var(--ink);
+      min-width: 260px;
+      flex: 1 1 260px;
+    }
+
+    .muted { color: var(--muted); font-size: 13px; }
+    .stat { font-size: 22px; font-weight: 700; }
+    .ok { color: var(--ok); }
+    .bad { color: var(--danger); }
+
+    .tool-list { display: grid; gap: 12px; }
+    .tool {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(7,12,20,0.5);
+      display: grid;
+      gap: 8px;
+    }
+
+    .tool-header { display: flex; gap: 10px; align-items: center; }
+    .tool-title { font-weight: 700; font-size: 16px; }
+    .tool-desc { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .tool-links { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .link {
+      color: var(--accent-2);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 46px;
+      height: 26px;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.2);
+      border-radius: 999px;
+      transition: 0.2s;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      top: 3px;
+      background: #0b1220;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle input:checked + .slider { background: var(--accent-2); }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+    .terminal {
+      background: #070b12;
+      border-radius: 14px;
+      padding: 14px;
+      font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+      font-size: 12px;
+      color: #cbd5f5;
+      max-height: 260px;
+      overflow: auto;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card { animation: none; }
+      .btn:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AI Beast Control Room</h1>
+    <div class="sub">One panel for the entire stack. Toggle packs and extensions, jump to portals and APIs, and monitor resource headroom.</div>
+  </header>
+
+  <div class="wrap">
+    <section class="card" style="--delay: 50ms;">
+      <div class="row">
+        <div>
+          <div class="muted">Dashboard Token</div>
+          <input id="token" class="token-input" placeholder="Paste dashboard token" />
+        </div>
+        <button class="btn" onclick="saveToken()">Save</button>
+        <button class="btn ghost" onclick="refreshAll()">Refresh</button>
+        <div class="spacer"></div>
+        <div id="health" class="pill">checking...</div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card" style="--delay: 120ms;">
+        <h3>System</h3>
+        <div id="systemMetrics" class="tool-list"></div>
+      </div>
+      <div class="card" style="--delay: 180ms;">
+        <h3>Actions</h3>
+        <div class="row">
+          <button class="btn" onclick="runCmd('preflight')">Preflight</button>
+          <button class="btn" onclick="runCmd('status')">Status</button>
+          <button class="btn" onclick="runCmd('doctor')">Doctor</button>
+          <button class="btn" onclick="runCmd('compose_gen')">Compose Gen</button>
+          <button class="btn" onclick="runCmd('up')">Up</button>
+          <button class="btn" onclick="runCmd('down')">Down</button>
+          <button class="btn" onclick="runCmd('speech_up')">Speech Up</button>
+          <button class="btn" onclick="runCmd('speech_down')">Speech Down</button>
+        </div>
+        <div class="muted" style="margin-top:10px;">All commands run via <code>bin/beast</code> on the host.</div>
+      </div>
+    </section>
+
+    <section class="card" style="--delay: 190ms;">
+      <h3>Storage Paths</h3>
+      <div class="muted" style="margin-bottom: 8px;">Update GUTS/HEAVY storage locations (re-runs init and creates dirs).</div>
+      <div class="row" style="gap: 10px; margin-bottom: 10px;">
+        <input id="gutsDir" class="token-input" placeholder="GUTS_DIR (internal, apps/venv)" />
+        <input id="heavyDir" class="token-input" placeholder="HEAVY_DIR (external, models/data)" />
+      </div>
+      <div class="row">
+        <button class="btn primary" onclick="savePaths()">Save Paths</button>
+        <span id="pathsStatus" class="pill">idle</span>
+      </div>
+    </section>
+
+    <section class="card" style="--delay: 195ms;">
+      <h3>LLM Models</h3>
+      <div class="row" style="margin-bottom: 12px;">
+        <button class="btn" onclick="refreshModels()">🔄 Scan Models</button>
+        <button class="btn" onclick="showOllamaLibrary()">📦 Ollama Library</button>
+        <button class="btn" onclick="showUrlDownload()">🔗 Download from URL</button>
+        <div class="spacer"></div>
+        <span id="ollamaStatus" class="pill">checking...</span>
+      </div>
+      <div id="urlDownloadPanel" style="display:none; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+        <div class="muted" style="margin-bottom: 8px;">Download model from URL (Hugging Face, direct links, etc.)</div>
+        <div class="row" style="gap: 8px;">
+          <input id="modelUrl" type="text" class="token-input" placeholder="https://huggingface.co/.../model.gguf" style="flex: 2;">
+          <select id="modelDestination" class="token-input" style="flex: 0 0 120px;">
+            <option value="internal">Internal</option>
+            <option value="external">External</option>
+            <option value="custom">Custom</option>
+          </select>
+          <button class="btn primary" onclick="downloadFromUrl()">Download</button>
+        </div>
+        <input id="customPath" type="text" class="token-input" placeholder="Custom path (if selected)" style="display:none; margin-top: 8px; width: 100%;">
+      </div>
+      <div id="ollamaLibrary" style="display:none; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; max-height: 300px; overflow-y: auto;">
+        <div class="muted" style="margin-bottom: 8px;">Popular Ollama models (click to pull)</div>
+        <div id="ollamaLibraryList" class="row" style="flex-wrap: wrap; gap: 6px;"></div>
+      </div>
+      <div id="downloadProgress" style="display:none; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+        <div class="row">
+          <span id="downloadName">Downloading...</span>
+          <div class="spacer"></div>
+          <span id="downloadPercent">0%</span>
+        </div>
+        <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px;">
+          <div id="downloadBar" style="height: 100%; width: 0%; background: var(--accent); border-radius: 4px; transition: width 0.3s;"></div>
+        </div>
+      </div>
+      <div id="modelList" class="tool-list"></div>
+      <div id="storageInfo" class="muted" style="margin-top: 12px;"></div>
+    </section>
+
+    <section class="card" style="--delay: 210ms;">
+      <h3>Capabilities</h3>
+      <div id="capabilityList" class="tool-list"></div>
+    </section>
+
+    <section class="grid two">
+      <div class="card" style="--delay: 240ms;">
+        <h3>Packs</h3>
+        <div id="packList" class="tool-list"></div>
+      </div>
+      <div class="card" style="--delay: 300ms;">
+        <h3>Extensions</h3>
+        <div id="extensionList" class="tool-list"></div>
+      </div>
+    </section>
+
+    <section class="card" style="--delay: 360ms;">
+      <h3>Services & Ports</h3>
+      <div id="serviceList" class="tool-list"></div>
+    </section>
+
+    <section class="card" style="--delay: 420ms;">
+      <h3>Command Output</h3>
+      <div id="log" class="terminal">Ready.</div>
+    </section>
+  </div>
+
+<script>
+  const state = {
+    token: localStorage.getItem('beast_token') || '',
+    config: {},
+    packs: [],
+    extensions: [],
+    metrics: {},
+  };
+
+  const EXT_INFO = {
+    dify: {
+      title: 'Dify',
+      description: 'Low-code agent builder stack with API + web UI.',
+      ports: ['PORT_DIFY'],
+      portal: cfg => url(cfg, 'PORT_DIFY'),
+      api: 'internal: dify-api:5001',
+    },
+    flowise: {
+      title: 'Flowise',
+      description: 'Flow-based LLM orchestration UI.',
+      ports: ['PORT_FLOWISE'],
+      portal: cfg => url(cfg, 'PORT_FLOWISE'),
+      api: cfg => url(cfg, 'PORT_FLOWISE'),
+    },
+    langflow: {
+      title: 'Langflow',
+      description: 'Visual builder for LLM chains and data flows.',
+      ports: ['PORT_LANGFLOW'],
+      portal: cfg => url(cfg, 'PORT_LANGFLOW'),
+      api: cfg => url(cfg, 'PORT_LANGFLOW'),
+    },
+    searxng: {
+      title: 'SearxNG',
+      description: 'Meta-search engine for OSINT.',
+      ports: ['PORT_SEARXNG'],
+      portal: cfg => url(cfg, 'PORT_SEARXNG'),
+      api: cfg => url(cfg, 'PORT_SEARXNG'),
+    },
+    jupyter: {
+      title: 'JupyterLab',
+      description: 'Notebook-based code runner and analysis.',
+      ports: ['PORT_JUPYTER'],
+      portal: cfg => url(cfg, 'PORT_JUPYTER', 'lab'),
+      api: cfg => url(cfg, 'PORT_JUPYTER', 'api'),
+    },
+    apache_tika: {
+      title: 'Apache Tika',
+      description: 'Document parsing and normalization.',
+      ports: ['PORT_TIKA'],
+      portal: cfg => url(cfg, 'PORT_TIKA'),
+      api: cfg => url(cfg, 'PORT_TIKA'),
+    },
+    unstructured_api: {
+      title: 'Unstructured API',
+      description: 'Document chunking and preprocessing.',
+      ports: ['PORT_UNSTRUCTURED'],
+      portal: cfg => url(cfg, 'PORT_UNSTRUCTURED'),
+      api: cfg => url(cfg, 'PORT_UNSTRUCTURED'),
+    },
+    otel_collector: {
+      title: 'OTel Collector',
+      description: 'Telemetry collection pipeline.',
+      ports: ['PORT_OTEL_GRPC', 'PORT_OTEL_HTTP'],
+      portal: null,
+      api: cfg => `http://${bind(cfg)}:${port(cfg, 'PORT_OTEL_HTTP', 4318)}`,
+    },
+    minio: {
+      title: 'MinIO',
+      description: 'S3-compatible object storage.',
+      ports: ['PORT_MINIO', 'PORT_MINIO_CONSOLE'],
+      portal: cfg => `http://${bind(cfg)}:${port(cfg, 'PORT_MINIO_CONSOLE', 9002)}`,
+      api: cfg => `http://${bind(cfg)}:${port(cfg, 'PORT_MINIO', 9001)}`,
+    },
+    comfyui_manager: {
+      title: 'ComfyUI Manager',
+      description: 'ComfyUI custom node manager (native add-on).',
+      ports: [],
+      portal: cfg => url(cfg, 'PORT_COMFYUI'),
+      api: null,
+    },
+    comfyui_video: {
+      title: 'ComfyUI Video',
+      description: 'Video pipeline nodes for ComfyUI.',
+      ports: [],
+      portal: cfg => url(cfg, 'PORT_COMFYUI'),
+      api: null,
+    },
+    example_service: { title: 'Example Service', description: 'Example extension service.', ports: [], portal: null, api: null },
+    example_segment: { title: 'Example Segment', description: 'Example segment extension.', ports: [], portal: null, api: null },
+  };
+
+  const CORE_SERVICES = [
+    { name: 'Open WebUI', port: 'PORT_WEBUI', path: '', api: '/health', desc: 'LLM web interface.' },
+    { name: 'Ollama API', port: 'PORT_OLLAMA', path: '/api/version', api: '/api/version', desc: 'Local model API.' },
+    { name: 'Qdrant', port: 'PORT_QDRANT', path: '', api: '/healthz', desc: 'Vector database.' },
+    { name: 'ComfyUI', port: 'PORT_COMFYUI', path: '', api: '', desc: 'Image pipeline UI.' },
+    { name: 'n8n', port: 'PORT_N8N', path: '', api: '', desc: 'Workflow automation.' },
+    { name: 'JupyterLab', port: 'PORT_JUPYTER', path: '/lab', api: '/api', desc: 'Code runner + notebooks.' },
+    { name: 'Uptime Kuma', port: 'PORT_KUMA', path: '', api: '', desc: 'Status/monitoring UI.' },
+    { name: 'Speech API', port: 'PORT_SPEECH_API', path: '/docs', api: '/docs', desc: 'Local speech (STT/TTS) API.' },
+  ];
+
+  const CAPABILITIES = [
+    {
+      id: 'text2image',
+      title: 'Text → Image',
+      description: 'Generate images with ComfyUI workflows.',
+      packs: ['media_synth'],
+      extensions: [],
+      portal: cfg => url(cfg, 'PORT_COMFYUI'),
+      api: cfg => url(cfg, 'PORT_COMFYUI', 'object_info'),
+      health: cfg => url(cfg, 'PORT_COMFYUI', ''),
+      ports: ['PORT_COMFYUI'],
+      notes: 'Requires ComfyUI models; install separately.',
+    },
+    {
+      id: 'text2video',
+      title: 'Text → Video',
+      description: 'Video generation via ComfyUI + VideoHelperSuite nodes.',
+      packs: ['media_synth'],
+      extensions: ['comfyui_video'],
+      portal: cfg => url(cfg, 'PORT_COMFYUI'),
+      api: cfg => url(cfg, 'PORT_COMFYUI', 'object_info'),
+      health: cfg => url(cfg, 'PORT_COMFYUI', ''),
+      ports: ['PORT_COMFYUI'],
+      notes: 'Enable ComfyUI Video extension and install video workflows.',
+    },
+    {
+      id: 'text2audio',
+      title: 'Text → Audio',
+      description: 'Speech synthesis via the local Speech API.',
+      packs: ['speech_stack'],
+      extensions: [],
+      portal: cfg => url(cfg, 'PORT_SPEECH_API', 'docs'),
+      api: cfg => url(cfg, 'PORT_SPEECH_API', 'docs'),
+      health: cfg => url(cfg, 'PORT_SPEECH_API', 'docs'),
+      ports: ['PORT_SPEECH_API'],
+      notes: 'Start the service with the Speech Up action.',
+    },
+    {
+      id: 'text2music',
+      title: 'Text → Music',
+      description: 'Use speech + audio tooling for music prompts (models required).',
+      packs: ['media_synth', 'speech_stack'],
+      extensions: [],
+      portal: cfg => url(cfg, 'PORT_SPEECH_API', 'docs'),
+      api: cfg => url(cfg, 'PORT_SPEECH_API', 'docs'),
+      health: cfg => url(cfg, 'PORT_SPEECH_API', 'docs'),
+      ports: ['PORT_SPEECH_API'],
+      notes: 'Pair with external music models or ComfyUI audio workflows.',
+    },
+  ];
+
+  const PACK_LINKS = {
+    media_synth: cfg => [ { label: 'ComfyUI', url: url(cfg, 'PORT_COMFYUI') } ],
+    speech_stack: cfg => [ { label: 'Speech API', url: url(cfg, 'PORT_SPEECH_API', 'docs') } ],
+  };
+
+  document.getElementById('token').value = state.token;
+
+  function bind(cfg) {
+    return cfg.AI_BEAST_BIND_ADDR || '127.0.0.1';
+  }
+
+  function port(cfg, key, fallback) {
+    return cfg[key] || fallback || '';
+  }
+
+  function url(cfg, key, path='') {
+    const p = port(cfg, key, '');
+    if (!p) return '';
+    const suffix = path ? `/${path.replace(/^\//, '')}` : '';
+    return `http://${bind(cfg)}:${p}${suffix}`;
+  }
+
+  function saveToken() {
+    state.token = document.getElementById('token').value.trim();
+    localStorage.setItem('beast_token', state.token);
+    refreshAll();
+  }
+
+  function setHealth(ok) {
+    const el = document.getElementById('health');
+    el.textContent = ok ? 'online' : 'offline';
+    el.className = ok ? 'pill ok' : 'pill bad';
+  }
+
+  async function apiGet(path) {
+    const res = await fetch(path, {
+      headers: { 'X-Beast-Token': state.token }
+    });
+    return res.json();
+  }
+
+  async function apiPost(path, body) {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Beast-Token': state.token,
+      },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  async function refreshAll() {
+    try {
+      const health = await fetch('/api/health');
+      setHealth(health.ok);
+    } catch (e) {
+      setHealth(false);
+    }
+    await Promise.all([loadConfig(), loadPacks(), loadExtensions(), loadMetrics(), refreshModels()]);
+    renderServices();
+    renderCapabilities();
+    await checkHealth();
+  }
+
+  async function loadConfig() {
+    const data = await apiGet('/api/config');
+    if (data.ok) {
+      state.config = data.config || {};
+      renderPathsForm();
+      renderMetrics();
+    }
+  }
+
+  async function loadPacks() {
+    const data = await apiGet('/api/packs');
+    if (data.ok) {
+      state.packs = data.items || [];
+      renderPacks();
+    }
+  }
+
+  async function loadExtensions() {
+    const data = await apiGet('/api/extensions');
+    if (data.ok) {
+      state.extensions = data.items || [];
+      renderExtensions();
+    }
+  }
+
+  async function loadMetrics() {
+    const data = await apiGet('/api/metrics');
+    if (data.ok) {
+      state.metrics = data.metrics || {};
+      renderMetrics();
+    }
+  }
+
+  function renderMetrics() {
+    const el = document.getElementById('systemMetrics');
+    const disk = state.metrics.disk_usage || {};
+    const mem = state.metrics.memory || {};
+    const rows = [
+      metricRow('Base Dir', state.config.BASE_DIR || 'unknown'),
+      metricRow('Guts Dir', state.config.GUTS_DIR || 'n/a'),
+      metricRow('Heavy Dir', state.config.HEAVY_DIR || 'n/a'),
+      metricRow('Models Dir', state.config.MODELS_DIR || 'n/a'),
+      metricRow('Data Dir', state.config.DATA_DIR || 'n/a'),
+      metricRow('LLM Models', state.config.LLM_MODELS_DIR || 'n/a'),
+      metricRow('Ollama Models', state.config.OLLAMA_MODELS || 'n/a'),
+      metricRow('Disk Used', disk.total_gb ? `${disk.used_gb} / ${disk.total_gb} GB (${disk.percent_used}%)` : 'n/a'),
+      metricRow('Disk Free', disk.free_gb ? `${disk.free_gb} GB` : 'n/a'),
+      metricRow('Memory Used', mem.total_gb ? `${mem.used_gb} / ${mem.total_gb} GB (${mem.percent_used}%)` : 'n/a'),
+      metricRow('Bind Addr', bind(state.config)),
+    ];
+    el.innerHTML = rows.join('');
+  }
+
+  function packEnabled(name) {
+    const pack = state.packs.find(p => p.name === name);
+    return !!(pack && pack.enabled);
+  }
+
+  function extensionEnabled(name) {
+    const ext = state.extensions.find(e => e.name === name);
+    return !!(ext && ext.enabled === 'true');
+  }
+
+  function capabilityEnabled(cap) {
+    const packsOk = (cap.packs || []).every(packEnabled);
+    const extsOk = (cap.extensions || []).every(extensionEnabled);
+    return packsOk && extsOk;
+  }
+
+  function renderCapabilities() {
+    const el = document.getElementById('capabilityList');
+    if (!el) return;
+    el.innerHTML = CAPABILITIES.map(cap => {
+      const enabled = capabilityEnabled(cap);
+      const portal = typeof cap.portal === 'function' ? cap.portal(state.config) : cap.portal;
+      const api = typeof cap.api === 'function' ? cap.api(state.config) : cap.api;
+      const health = cap.health ? cap.health(state.config) : api;
+      const links = [];
+      if (portal) links.push({ label: 'Portal', url: portal });
+      if (api) links.push({ label: 'API', url: api });
+      const ports = (cap.ports || []).map(key => `${key}=${port(state.config, key, '-')}`);
+      return toolCard({
+        id: `cap-${cap.id}`,
+        title: cap.title,
+        description: cap.description,
+        notes: cap.notes || '',
+        enabled,
+        onToggle: `toggleCapability('${cap.id}', ${!enabled})`,
+        links,
+        ports,
+        health,
+      });
+    }).join('');
+  }
+
+  function metricRow(label, value) {
+    return `<div class="tool"><div class="tool-header"><div class="tool-title">${label}</div><div class="spacer"></div></div><div class="tool-desc">${value}</div></div>`;
+  }
+
+  function renderPathsForm() {
+    const gutsEl = document.getElementById('gutsDir');
+    const heavyEl = document.getElementById('heavyDir');
+    if (!gutsEl || !heavyEl) return;
+    gutsEl.value = state.config.GUTS_DIR || state.config.BASE_DIR || '';
+    heavyEl.value = state.config.HEAVY_DIR || '';
+  }
+
+  function setPathsStatus(ok, message) {
+    const el = document.getElementById('pathsStatus');
+    if (!el) return;
+    el.textContent = message;
+    if (ok === null) {
+      el.className = 'pill';
+    } else if (ok) {
+      el.className = 'pill ok';
+    } else {
+      el.className = 'pill bad';
+    }
+  }
+
+  async function savePaths() {
+    const guts = (document.getElementById('gutsDir').value || '').trim();
+    const heavy = (document.getElementById('heavyDir').value || '').trim();
+    const payload = {};
+    if (guts) payload.guts_dir = guts;
+    if (heavy) payload.heavy_dir = heavy;
+    if (!payload.guts_dir && !payload.heavy_dir) {
+      setPathsStatus(false, 'missing');
+      return;
+    }
+    setPathsStatus(null, 'saving...');
+    try {
+      const res = await apiPost('/api/paths', payload);
+      if (res.ok) {
+        setPathsStatus(true, 'saved');
+        state.config = res.config || state.config;
+        renderMetrics();
+        renderPathsForm();
+      } else {
+        setPathsStatus(false, 'error');
+        const log = document.getElementById('log');
+        if (log) {
+          log.textContent = `${res.error || 'Failed to update paths.'}\n${res.stderr || ''}`.trim();
+        }
+      }
+    } catch (e) {
+      setPathsStatus(false, 'error');
+    }
+  }
+
+  function renderPacks() {
+    const el = document.getElementById('packList');
+    if (!state.packs.length) {
+      el.innerHTML = '<div class="muted">No packs found.</div>';
+      return;
+    }
+    el.innerHTML = state.packs.map(pack => {
+      const enabled = !!pack.enabled;
+      const extNames = (pack.extensions || []);
+      const extPorts = [];
+      const links = [];
+      extNames.forEach(name => {
+        const meta = EXT_INFO[name];
+        if (meta && meta.ports) {
+          meta.ports.forEach(key => {
+            const val = `${key}=${port(state.config, key, '-')}`;
+            if (!extPorts.includes(val)) extPorts.push(val);
+          });
+        }
+        if (meta) {
+          const portal = typeof meta.portal === 'function' ? meta.portal(state.config) : meta.portal;
+          const api = typeof meta.api === 'function' ? meta.api(state.config) : meta.api;
+          if (portal) links.push({ label: `${meta.title} Portal`, url: portal });
+          if (api) links.push({ label: `${meta.title} API`, url: api });
+        }
+      });
+      if (PACK_LINKS[pack.name]) {
+        links.push(...PACK_LINKS[pack.name](state.config));
+      }
+      const extLabel = extNames.length ? `Extensions: ${extNames.join(', ')}` : '';
+      return toolCard({
+        id: `pack-${pack.name}`,
+        title: pack.name,
+        description: pack.desc || 'No description',
+        notes: [pack.notes || '', extLabel].filter(Boolean).join(' | '),
+        enabled,
+        onToggle: `togglePack('${pack.name}', ${!enabled})`,
+        links,
+        ports: extPorts,
+      });
+    }).join('');
+  }
+
+  function renderExtensions() {
+    const el = document.getElementById('extensionList');
+    if (!state.extensions.length) {
+      el.innerHTML = '<div class="muted">No extensions found.</div>';
+      return;
+    }
+    el.innerHTML = state.extensions.map(ext => {
+      const meta = EXT_INFO[ext.name] || { title: ext.name, description: '', ports: [], portal: null, api: null };
+      const enabled = ext.enabled === 'true';
+      const canInstall = ext.has_installer === 'true';
+      const links = [];
+      const portal = typeof meta.portal === 'function' ? meta.portal(state.config) : meta.portal;
+      const api = typeof meta.api === 'function' ? meta.api(state.config) : meta.api;
+      if (portal) links.push({ label: 'Portal', url: portal });
+      if (api) links.push({ label: 'API', url: api });
+      const ports = (meta.ports || []).map(key => `${key}=${port(state.config, key, '-')}`);
+      const actions = canInstall ? `<button class="btn" onclick="installExtension('${ext.name}')">Install</button>` : '';
+      return toolCard({
+        id: `ext-${ext.name}`,
+        title: meta.title || ext.name,
+        description: ext.description || meta.description || 'No description',
+        notes: '',
+        enabled,
+        onToggle: `toggleExtension('${ext.name}', ${!enabled})`,
+        links,
+        ports,
+        actions,
+      });
+    }).join('');
+  }
+
+  function renderServices() {
+    const el = document.getElementById('serviceList');
+    const items = CORE_SERVICES.map(svc => {
+      const portal = url(state.config, svc.port, svc.path || '');
+      const api = svc.api ? url(state.config, svc.port, svc.api) : '';
+      const ports = [ `${svc.port}=${port(state.config, svc.port, '-')}` ];
+      return toolCard({
+        id: `svc-${svc.name}`,
+        title: svc.name,
+        description: svc.desc || 'Core service',
+        notes: '',
+        enabled: true,
+        onToggle: '',
+        links: [portal ? { label: 'Portal', url: portal } : null, api ? { label: 'API', url: api } : null].filter(Boolean),
+        ports,
+        readonly: true,
+      });
+    });
+    el.innerHTML = items.join('');
+  }
+
+  function toolCard({ id, title, description, notes, enabled, onToggle, links, ports, readonly, health, actions }) {
+    const toggle = readonly ? '' : `
+      <label class="toggle">
+        <input type="checkbox" ${enabled ? 'checked' : ''} onchange="${onToggle}">
+        <span class="slider"></span>
+      </label>`;
+    const healthHtml = health ? `<span class="pill" data-health="${health}">checking</span>` : '';
+    const linkHtml = (links || []).map(l => `<a class="link" href="${l.url}" target="_blank" rel="noreferrer">${l.label}</a>`).join('');
+    const portHtml = (ports || []).length ? `<div class="muted">${ports.join(' | ')}</div>` : '';
+    const noteHtml = notes ? `<div class="muted">${notes}</div>` : '';
+    const actionsHtml = actions ? `<div class="row" style="margin-top: 8px;">${actions}</div>` : '';
+    return `
+      <div id="${id}" class="tool">
+        <div class="tool-header">
+          <div class="tool-title">${title}</div>
+          <div class="spacer"></div>
+          ${healthHtml}
+          ${toggle}
+        </div>
+        <div class="tool-desc">${description}</div>
+        ${noteHtml}
+        ${portHtml}
+        <div class="tool-links">${linkHtml || '<span class="muted">No links</span>'}</div>
+        ${actionsHtml}
+      </div>
+    `;
+  }
+
+  async function installExtension(name) {
+    const log = document.getElementById('log');
+    log.textContent = `Installing extension: ${name}...`;
+    try {
+      const res = await apiPost('/api/extensions/install', { name });
+      log.textContent = `${res.cmd ? res.cmd.join(' ') : 'install'}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+      await loadExtensions();
+    } catch (e) {
+      log.textContent = `Error: ${e}`;
+    }
+  }
+
+  async function toggleExtension(name, enable) {
+    await apiPost('/api/toggle', { kind: 'extension', name, enable });
+    await loadExtensions();
+    renderCapabilities();
+  }
+
+  async function togglePack(name, enable) {
+    await apiPost('/api/toggle', { kind: 'pack', name, enable });
+    await loadPacks();
+    renderCapabilities();
+  }
+
+  async function toggleCapability(id, enable) {
+    const cap = CAPABILITIES.find(c => c.id === id);
+    if (!cap) return;
+    if (enable) {
+      for (const pack of (cap.packs || [])) {
+        if (!packEnabled(pack)) {
+          await togglePack(pack, true);
+        }
+      }
+      for (const ext of (cap.extensions || [])) {
+        if (!extensionEnabled(ext)) {
+          await toggleExtension(ext, true);
+        }
+      }
+      if ((cap.packs || []).includes('speech_stack')) {
+        await runCmd('speech_up');
+      }
+    } else {
+      for (const ext of (cap.extensions || [])) {
+        if (extensionEnabled(ext)) {
+          await toggleExtension(ext, false);
+        }
+      }
+      for (const pack of (cap.packs || [])) {
+        const stillNeeded = CAPABILITIES.some(other => {
+          if (other.id === cap.id) return false;
+          if (!capabilityEnabled(other)) return false;
+          return (other.packs || []).includes(pack);
+        });
+        if (!stillNeeded && packEnabled(pack)) {
+          await togglePack(pack, false);
+        }
+      }
+      if ((cap.packs || []).includes('speech_stack')) {
+        await runCmd('speech_down');
+      }
+    }
+    renderCapabilities();
+  }
+
+  async function checkHealth() {
+    const nodes = document.querySelectorAll('[data-health]');
+    await Promise.all(Array.from(nodes).map(async node => {
+      const url = node.getAttribute('data-health');
+      if (!url) return;
+      try {
+        const res = await fetch(url, { method: 'GET' });
+        node.textContent = res.ok ? 'ok' : 'down';
+        node.className = res.ok ? 'pill ok' : 'pill bad';
+      } catch (e) {
+        node.textContent = 'down';
+        node.className = 'pill bad';
+      }
+    }));
+  }
+
+  async function runCmd(cmd) {
+    const log = document.getElementById('log');
+    log.textContent = `Running: ${cmd}...`;
+    try {
+      const res = await fetch(`/api/run?cmd=${encodeURIComponent(cmd)}`, {
+        headers: { 'X-Beast-Token': state.token }
+      });
+      const data = await res.json();
+      log.textContent = `${data.cmd ? data.cmd.join(' ') : cmd}\n\n${data.stdout || ''}\n${data.stderr || ''}`.trim();
+    } catch (e) {
+      log.textContent = `Error: ${e}`;
+    }
+  }
+
+  // LLM Model Management
+  state.models = [];
+  state.ollamaRunning = false;
+  state.availableModels = [];
+  state.activeDownloads = {};
+
+  async function refreshModels() {
+    try {
+      const data = await apiGet('/api/models?force=1');
+      if (data.ok) {
+        state.models = data.models || [];
+        state.ollamaRunning = data.ollama_running;
+        renderModels();
+        updateOllamaStatus();
+      }
+    } catch (e) {
+      console.error('Failed to load models:', e);
+    }
+    await loadStorageInfo();
+  }
+
+  async function loadStorageInfo() {
+    try {
+      const data = await apiGet('/api/models/storage');
+      if (data.ok) {
+        const el = document.getElementById('storageInfo');
+        const s = data.storage;
+        const parts = [];
+        if (s.internal && s.internal.free_human) {
+          parts.push(`Internal: ${s.internal.free_human} free`);
+        }
+        if (s.external && s.external.free_human && s.external.path !== s.internal?.path) {
+          parts.push(`External: ${s.external.free_human} free`);
+        }
+        el.textContent = parts.length ? `Storage: ${parts.join(' | ')}` : '';
+      }
+    } catch (e) {}
+  }
+
+  function updateOllamaStatus() {
+    const el = document.getElementById('ollamaStatus');
+    if (state.ollamaRunning) {
+      el.textContent = 'Ollama: online';
+      el.className = 'pill ok';
+    } else {
+      el.textContent = 'Ollama: offline';
+      el.className = 'pill bad';
+    }
+  }
+
+  function renderModels() {
+    const el = document.getElementById('modelList');
+    if (!state.models.length) {
+      el.innerHTML = '<div class="muted">No models found. Drop GGUF/safetensors files in the models directory or pull from Ollama.</div>';
+      return;
+    }
+    el.innerHTML = state.models.map(m => {
+      const isOllama = m.location === 'ollama';
+      const icon = isOllama ? '🦙' : '📄';
+      const locLabel = m.location.charAt(0).toUpperCase() + m.location.slice(1);
+      const quantLabel = m.quantization ? ` (${m.quantization})` : '';
+      return `
+        <div class="tool">
+          <div class="tool-header">
+            <div class="tool-title">${icon} ${m.name}${quantLabel}</div>
+            <div class="spacer"></div>
+            <span class="pill">${m.size_human}</span>
+            <span class="pill">${locLabel}</span>
+            <button class="btn ghost" onclick="deleteModel('${m.path.replace(/'/g, "\\'")}')">🗑</button>
+          </div>
+          <div class="tool-desc">${m.model_type} | ${m.path}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function deleteModel(path) {
+    if (!confirm(`Delete model?\n${path}`)) return;
+    try {
+      const res = await apiPost('/api/models/delete', { path });
+      if (res.ok) {
+        await refreshModels();
+      } else {
+        alert('Failed to delete: ' + (res.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Error: ' + e);
+    }
+  }
+
+  async function showOllamaLibrary() {
+    const panel = document.getElementById('ollamaLibrary');
+    const list = document.getElementById('ollamaLibraryList');
+    if (panel.style.display !== 'none') {
+      panel.style.display = 'none';
+      return;
+    }
+    document.getElementById('urlDownloadPanel').style.display = 'none';
+    panel.style.display = 'block';
+    try {
+      const data = await apiGet('/api/models/available');
+      if (data.ok) {
+        state.availableModels = data.models || [];
+        list.innerHTML = state.availableModels.map(m => 
+          `<button class="btn" onclick="pullOllamaModel('${m.name}')" title="${m.desc} (${m.size})">${m.name}</button>`
+        ).join('');
+      }
+    } catch (e) {
+      list.innerHTML = '<div class="muted">Failed to load models</div>';
+    }
+  }
+
+  async function pullOllamaModel(name) {
+    if (!state.ollamaRunning) {
+      alert('Ollama is not running. Start it first.');
+      return;
+    }
+    document.getElementById('ollamaLibrary').style.display = 'none';
+    showDownloadProgress(name, 0);
+    try {
+      const res = await apiPost('/api/models/pull', { model: name });
+      if (res.ok) {
+        hideDownloadProgress();
+        await refreshModels();
+      } else {
+        hideDownloadProgress();
+        alert('Failed to pull: ' + (res.error || 'Unknown error'));
+      }
+    } catch (e) {
+      hideDownloadProgress();
+      alert('Error: ' + e);
+    }
+  }
+
+  function showUrlDownload() {
+    const panel = document.getElementById('urlDownloadPanel');
+    if (panel.style.display !== 'none') {
+      panel.style.display = 'none';
+      return;
+    }
+    document.getElementById('ollamaLibrary').style.display = 'none';
+    panel.style.display = 'block';
+    
+    document.getElementById('modelDestination').onchange = function() {
+      document.getElementById('customPath').style.display = this.value === 'custom' ? 'block' : 'none';
+    };
+  }
+
+  async function downloadFromUrl() {
+    const url = document.getElementById('modelUrl').value.trim();
+    if (!url) {
+      alert('Please enter a URL');
+      return;
+    }
+    const destination = document.getElementById('modelDestination').value;
+    const customPath = document.getElementById('customPath').value.trim();
+    
+    if (destination === 'custom' && !customPath) {
+      alert('Please enter a custom path');
+      return;
+    }
+
+    document.getElementById('urlDownloadPanel').style.display = 'none';
+    const filename = url.split('/').pop().split('?')[0] || 'model.gguf';
+    showDownloadProgress(filename, 0);
+
+    try {
+      const res = await apiPost('/api/models/download', { 
+        url, 
+        destination,
+        custom_path: customPath || undefined
+      });
+      if (res.ok) {
+        // Poll for download progress
+        pollDownloadStatus(res.download_id);
+      } else {
+        hideDownloadProgress();
+        alert('Failed to start download: ' + (res.error || 'Unknown error'));
+      }
+    } catch (e) {
+      hideDownloadProgress();
+      alert('Error: ' + e);
+    }
+  }
+
+  async function pollDownloadStatus(downloadId) {
+    const poll = async () => {
+      try {
+        const data = await apiGet(`/api/models/downloads?id=${downloadId}`);
+        if (data.ok) {
+          const dl = data.downloads;
+          if (dl.status === 'complete') {
+            hideDownloadProgress();
+            await refreshModels();
+            return;
+          } else if (dl.status === 'error') {
+            hideDownloadProgress();
+            alert('Download failed: ' + (dl.error || 'Unknown error'));
+            return;
+          } else {
+            updateDownloadProgress(dl.progress || 0);
+            setTimeout(poll, 1000);
+          }
+        }
+      } catch (e) {
+        hideDownloadProgress();
+      }
+    };
+    poll();
+  }
+
+  function showDownloadProgress(name, percent) {
+    document.getElementById('downloadProgress').style.display = 'block';
+    document.getElementById('downloadName').textContent = `Downloading: ${name}`;
+    updateDownloadProgress(percent);
+  }
+
+  function updateDownloadProgress(percent) {
+    document.getElementById('downloadPercent').textContent = `${Math.round(percent)}%`;
+    document.getElementById('downloadBar').style.width = `${percent}%`;
+  }
+
+  function hideDownloadProgress() {
+    document.getElementById('downloadProgress').style.display = 'none';
+  }
+
+  refreshAll();
+  // Auto-refresh models every 30 seconds to detect dropped files
+  setInterval(refreshModels, 30000);
+</script>
+</body>
+</html>

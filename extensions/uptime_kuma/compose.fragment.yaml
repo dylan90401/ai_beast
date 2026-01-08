@@ -1,0 +1,19 @@
+# Uptime Kuma - Service monitoring dashboard
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: ai_beast_uptime_kuma
+    profiles: ["kuma", "uptime_kuma", "full", "prodish"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_KUMA:-3001}:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  uptime_kuma_data:

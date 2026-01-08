@@ -4,14 +4,12 @@ set -euo pipefail
 STATE_FILE=""
 OUT_DIR=""
 FORMAT="both"   # md|dot|both
-VERBOSE=0
 
 for arg in "${@:-}"; do
   case "$arg" in
     --state=*) STATE_FILE="${arg#--state=}" ;;
     --out=*) OUT_DIR="${arg#--out=}" ;;
     --format=*) FORMAT="${arg#--format=}" ;;
-    --verbose) VERBOSE=1 ;;
   esac
 done
 
@@ -224,4 +222,3 @@ case "$FORMAT" in
   md) log "Wrote $md" ;;
   both|*) log "Wrote $dot and $md" ;;
 esac
-

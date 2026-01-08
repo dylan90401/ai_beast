@@ -1,8 +1,14 @@
-# dify (stub)
+# dify
 
-This is a **stub extension** for Dify.
+Dockerized Dify stack with API, worker, web UI, Redis, Postgres, and sandbox.
 
-- Purpose: reserve the service name/ports and provide a predictable placeholder in the compose graph.
-- Status: **NOT a real Dify deployment yet**.
+## Notes
+- Uses `${DATA_DIR}/dify` for state.
+- Default credentials are for local dev only; set real secrets via env vars.
+- Requires Qdrant (already part of the base stack) for vector storage.
 
-When you decide to make this real, replace this extension with an upstream Dify compose (multi-service) and wire persistence + secrets.
+## Configuration
+Environment overrides (optional):
+- `DIFY_DB_USER`, `DIFY_DB_PASSWORD`, `DIFY_DB_NAME`
+- `DIFY_SECRET_KEY`
+- `DIFY_SANDBOX_API_KEY`

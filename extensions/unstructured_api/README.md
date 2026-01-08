@@ -1,11 +1,8 @@
-# unstructured_api (stub)
+# unstructured_api
 
-Stub surface area for Unstructured's API service.
+Unstructured API service for document parsing and chunking.
 
 - Service name: `unstructured-api`
-- Intended role: robust parsing/chunking for messy documents before embeddings.
-- Current version: **stub placeholder** (nginx static).
+- Port: `${PORT_UNSTRUCTURED:-8000}`
 
-When ready:
-- Swap to the real Unstructured API image and configure resource limits.
-- Wire `scripts/75_rag_ingest.sh` to use Tika/Unstructured as preprocessors.
+Wire this into your RAG ingestion pipeline as a pre-processor.

@@ -29,11 +29,11 @@ if [[ ! -d "$VENV_DIR" ]]; then
   exit 2
 fi
 
-# shellcheck disable=SC1090
+# shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
 pip -q show qdrant-client >/dev/null 2>&1 || {
   echo "[rag] deps missing. Install:" >&2
-  echo "  source "$VENV_DIR/bin/activate" && pip install -r "$BASE_DIR/modules/rag/requirements.txt"" >&2
+  echo "  source \"$VENV_DIR/bin/activate\" && pip install -r \"$BASE_DIR/modules/rag/requirements.txt\"" >&2
   exit 2
 }
 

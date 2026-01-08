@@ -1,0 +1,32 @@
+services:
+  qdrant:
+    profiles: ["qdrant"]
+    image: qdrant/qdrant:latest
+    ports:
+      - "127.0.0.1:${PORT_QDRANT:-6333}:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - "${DATA_DIR:-./data}/qdrant:/qdrant/storage"
+    restart: unless-stopped
+    labels:
+      - ai.beast.managed=true
+      - ai.beast.tier=core
+      - ai.beast.profiles=qdrant
+      - ai.beast.service_hash=7575f40d886a528962510ec52d4c1b727dadbf065edecc9ff996eaac27b48c8c
+
+  open-webui:
+    profiles: ["webui"]
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - "127.0.0.1:${PORT_WEBUI:-3000}:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}
+      - WEBUI_AUTH=false
+    volumes:
+      - "${DATA_DIR:-./data}/openwebui:/app/backend/data"
+    restart: unless-stopped
+    labels:
+      - ai.beast.managed=true
+      - ai.beast.tier=core
+      - ai.beast.profiles=webui
+      - ai.beast.service_hash=507d22184f4c8f341892f570eae90d1ac79316e82bf7310a9c77d2e411012f73

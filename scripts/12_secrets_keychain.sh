@@ -59,7 +59,7 @@ render_env(){
     printf '%s=%q\n' "$name" "$val" >> "$ENV_OUT"
   done < <(list_secrets)
   log "rendered: $ENV_OUT"
-  log "tip: source it in your shell:  set -a; source "$ENV_OUT"; set +a"
+  log "tip: source it in your shell: set -a; source \"$ENV_OUT\"; set +a"
 }
 
 case "$ACTION" in

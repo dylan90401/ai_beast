@@ -1,11 +1,107 @@
 services:
-  dify:
-    # STUB ONLY. This is *not* the real Dify deployment.
-    # When ready, replace with upstream Dify compose (multi-container) and persistence.
-    image: nginx:alpine
+  dify-db:
     profiles: ["agent_builders"]
-    ports:
-      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_DIFY:-3004}:80"
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=${DIFY_DB_USER:-dify}
+      - POSTGRES_PASSWORD=${DIFY_DB_PASSWORD:-dify}
+      - POSTGRES_DB=${DIFY_DB_NAME:-dify}
     volumes:
-      - "./extensions/dify/stub:/usr/share/nginx/html:ro"
+      - "${DATA_DIR:-./data}/dify/postgres:/var/lib/postgresql/data"
+    restart: unless-stopped
+
+  dify-redis:
+    profiles: ["agent_builders"]
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "20", "1", "--loglevel", "warning"]
+    volumes:
+      - "${DATA_DIR:-./data}/dify/redis:/data"
+    restart: unless-stopped
+
+  dify-sandbox:
+    profiles: ["agent_builders"]
+    image: langgenius/dify-sandbox:latest
+    environment:
+      - API_KEY=${DIFY_SANDBOX_API_KEY:-dify-sandbox}
+    restart: unless-stopped
+
+  dify-api:
+    profiles: ["agent_builders"]
+    image: langgenius/dify-api:latest
+    environment:
+      - MODE=api
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=${DIFY_SECRET_KEY:-change-me}
+      - DB_HOST=dify-db
+      - DB_PORT=5432
+      - DB_USERNAME=${DIFY_DB_USER:-dify}
+      - DB_PASSWORD=${DIFY_DB_PASSWORD:-dify}
+      - DB_DATABASE=${DIFY_DB_NAME:-dify}
+      - REDIS_HOST=dify-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - CELERY_BROKER_URL=redis://dify-redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://dify-redis:6379/1
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/api/storage
+      - SANDBOX_HOST=dify-sandbox
+      - SANDBOX_PORT=8194
+      - SANDBOX_API_KEY=${DIFY_SANDBOX_API_KEY:-dify-sandbox}
+      - VECTOR_STORE=qdrant
+      - QDRANT_URL=http://qdrant:6333
+      - CONSOLE_WEB_URL=http://127.0.0.1:${PORT_DIFY:-3004}
+      - CONSOLE_API_URL=http://dify-api:5001
+      - SERVICE_API_URL=http://dify-api:5001
+    volumes:
+      - "${DATA_DIR:-./data}/dify/storage:/app/api/storage"
+    depends_on:
+      - dify-db
+      - dify-redis
+      - dify-sandbox
+    restart: unless-stopped
+
+  dify-worker:
+    profiles: ["agent_builders"]
+    image: langgenius/dify-api:latest
+    command: ["bash", "-lc", "celery -A app.celery worker -l INFO"]
+    environment:
+      - MODE=worker
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=${DIFY_SECRET_KEY:-change-me}
+      - DB_HOST=dify-db
+      - DB_PORT=5432
+      - DB_USERNAME=${DIFY_DB_USER:-dify}
+      - DB_PASSWORD=${DIFY_DB_PASSWORD:-dify}
+      - DB_DATABASE=${DIFY_DB_NAME:-dify}
+      - REDIS_HOST=dify-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - CELERY_BROKER_URL=redis://dify-redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://dify-redis:6379/1
+      - STORAGE_TYPE=local
+      - STORAGE_LOCAL_PATH=/app/api/storage
+      - SANDBOX_HOST=dify-sandbox
+      - SANDBOX_PORT=8194
+      - SANDBOX_API_KEY=${DIFY_SANDBOX_API_KEY:-dify-sandbox}
+      - VECTOR_STORE=qdrant
+      - QDRANT_URL=http://qdrant:6333
+    volumes:
+      - "${DATA_DIR:-./data}/dify/storage:/app/api/storage"
+    depends_on:
+      - dify-db
+      - dify-redis
+      - dify-sandbox
+    restart: unless-stopped
+
+  dify-web:
+    profiles: ["agent_builders"]
+    image: langgenius/dify-web:latest
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_DIFY:-3004}:3000"
+    environment:
+      - CONSOLE_API_URL=http://dify-api:5001
+      - APP_API_URL=http://dify-api:5001
+      - NEXT_TELEMETRY_DISABLED=1
+    depends_on:
+      - dify-api
     restart: unless-stopped

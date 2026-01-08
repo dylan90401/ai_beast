@@ -1,6 +1,5 @@
 services:
   flowise:
-    # Stub only: verify upstream image + version pin when enabling.
     image: flowiseai/flowise:latest
     profiles: ["agent_builders"]
     ports:

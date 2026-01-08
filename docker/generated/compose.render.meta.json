@@ -1,0 +1,17 @@
+{
+  "generated_at": 1767884185.061762,
+  "registry": "/Users/wolfen/_dev/_AI_Kryptos/ai_beast/config/resources/services.json",
+  "only_services": [
+    "example_hello",
+    "jupyterlab",
+    "open-webui",
+    "qdrant",
+    "searxng",
+    "uptime-kuma"
+  ],
+  "sha256": {
+    "compose.core.yaml": "5e1bcf5fe6ff58d0ba9d791f1f490ae76cf93d2cc90ec16f9c12f3c8677a330a",
+    "compose.ops.yaml": "21f601bf66a819c39d31b9fe9c4d612135b0e952add9cd9ec88101f9e5c31782"
+  },
+  "service_count": 3
+}

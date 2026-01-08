@@ -1,0 +1,13 @@
+# JupyterLab - code runner/notebook environment
+services:
+  jupyterlab:
+    image: jupyter/minimal-notebook:latest
+    container_name: ai_beast_jupyterlab
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_JUPYTER:-8889}:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: "${AI_BEAST_JUPYTER_TOKEN:-ai-beast}"
+    volumes:
+      - "${DATA_DIR:-./data}/notebooks:/home/jovyan/work"
+    restart: unless-stopped

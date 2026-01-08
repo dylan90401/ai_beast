@@ -1,0 +1,41 @@
+# n8n - Workflow automation for AI pipelines
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: ai_beast_n8n
+    profiles: ["n8n", "full", "prodish"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+      redis:
+        condition: service_healthy
+        required: false
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_N8N:-5678}:5678"
+    environment:
+      N8N_HOST: "0.0.0.0"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "http"
+      WEBHOOK_URL: "http://localhost:${PORT_N8N:-5678}/"
+      GENERIC_TIMEZONE: "${TZ:-America/Los_Angeles}"
+      # Database (optional - uses SQLite by default)
+      # DB_TYPE: "postgresdb"
+      # DB_POSTGRESDB_HOST: "postgres"
+      # DB_POSTGRESDB_PORT: "5432"
+      # DB_POSTGRESDB_DATABASE: "${POSTGRES_DB:-aibeast}"
+      # DB_POSTGRESDB_USER: "${POSTGRES_USER:-aibeast}"
+      # DB_POSTGRESDB_PASSWORD: "${POSTGRES_PASSWORD:-aibeast_dev}"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  n8n_data:

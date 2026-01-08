@@ -40,7 +40,7 @@ tmp="$(mktemp)"
     case "${val,,}" in
       true|yes|1) echo "export ${envkey}=1" ;;
       false|no|0) echo "export ${envkey}=0" ;;
-      *) echo "export ${envkey}="${val}"" ;;
+      *) printf 'export %s="%s"\n' "$envkey" "$val" ;;
     esac
   done < "$in"
 } > "$tmp"

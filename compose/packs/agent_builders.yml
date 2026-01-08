@@ -1,2 +1,3 @@
-# pack: agent_builders (stub)
+# pack: agent_builders
+# Services are provided via extensions/langflow, extensions/flowise, extensions/dify
 services: {}

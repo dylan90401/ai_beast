@@ -8,7 +8,26 @@ import hashlib
 from pathlib import Path
 
 
-def compute_sha256(file_path: Path) -> str:
+def _is_placeholder_secret(value: str) -> bool:
+    value = value.strip().lower()
+    placeholders = {
+        "your_api_key_here",
+        "your_password_here",
+        "your_secret_here",
+        "your_token_here",
+        "changeme",
+        "password",
+        "example",
+        "example_password",
+    }
+    if value in placeholders:
+        return True
+    if value.startswith("your_") and value.endswith("_here"):
+        return True
+    return False
+
+
+def compute_sha256(file_path: Path) -> dict:
     """
     Compute SHA256 hash of a file.
 
@@ -16,15 +35,20 @@ def compute_sha256(file_path: Path) -> str:
         file_path: Path to file
 
     Returns:
-        Hex string of SHA256 hash
+        Dict with success flag and SHA256 hex digest
     """
+    if not file_path.exists():
+        return {"success": False, "error": "File does not exist", "sha256": ""}
+
     sha256_hash = hashlib.sha256()
+    try:
+        with open(file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+    except OSError as exc:
+        return {"success": False, "error": str(exc), "sha256": ""}
 
-    with open(file_path, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-
-    return sha256_hash.hexdigest()
+    return {"success": True, "sha256": sha256_hash.hexdigest()}
 
 
 def verify_file_hash(file_path: Path, expected_hash: str) -> bool:
@@ -41,7 +65,10 @@ def verify_file_hash(file_path: Path, expected_hash: str) -> bool:
     if not file_path.exists():
         return False
 
-    actual_hash = compute_sha256(file_path)
+    result = compute_sha256(file_path)
+    if not result.get("success"):
+        return False
+    actual_hash = result.get("sha256", "")
     return actual_hash.lower() == expected_hash.lower()
 
 
@@ -69,6 +96,9 @@ def scan_for_secrets(text: str) -> list:
     for pattern, name in patterns:
         matches = re.finditer(pattern, text, re.IGNORECASE)
         for match in matches:
+            candidate = match.group(1) if match.groups() else match.group(0)
+            if _is_placeholder_secret(candidate):
+                continue
             findings.append(
                 {"type": name, "pattern": pattern, "position": match.start()}
             )

@@ -22,6 +22,9 @@ AI Beast CLI
 
 UX (most-used):
   init                  Initialize workspace (paths/env/templates)
+    --defaults          Use default GUTS_DIR/HEAVY_DIR without prompting
+    --guts-dir=PATH     Override GUTS_DIR (native apps/venv)
+    --heavy-dir=PATH    Override HEAVY_DIR (models/data/outputs)
   preflight             Check system deps, ports, disk, permissions
   bootstrap             Install macOS deps + prep runtimes (brew/python/docker)
   up                    Start native + docker services (alias: services up)
@@ -38,7 +41,10 @@ Power-user:
   doctor                Environment diagnostics
   install               Full install (bootstrap + optional packs/extensions/assets)
   compose gen           Generate docker-compose.yml (state→services→fragments)
+  features sync|merge   Sync or merge feature flags
   services up|down      Start/stop native + docker services
+  urls                  Print service URLs
+  launchd               Install/Unload macOS LaunchAgents
   state plan|apply      Desired-state reconciler (packs/extensions/assets/services)
   graph [typed]         Resource graph + "why"
   drift status|apply    Compose drift detection + minimal reconcile
@@ -52,9 +58,10 @@ Power-user:
   restore               Restore from backup
   comfy postinstall     ComfyUI post-install actions (nodes, allowlist, audits)
   rag ingest            Ingest docs into vector DB (Qdrant)
+  llm status|list       LLM model inventory + storage info
 
 Examples:
-  ./bin/beast init --apply
+  ./bin/beast init --apply [--defaults] [--guts-dir=/path] [--heavy-dir=/path]
   ./bin/beast preflight
   ./bin/beast bootstrap --apply
   ./bin/beast up --apply
@@ -85,6 +92,22 @@ case "$cmd" in
     sub="${1:-}"; shift || true
     case "$sub" in
       gen|generate) "$BASE_DIR/scripts/25_compose_generate.sh" gen "${@:-}" ;;
+      *) die "Usage: beast compose gen [--apply] [--no-ops] [--out=FILE]" ;;
+    esac
+    ;;
+
+  features)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      sync) "$BASE_DIR/scripts/13_features_sync.sh" "${@:-}" ;;
+      merge) "$BASE_DIR/scripts/83_features_merge.sh" "${@:-}" ;;
+      *) die "Usage: beast features {sync|merge} [--apply]" ;;
+    esac
+    ;;
+
+  urls) "$BASE_DIR/scripts/34_urls.sh" "${@:-}" ;;
+  launchd) "$BASE_DIR/scripts/45_launchd.sh" "${@:-}" ;;
+
   agent)
     # Run the KRYPTOS builder agent (single-agent)
     shift || true
@@ -158,10 +181,6 @@ verify)
   "$PY_AGENT" "$BASE_DIR/apps/agent/verifier_strict.py"
   ;;
 
-      *) die "Usage: beast compose gen [--apply] [--no-ops] [--out=FILE]" ;;
-    esac
-    ;;
-
   services)
     sub="${1:-}"; shift || true
     case "$sub" in
@@ -220,6 +239,8 @@ verify)
       *) die "Usage: beast comfy postinstall" ;;
     esac
     ;;
+
+  llm) "$BASE_DIR/scripts/86_llm.sh" "${@:-}" ;;
 
   rag)
     sub="${1:-}"; shift || true

@@ -4,10 +4,8 @@ set -euo pipefail
 ACTION="${1:-help}"; shift || true
 
 APPLY=0
-VERBOSE=0
 for arg in "${@:-}"; do
   [[ "$arg" == "--apply" ]] && APPLY=1
-  [[ "$arg" == "--verbose" ]] && VERBOSE=1
 done
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,9 +21,9 @@ list_ext(){
   find "$ext_root" -mindepth 1 -maxdepth 1 -type d -print | sort | while read -r d; do
     name="$(basename "$d")"
     if [[ -f "$d/enabled" ]]; then
-      echo "$name\tenabled"
+      printf '%s\tenabled\n' "$name"
     else
-      echo "$name\tdisabled"
+      printf '%s\tdisabled\n' "$name"
     fi
   done
 }
@@ -63,7 +61,6 @@ install_ext(){
 
   if [[ "$APPLY" -ne 1 ]]; then
     log "DRYRUN: would run $installer --apply"
-    bash "$installer" || true
     return 0
   fi
 

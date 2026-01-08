@@ -1,7 +1,5 @@
 services:
   langflow:
-    # Stub only: pick an official image when you want to enable this for real.
-    # Common image choices (verify before use): langflowai/langflow
     image: langflowai/langflow:latest
     profiles: ["agent_builders"]
     ports:

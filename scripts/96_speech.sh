@@ -37,7 +37,7 @@ start_bg(){
   [[ -f "$server_py" ]] || die "Missing server: $server_py (run pack hook via packs install)"
   if is_running; then log "Already running (pid $(cat "$pidfile"))"; return 0; fi
 
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1091
   source "$venv/bin/activate"
   nohup python -m uvicorn apps.speech_api.server:app --app-dir "$BASE_DIR" --host "$HOST" --port "$PORT"     > "$LOG_DIR/speech_api.out.log" 2> "$LOG_DIR/speech_api.err.log" &
   echo $! > "$pidfile"

@@ -159,7 +159,7 @@ into **docker/compose.generated.yaml** using `docker compose ... config`.
 
 Initialize with internal **guts** + external **heavy**:
 ```bash
-./bin/beast init --apply
+./bin/beast init --apply --heavy-dir=/Volumes/SSD/AI_Beast_Heavy --guts-dir=/path
 ./bin/beast features sync --apply
 ```
 

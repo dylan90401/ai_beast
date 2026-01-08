@@ -1,0 +1,3 @@
+# pack: observability_otel
+# Services are provided via extensions/otel_collector/compose.fragment.yaml
+services: {}

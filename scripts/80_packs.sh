@@ -57,7 +57,7 @@ pip_install(){
       log "DRYRUN python3 -m venv $venv"
     else
       python3 -m venv "$venv"
-      # shellcheck disable=SC1090
+      # shellcheck disable=SC1091
       source "$venv/bin/activate"
       pip install -U pip wheel setuptools >/dev/null
       deactivate || true
@@ -67,7 +67,7 @@ pip_install(){
     log "DRYRUN pip install (venv=$venv): ${pkgs[*]}"
     return 0
   fi
-  # shellcheck disable=SC1090
+  # shellcheck disable=SC1091
   source "$venv/bin/activate"
   pip install -U pip wheel setuptools >/dev/null
   pip install "${pkgs[@]}" || log "WARN: pip install had errors for pack '$name'"
@@ -194,11 +194,6 @@ disable_pack_flag(){
   enable_feature_flag "packs.${name}" "false"
 }
 
-enable_pack_flag(){
-  local name="$1"
-  enable_feature_flag "packs.${name}" "true"
-}
-
 case "$ACTION" in
 
   list) list_packs ;;
@@ -217,6 +212,22 @@ enable)
     else
       "$BASE_DIR/bin/beast" nodes install --pack="$p" --apply || true
     fi
+  done
+  if [[ -f "$BASE_DIR/config/features.local.yml" ]]; then
+    if [[ "$APPLY" -ne 1 ]]; then
+      log "DRYRUN would merge features + sync features.env"
+    else
+      "$BASE_DIR/scripts/83_features_merge.sh" --apply
+      "$BASE_DIR/scripts/13_features_sync.sh" --apply
+    fi
+  fi
+  ;;
+disable)
+  if [[ -z "${1:-}" ]]; then die "Usage: packs disable <pack> [pack2...] [--apply]"; fi
+  want=()
+  for a in "$@"; do [[ "$a" == "--apply" ]] && continue; want+=("$a"); done
+  for p in "${want[@]}"; do
+    disable_pack_flag "$p"
   done
   if [[ -f "$BASE_DIR/config/features.local.yml" ]]; then
     if [[ "$APPLY" -ne 1 ]]; then
@@ -253,6 +264,6 @@ for n in "${ordered[@]}"; do
     fi
     ;;
   *)
-    die "Usage: packs {list|show|install} [name|all] [--apply]"
+    die "Usage: packs {list|show|install|enable|disable} [name|all] [--apply]"
     ;;
 esac

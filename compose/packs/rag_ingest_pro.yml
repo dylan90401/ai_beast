@@ -1,2 +1,13 @@
-# pack: rag_ingest_pro (stub)
-services: {}
+# pack: rag_ingest_pro
+services:
+  apache-tika:
+    image: apache/tika:latest
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TIKA:-9998}:9998"
+    restart: unless-stopped
+
+  unstructured-api:
+    image: quay.io/unstructured-io/unstructured-api:latest
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_UNSTRUCTURED:-8000}:8000"
+    restart: unless-stopped

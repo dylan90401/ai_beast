@@ -17,9 +17,9 @@ Rules:
 
 - comfyui_manager: installs ComfyUI-Manager custom node
 
-## Newly added stub extensions
-- dify (stub)
-- apache_tika (stub)
-- unstructured_api (stub)
+## Newly added extensions
+- apache_tika
+- unstructured_api
 - otel_collector (minimal)
 - minio (minimal)
+- jupyter

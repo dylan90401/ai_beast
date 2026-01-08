@@ -10,11 +10,11 @@ BASE_DIR="$(cd "$script_dir/../.." && pwd)"
 # shellcheck disable=SC1091
 [[ -f "$BASE_DIR/config/paths.env" ]] && source "$BASE_DIR/config/paths.env" || true
 
-msg="[ext:dify] stub extension installed (placeholder only)."
+DATA_ROOT="${DATA_DIR:-$BASE_DIR/data}/dify"
+
 if [[ "$APPLY" -eq 1 ]]; then
-  mkdir -p "$BASE_DIR/extensions/dify/stub"
-  echo "$msg" > "$BASE_DIR/extensions/dify/installed.txt"
-  echo "$msg"
+  mkdir -p "$DATA_ROOT/postgres" "$DATA_ROOT/redis" "$DATA_ROOT/storage"
+  echo "[ext:dify] data dirs ready: $DATA_ROOT"
 else
-  echo "[ext:dify] DRYRUN would mark stub as installed."
+  echo "[ext:dify] DRYRUN would create data dirs under: $DATA_ROOT"
 fi

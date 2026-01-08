@@ -14,17 +14,17 @@ die(){ echo "[live] ERROR: $*" >&2; exit 1; }
 
 run(){
   if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN $*"
+    printf '[live] DRYRUN:'; printf ' %q' "$@"; printf '\n'
   else
-    eval "$*"
+    "$@"
   fi
 }
 
 apply_all(){
-  run ""$BASE_DIR/bin/beast" features merge --apply"
-  run ""$BASE_DIR/bin/beast" features sync --apply"
-  run ""$BASE_DIR/bin/beast" compose gen --apply"
-  run ""$BASE_DIR/bin/beast" up"
+  run "$BASE_DIR/bin/beast" features merge --apply
+  run "$BASE_DIR/bin/beast" features sync --apply
+  run "$BASE_DIR/bin/beast" compose gen --apply
+  run "$BASE_DIR/bin/beast" up
 }
 
 case "$ACTION" in
@@ -33,17 +33,21 @@ case "$ACTION" in
     ;;
   enable)
     [[ -n "${1:-}" ]] || die "Usage: live enable <pack> [pack2...] [--apply]"
-    run ""$BASE_DIR/bin/beast" packs enable $* --apply"
+    packs=()
+    for arg in "$@"; do [[ "$arg" == "--apply" ]] && continue; packs+=("$arg"); done
+    run "$BASE_DIR/bin/beast" packs enable "${packs[@]}" --apply
     apply_all
     ;;
   disable)
     [[ -n "${1:-}" ]] || die "Usage: live disable <pack> [pack2...] [--apply]"
-    run ""$BASE_DIR/bin/beast" packs disable $* --apply"
+    packs=()
+    for arg in "$@"; do [[ "$arg" == "--apply" ]] && continue; packs+=("$arg"); done
+    run "$BASE_DIR/bin/beast" packs disable "${packs[@]}" --apply
     apply_all
     ;;
   restart)
-    run ""$BASE_DIR/bin/beast" down"
-    run ""$BASE_DIR/bin/beast" up"
+    run "$BASE_DIR/bin/beast" down
+    run "$BASE_DIR/bin/beast" up
     ;;
   status)
     echo "== Enabled packs (from config/features.env) =="

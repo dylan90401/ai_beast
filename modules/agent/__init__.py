@@ -6,7 +6,7 @@ Provides agent orchestration, state management, and tool execution.
 
 import importlib.util
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 
@@ -14,13 +14,14 @@ from pathlib import Path
 class AgentState:
     """Agent state snapshot."""
 
-    task: str
-    step: int
-    max_steps: int
-    apply_mode: bool
-    files_touched: list[str]
-    tools_used: list[str]
-    status: str  # "running", "completed", "failed"
+    task: str = ""
+    step: int = 0
+    max_steps: int = 0
+    apply_mode: bool = False
+    files_touched: list[str] = field(default_factory=list)
+    tools_used: list[str] = field(default_factory=list)
+    status: str = "idle"  # "running", "completed", "failed"
+    task_count: int = 0
     result: str | None = None
     error: str | None = None
 
@@ -30,46 +31,48 @@ class AgentOrchestrator:
     Orchestrate agent execution with state tracking.
     """
 
-    def __init__(self, base_dir: Path, apply: bool = False):
+    def __init__(
+        self,
+        base_dir: Path | None = None,
+        apply: bool = False,
+        state_file: Path | None = None,
+    ):
+        if base_dir is None:
+            from modules.utils import get_base_dir
+
+            base_dir = get_base_dir()
+
         self.base_dir = base_dir
         self.apply = apply
-        self.state_file = base_dir / "config" / "agent_state.json"
-        self.current_state: AgentState | None = None
+        self.state_file = state_file or (base_dir / "config" / "agent_state.json")
+        self.state = AgentState(apply_mode=apply)
+        self.current_state: AgentState | None = self.state
 
-    def load_state(self) -> AgentState | None:
+    def load_state(self) -> AgentState:
         """Load agent state from disk."""
         if not self.state_file.exists():
-            return None
+            return self.state
 
         try:
             import json
 
             data = json.loads(self.state_file.read_text())
-            return AgentState(**data.get("current", {}))
+            state_data = data.get("current", data)
+            self.state = AgentState(**state_data)
+            self.current_state = self.state
+            return self.state
         except Exception:
-            return None
+            return self.state
 
-    def save_state(self, state: AgentState) -> None:
+    def save_state(self, state: AgentState | None = None) -> None:
         """Save agent state to disk."""
-        if not self.apply:
-            return
-
         import json
-        from datetime import datetime
+        from datetime import UTC, datetime
 
+        state = state or self.state
         data = {
-            "current": {
-                "task": state.task,
-                "step": state.step,
-                "max_steps": state.max_steps,
-                "apply_mode": state.apply_mode,
-                "files_touched": state.files_touched,
-                "tools_used": state.tools_used,
-                "status": state.status,
-                "result": state.result,
-                "error": state.error,
-            },
-            "last_updated": datetime.utcnow().isoformat(),
+            "current": asdict(state),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
 
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -116,10 +119,12 @@ class AgentOrchestrator:
             files_touched=[],
             tools_used=[],
             status="running",
+            task_count=self.state.task_count + 1,
         )
 
+        self.state = state
         self.current_state = state
-        self.save_state(state)
+        self.save_state()
 
         try:
             core = self._load_agent_core()
@@ -165,7 +170,7 @@ class AgentOrchestrator:
             state.status = "failed"
             state.error = str(exc)
 
-        self.save_state(state)
+        self.save_state()
         return state
 
 
@@ -180,4 +185,4 @@ def create_agent(base_dir: Path, apply: bool = False) -> AgentOrchestrator:
     Returns:
         AgentOrchestrator instance
     """
-    return AgentOrchestrator(base_dir, apply)
+    return AgentOrchestrator(base_dir=base_dir, apply=apply)

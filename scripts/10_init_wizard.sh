@@ -2,8 +2,16 @@
 set -euo pipefail
 
 APPLY=0
+USE_DEFAULTS=0
+GUTS_DIR_OVERRIDE=""
+HEAVY_DIR_OVERRIDE=""
 for arg in "${@:-}"; do
-  [[ "$arg" == "--apply" ]] && APPLY=1
+  case "$arg" in
+    --apply) APPLY=1 ;;
+    --defaults|--non-interactive) USE_DEFAULTS=1 ;;
+    --guts-dir=*) GUTS_DIR_OVERRIDE="${arg#--guts-dir=}" ;;
+    --heavy-dir=*) HEAVY_DIR_OVERRIDE="${arg#--heavy-dir=}" ;;
+  esac
 done
 
 log(){ echo "[init] $*"; }
@@ -13,22 +21,45 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$script_dir/.." && pwd)"
 
 default_external_volume() {
-  ls -1 /Volumes 2>/dev/null | grep -vE '^(Macintosh HD|Macintosh HD - Data|Recovery|Preboot|VM)$' | head -n 1 || true
+  local vol name
+  for vol in /Volumes/*; do
+    [[ -d "$vol" ]] || continue
+    name="$(basename "$vol")"
+    case "$name" in
+      "Macintosh HD"|"Macintosh HD - Data"|Recovery|Preboot|VM) continue ;;
+    esac
+    echo "$name"
+    return 0
+  done
+  return 0
 }
 
 prompt_path() {
   local label="$1" def="$2" ans=""
   printf "%s
 Default: %s
-Enter path (or press Return): " "$label" "$def"
+Enter path (or press Return): " "$label" "$def" >&2
   IFS= read -r ans || true
   [[ -n "${ans:-}" ]] && echo "$ans" || echo "$def"
+}
+
+validate_path_value(){
+  local label="$1" value="$2"
+  if [[ -z "${value:-}" ]]; then
+    die "Invalid ${label}: empty path"
+  fi
+  if [[ "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
+    die "Invalid ${label}: multiline value"
+  fi
+  if [[ "$value" == *"Enter path"* || "$value" == *"Default:"* || "$value" == *"Where should"* ]]; then
+    die "Invalid ${label}: looks like prompt text"
+  fi
 }
 
 ensure_dir(){
   local p="$1"
   if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN: would mkdir -p "$p""
+    log "DRYRUN: would mkdir -p \"$p\""
   else
     mkdir -p "$p"
   fi
@@ -58,9 +89,16 @@ export CACHE_DIR="$CACHE_DIR"
 export BACKUP_DIR="$BACKUP_DIR"
 export LOG_DIR="$LOG_DIR"
 
-# Optional subroots
-export COMFYUI_MODELS_DIR="$COMFYUI_MODELS_DIR"
-export LLM_MODELS_DIR="$LLM_MODELS_DIR"
+  # Optional subroots
+  export COMFYUI_MODELS_DIR="$COMFYUI_MODELS_DIR"
+  export LLM_MODELS_DIR="$LLM_MODELS_DIR"
+  export LLM_CACHE_DIR="$LLM_CACHE_DIR"
+  export OLLAMA_MODELS="$OLLAMA_MODELS"
+  export HF_HOME="$HF_HOME"
+  export TRANSFORMERS_CACHE="$TRANSFORMERS_CACHE"
+  export HUGGINGFACE_HUB_CACHE="$HUGGINGFACE_HUB_CACHE"
+  export XDG_CACHE_HOME="$XDG_CACHE_HOME"
+  export TORCH_HOME="$TORCH_HOME"
 
 # Native guts locations
 export COMFYUI_DIR="$COMFYUI_DIR"
@@ -81,8 +119,17 @@ main(){
     default_heavy="$PROJECT_ROOT"
   fi
 
-  GUTS_DIR="$(prompt_path "Where should native apps/venv live? (guts)" "$default_guts")"
-  HEAVY_DIR="$(prompt_path "Where should models/data/outputs live? (heavy)" "$default_heavy")"
+  if [[ "$USE_DEFAULTS" -eq 1 || ! -t 0 ]]; then
+    GUTS_DIR="${GUTS_DIR_OVERRIDE:-$default_guts}"
+    HEAVY_DIR="${HEAVY_DIR_OVERRIDE:-$default_heavy}"
+    log "Non-interactive init: GUTS_DIR=$GUTS_DIR"
+    log "Non-interactive init: HEAVY_DIR=$HEAVY_DIR"
+  else
+    GUTS_DIR="$(prompt_path "Where should native apps/venv live? (guts)" "$default_guts")"
+    HEAVY_DIR="$(prompt_path "Where should models/data/outputs live? (heavy)" "$default_heavy")"
+  fi
+  validate_path_value "GUTS_DIR" "$GUTS_DIR"
+  validate_path_value "HEAVY_DIR" "$HEAVY_DIR"
 
   MODELS_DIR="$HEAVY_DIR/models"
   DATA_DIR="$HEAVY_DIR/data"
@@ -93,6 +140,13 @@ main(){
 
   COMFYUI_MODELS_DIR="$MODELS_DIR/comfyui"
   LLM_MODELS_DIR="$MODELS_DIR/llm"
+  LLM_CACHE_DIR="$CACHE_DIR/llm"
+  OLLAMA_MODELS="$LLM_MODELS_DIR/ollama"
+  HF_HOME="$CACHE_DIR/huggingface"
+  TRANSFORMERS_CACHE="$HF_HOME/transformers"
+  HUGGINGFACE_HUB_CACHE="$HF_HOME/hub"
+  XDG_CACHE_HOME="$CACHE_DIR/xdg"
+  TORCH_HOME="$CACHE_DIR/torch"
 
   COMFYUI_DIR="$GUTS_DIR/apps/comfyui/ComfyUI"
   VENV_DIR="$GUTS_DIR/.venv"
@@ -100,6 +154,9 @@ main(){
   # Create dirs (best-effort)
   ensure_dir "$HEAVY_DIR"
   for d in "$MODELS_DIR" "$DATA_DIR" "$OUTPUTS_DIR" "$CACHE_DIR" "$BACKUP_DIR" "$LOG_DIR"; do
+    ensure_dir "$d"
+  done
+  for d in "$LLM_MODELS_DIR" "$LLM_CACHE_DIR" "$OLLAMA_MODELS" "$HF_HOME" "$TRANSFORMERS_CACHE" "$HUGGINGFACE_HUB_CACHE" "$XDG_CACHE_HOME" "$TORCH_HOME"; do
     ensure_dir "$d"
   done
   for d in checkpoints loras vae controlnet embeddings upscale_models clip clip_vision; do
