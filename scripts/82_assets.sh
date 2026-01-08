@@ -385,14 +385,14 @@ install_models_array(){
 
   for ((i=0;i<count;i++)); do
     local name kind subdir file url wantsha lic note
-    name="$(jq -r --arg p "$pack" "$arrpath[$i].name" "$cfg")"
-    kind="$(jq -r --arg p "$pack" "$arrpath[$i].kind" "$cfg")"
-    subdir="$(jq -r --arg p "$pack" "$arrpath[$i].dest_subdir" "$cfg")"
-    file="$(jq -r --arg p "$pack" "$arrpath[$i].filename" "$cfg")"
-    url="$(jq -r --arg p "$pack" "$arrpath[$i].url" "$cfg")"
-    wantsha="$(jq -r --arg p "$pack" "$arrpath[$i].sha256" "$cfg")"
-    lic="$(jq -r --arg p "$pack" "$arrpath[$i].license // """ "$cfg")"
-    note="$(jq -r --arg p "$pack" "$arrpath[$i].notes // """ "$cfg")"
+    name="$(jq -r --arg p "$pack" "${arrpath}[$i].name" "$cfg")"
+    kind="$(jq -r --arg p "$pack" "${arrpath}[$i].kind" "$cfg")"
+    subdir="$(jq -r --arg p "$pack" "${arrpath}[$i].dest_subdir" "$cfg")"
+    file="$(jq -r --arg p "$pack" "${arrpath}[$i].filename" "$cfg")"
+    url="$(jq -r --arg p "$pack" "${arrpath}[$i].url" "$cfg")"
+    wantsha="$(jq -r --arg p "$pack" "${arrpath}[$i].sha256" "$cfg")"
+    lic="$(jq -r --arg p "$pack" "${arrpath}[$i].license // \"\"" "$cfg")"
+    note="$(jq -r --arg p "$pack" "${arrpath}[$i].notes // \"\"" "$cfg")"
 
     [[ -n "$url" && "$url" != "null" ]] || die "Missing URL for $pack/$name"
         trust_enforce "model" "$name" "$url" "$wantsha"
@@ -850,14 +850,14 @@ install_models_array(){
 
   for ((i=0;i<count;i++)); do
     local name kind subdir file url wantsha lic note
-    name="$(jq -r --arg p "$pack" "$arrpath[$i].name" "$cfg")"
-    kind="$(jq -r --arg p "$pack" "$arrpath[$i].kind" "$cfg")"
-    subdir="$(jq -r --arg p "$pack" "$arrpath[$i].dest_subdir" "$cfg")"
-    file="$(jq -r --arg p "$pack" "$arrpath[$i].filename" "$cfg")"
-    url="$(jq -r --arg p "$pack" "$arrpath[$i].url" "$cfg")"
-    wantsha="$(jq -r --arg p "$pack" "$arrpath[$i].sha256" "$cfg")"
-    lic="$(jq -r --arg p "$pack" "$arrpath[$i].license // """ "$cfg")"
-    note="$(jq -r --arg p "$pack" "$arrpath[$i].notes // """ "$cfg")"
+    name="$(jq -r --arg p "$pack" "${arrpath}[$i].name" "$cfg")"
+    kind="$(jq -r --arg p "$pack" "${arrpath}[$i].kind" "$cfg")"
+    subdir="$(jq -r --arg p "$pack" "${arrpath}[$i].dest_subdir" "$cfg")"
+    file="$(jq -r --arg p "$pack" "${arrpath}[$i].filename" "$cfg")"
+    url="$(jq -r --arg p "$pack" "${arrpath}[$i].url" "$cfg")"
+    wantsha="$(jq -r --arg p "$pack" "${arrpath}[$i].sha256" "$cfg")"
+    lic="$(jq -r --arg p "$pack" "${arrpath}[$i].license // \"\"" "$cfg")"
+    note="$(jq -r --arg p "$pack" "${arrpath}[$i].notes // \"\"" "$cfg")"
 
     [[ -n "$url" && "$url" != "null" ]] || die "Missing URL for $pack/$name"
     if [[ "$STRICT" -eq 1 ]] && ! is_allowlisted "$url" "$allow_models"; then
@@ -1044,199 +1044,3 @@ EOF
   fi
 }
 
-gen_lockfile(){
-  # Generate a reproducible lockfile from asset_packs config + downloaded/installed files.
-  local out_json="$BASE_DIR/config/assets.lock.json"
-  local ts; ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-
-  # Build array of items from config
-  local tmp="$BASE_DIR/.cache/assets_lock.$$"
-  mkdir -p "$BASE_DIR/.cache"
-  : > "$tmp"
-
-  jq -c '.packs | to_entries[] | {pack:.key, models:(.value.models // []), loras:(.value.loras // []), workflows:(.value.workflows // [])}' "$cfg" | while read -r entry; do
-    local pack; pack="$(jq -r '.pack' <<<"$entry")"
-    # Models + loras
-    for arr in models loras; do
-      jq -c --arg pack "$pack" --arg arr "$arr" '.[$arr][]? | {pack:$pack, kind:.kind, name:.name, filename:.filename, url:.url, dest_subdir:.dest_subdir, sha256:(.sha256//"")}' <<<"$entry"         | while read -r it; do echo "$it" >> "$tmp"; done
-    done
-    # Workflows
-    jq -c --arg pack "$pack" '.workflows[]? | {pack:$pack, kind:"workflow", name:.name, filename:.filename, url:.url, dest_subdir:"workflows", sha256:(.sha256//"")}' <<<"$entry"       | while read -r it; do echo "$it" >> "$tmp"; done
-  done
-
-  # Enrich with observed sha/size if file exists (prefer downloads)
-  local out_tmp="$tmp.out"
-  : > "$out_tmp"
-  while read -r it; do
-    local pack kind file url sub wantsha
-    pack="$(jq -r '.pack' <<<"$it")"
-    kind="$(jq -r '.kind' <<<"$it")"
-    file="$(jq -r '.filename' <<<"$it")"
-    url="$(jq -r '.url' <<<"$it")"
-    sub="$(jq -r '.dest_subdir' <<<"$it")"
-    wantsha="$(jq -r '.sha256' <<<"$it")"
-    local dl="$DOWNLOAD_DIR/asset_packs/$pack/$file"
-    local sha="$wantsha"
-    local size="0"
-    if [[ -f "$dl" ]]; then
-      sha="$(sha256_file "$dl")"
-      size="$(wc -c < "$dl" | tr -d ' ')"
-    else
-      # fallback to installed locations
-      local inst=""
-      if [[ "$kind" == "workflow" ]]; then
-        inst="$WF_DIR/$file"
-      else
-        inst="$COMFYUI_MODELS_DIR/$sub/$file"
-      fi
-      if [[ -f "$inst" ]]; then
-        sha="$(sha256_file "$inst")"
-        size="$(wc -c < "$inst" | tr -d ' ')"
-      fi
-    fi
-    jq -nc --arg ts "$ts" --arg pack "$pack" --arg kind "$kind" --arg name "$(jq -r '.name'<<<"$it")" --arg file "$file" --arg url "$url" --arg resolved_url "${DL_RESOLVED_URL:-$url}" --arg mirror "${DL_MIRROR_USED:-}" --arg sub "$sub" --arg sha "$sha" --arg size "$size"       '{timestamp:$ts, pack:$pack, kind:$kind, name:$name, filename:$file, url:$url, dest_subdir:$sub, sha256:$sha, size_bytes:($size|tonumber)}' >> "$out_tmp"
-  done < "$tmp"
-
-  if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN: would write $out_json"
-  else
-    jq -s '{generated_at: (.[0].timestamp // ""), items: .}' "$out_tmp" > "$out_json"
-    log "Wrote lockfile: $out_json"
-  fi
-
-  rm -f "$tmp" "$out_tmp" 2>/dev/null || true
-}
-
-mirror_to(){
-  local dest="$1"
-  [[ -n "$dest" ]] || die "Usage: assets mirror --to <dir> [--apply]"
-  if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN: would mirror to $dest"
-    return 0
-  fi
-  mkdir -p "$dest"/{download,comfyui,registry,config} || true
-  mkdir -p "$dest/download/asset_packs" || true
-
-  # Copy downloads
-  if [[ -d "$DOWNLOAD_DIR/asset_packs" ]]; then
-    rsync -a --delete "$DOWNLOAD_DIR/asset_packs/" "$dest/download/asset_packs/"
-  fi
-
-  # Copy installed models/workflows
-  if [[ -d "$COMFYUI_MODELS_DIR" ]]; then
-    mkdir -p "$dest/comfyui/models"
-    rsync -a "$COMFYUI_MODELS_DIR/" "$dest/comfyui/models/"
-  fi
-  if [[ -d "$WF_DIR" ]]; then
-    mkdir -p "$dest/comfyui/workflows"
-    rsync -a "$WF_DIR/" "$dest/comfyui/workflows/"
-  fi
-
-  # Copy registry
-  if [[ -d "$DATA_DIR/registry/assets" ]]; then
-    mkdir -p "$dest/registry/assets"
-    rsync -a "$DATA_DIR/registry/assets/" "$dest/registry/assets/"
-  fi
-
-  # Copy config allowlists + packs
-  cp -n "$BASE_DIR/config/asset_packs.json" "$dest/config/" 2>/dev/null || true
-  cp -n "$BASE_DIR/config/assets.lock.json" "$dest/config/" 2>/dev/null || true
-  cp -n "$BASE_DIR/config/model_sources_allowlist.txt" "$dest/config/" 2>/dev/null || true
-  cp -n "$BASE_DIR/config/workflow_sources_allowlist.txt" "$dest/config/" 2>/dev/null || true
-
-  log "Mirror complete: $dest"
-}
-
-
-list_packs(){
-  jq -r '.packs | to_entries[] | "\(.key)	\(.value.desc)"' "$cfg" | expand -t 22
-}
-
-show_pack(){
-  local p="$1"
-  jq -r --arg p "$p" '.packs[$p]' "$cfg"
-}
-
-install_asset_pack(){
-  local p="$1"
-  pack_exists "$p" || die "Unknown asset pack: $p"
-  ensure_feature_packs "$p"
-
-  local do_models=1 do_wf=1
-  case "$ONLY" in
-    ""|all) ;;
-    models) do_wf=0 ;;
-    workflows) do_models=0 ;;
-    *) die "Unknown --only=$ONLY (use: models|workflows|all)" ;;
-  esac
-
-  log "Installing asset pack: $p"
-  if [[ "$do_models" -eq 1 ]]; then
-    install_models_array "$p" ".packs[\$p].models"
-    install_models_array "$p" ".packs[\$p].loras"
-  fi
-  if [[ "$do_wf" -eq 1 ]]; then
-    install_workflows "$p"
-  fi
-  register_rag "$p"
-  log "Done: $p"
-}
-
-case "$ACTION" in
-  list) list_packs ;;
-  show) [[ -n "${1:-}" ]] || die "Usage: assets show <pack>"; show_pack "$1" ;;
-lock)
-  gen_lockfile
-  ;;
-mirror)
-  # Usage: assets mirror --to <dir> [--apply]
-  to=""
-  for arg in "${@:-}"; do
-    case "$arg" in
-      --to=*) to="${arg#--to=}" ;;
-    esac
-  done
-  [[ -n "$to" ]] || die "Usage: assets mirror --to <dir> [--apply]"
-  mirror_to "$to"
-  ;;
-install)
-    if [[ -z "${1:-}" && -z "$PACK" ]]; then die "Usage: assets install <pack|all> [--apply] [--strict] [--rag] [--only=models|workflows|all]"; fi
-    target="${PACK:-${1:-}}"
-    if [[ "$target" == "all" ]]; then
-      mapfile -t names < <(jq -r '.packs | keys[]' "$cfg")
-      for p in "${names[@]}"; do install_asset_pack "$p"; done
-    else
-      # allow multiple packs
-      packs=()
-      for a in "$@"; do
-        [[ "$a" == "--apply" || "$a" == "--strict" || "$a" == "--rag" || "$a" == --only=* || "$a" == --pack=* || "$a" == "--yes" ]] && continue
-        packs+=("$a")
-      done
-      if [[ "${#packs[@]}" -eq 0 ]]; then packs=("$target"); fi
-      mapfile -t ordered < <(resolve_pack_deps "${packs[@]}")
-      log "Asset pack order: ${ordered[*]}"
-      for p in "${ordered[@]}"; do install_asset_pack "$p"; done
-    fi
-    ;;
-  *)
-    cat <<EOF
-Usage:
-  ./bin/beast assets list
-  ./bin/beast assets show <pack>
-  ./bin/beast assets install <pack|all> [--apply] [--strict] [--rag] [--only=models|workflows|all]
-
-Flags:
-  --apply    Actually do it (default is DRYRUN)
-  --strict   Enforce allowlisted source URLs
-  --trust=<enforce|warn|off>   Trust policy mode (default: enforce)
-  --no-quarantine-clear        Do not clear com.apple.quarantine on downloaded assets
-  --no-rollback                Disable rollback-on-fail behavior (default enabled)
-  --rag      After install, ingest the generated note into your RAG collection
-  --only=    Install subset: models|workflows|all
-
-Notes:
-- Edit config/asset_packs.json and replace placeholder URLs + sha256.
-- Provenance is written to: DATA_DIR/registry/assets/<pack>/
-EOF
-    ;;
-esac

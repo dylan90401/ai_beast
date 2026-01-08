@@ -10,6 +10,12 @@ BASE_DIR="${BASE_DIR:-$(cd "$script_dir/.." && pwd)}"
 PY_AGENT="$BASE_DIR/apps/agent/.venv/bin/python"
 if [[ -x "$PY_AGENT" ]]; then :; else PY_AGENT="python3"; fi
 
+# Load environment (non-fatal) so clients inherit defaults/features
+# shellcheck disable=SC1090
+[[ -f "$BASE_DIR/config/ai-beast.env" ]] && source "$BASE_DIR/config/ai-beast.env" || true
+# shellcheck disable=SC1090
+[[ -f "$BASE_DIR/config/features.env" ]] && source "$BASE_DIR/config/features.env" || true
+
 help(){
   cat <<EOT
 AI Beast CLI
@@ -93,7 +99,7 @@ case "$cmd" in
     done
     TASK="${*:-}"
     [[ -n "$TASK" ]] || { echo "Usage: beast agent \"task...\" [--apply] [--model MODEL]"; exit 2; }
-    $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent.py" $APPLY_FLAG $MODEL_FLAG "$TASK"
+    $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent.py" $APPLY_FLAG "$MODEL_FLAG" "$TASK"
     ;;
 
 agent-multi|agentx)
@@ -111,8 +117,8 @@ agent-multi|agentx)
     esac
   done
   TASK="${*:-}"
-  [[ -n "$TASK" ]] || { echo "Usage: beast agent-multi "task..." [--apply] [--model MODEL] [--pipeline build|harden|docs]"; exit 2; }
-  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $APPLY_FLAG $MODEL_FLAG --pipeline "$PIPELINE" "$TASK"
+  [[ -n "$TASK" ]] || { echo 'Usage: beast agent-multi "task..." [--apply] [--model MODEL] [--pipeline build|harden|docs]'; exit 2; }
+  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $APPLY_FLAG "$MODEL_FLAG" --pipeline "$PIPELINE" "$TASK"
   ;;
 
 agent-pipeline|agentp)
@@ -129,8 +135,8 @@ agent-pipeline|agentp)
     esac
   done
   TASK="${*:-}"
-  [[ -n "$PIPELINE" && -n "$TASK" ]] || { echo "Usage: beast agent-pipeline <pipeline> "task..." [--apply] [--model MODEL]"; exit 2; }
-  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $APPLY_FLAG $MODEL_FLAG --pipeline "$PIPELINE" "$TASK"
+  [[ -n "$PIPELINE" && -n "$TASK" ]] || { echo 'Usage: beast agent-pipeline <pipeline> "task..." [--apply] [--model MODEL]'; exit 2; }
+  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $APPLY_FLAG "$MODEL_FLAG" --pipeline "$PIPELINE" "$TASK"
   ;;
 
 audit)
@@ -144,7 +150,7 @@ audit)
     esac
   done
   TASK="${*:-Audit the workspace for hardcoded ports/paths, secret leaks, unsafe shell patterns, and missing verification/rollback steps. Provide a prioritized fix plan.}"
-  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" $MODEL_FLAG --pipeline harden "$TASK"
+  $PY_AGENT "$BASE_DIR/apps/agent/kryptos_agent_hub.py" "$MODEL_FLAG" --pipeline harden "$TASK"
   ;;
 
 verify)

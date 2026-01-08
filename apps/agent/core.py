@@ -19,16 +19,20 @@ import os
 import re
 import shlex
 import subprocess
-import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 import requests
 
 DEFAULT_OLLAMA = os.environ.get("AI_BEAST_OLLAMA", "http://127.0.0.1:11434")
-DEFAULT_MODEL = os.environ.get("AI_BEAST_AGENT_MODEL", "llama3.2:latest")
+DEFAULT_MODEL = (
+    os.environ.get("AI_BEAST_AGENT_MODEL")
+    or os.environ.get("FEATURE_AGENT_MODEL_DEFAULT")
+    or "llama3.2:latest"
+)
 
 SAFE_SUBDIRS = {
     "config",
@@ -74,11 +78,11 @@ class ToolContext:
     base: Path
     apply: bool
     allow_destructive: bool
-    touched: List[str]
+    touched: list[str]
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def base_dir_from_cwd() -> Path:
@@ -88,7 +92,9 @@ def base_dir_from_cwd() -> Path:
     for p in [cwd] + list(cwd.parents)[:8]:
         if (p / "bin" / "beast").exists():
             return p
-    raise SystemExit("Cannot locate BASE_DIR (expected bin/beast). cd into your AI Beast workspace root.")
+    raise SystemExit(
+        "Cannot locate BASE_DIR (expected bin/beast). cd into your AI Beast workspace root."
+    )
 
 
 def is_path_allowed(base: Path, target: Path) -> bool:
@@ -115,7 +121,13 @@ def write_text(path: Path, content: str, apply: bool) -> str:
     return f"wrote {path}"
 
 
-def run_cmd(cmd: Sequence[str], cwd: Path, apply: bool, allow_destructive: bool, timeout: int = 300) -> RunResult:
+def run_cmd(
+    cmd: Sequence[str],
+    cwd: Path,
+    apply: bool,
+    allow_destructive: bool,
+    timeout: int = 300,
+) -> RunResult:
     cmd = list(cmd)
     if not cmd:
         return RunResult(2, "", "empty command")
@@ -124,7 +136,15 @@ def run_cmd(cmd: Sequence[str], cwd: Path, apply: bool, allow_destructive: bool,
 
     # DRYRUN blocks anything that could mutate state.
     if not apply:
-        if exe in RISKY_BINS or exe in {"git", "pip", "brew", "docker", "colima", "python", "python3"}:
+        if exe in RISKY_BINS or exe in {
+            "git",
+            "pip",
+            "brew",
+            "docker",
+            "colima",
+            "python",
+            "python3",
+        }:
             # We still allow *read-only* docker and git via allowlist below.
             pass
 
@@ -179,17 +199,20 @@ def run_cmd(cmd: Sequence[str], cwd: Path, apply: bool, allow_destructive: bool,
         ]
         for pat in blocked_patterns:
             if re.search(pat, joined):
-                return RunResult(2, "", f"[dry-run] blocked command pattern: {pat} ({joined})")
+                return RunResult(
+                    2, "", f"[dry-run] blocked command pattern: {pat} ({joined})"
+                )
 
     # APPLY mode still blocks risky binaries unless allow_destructive.
     if apply and not allow_destructive and exe in RISKY_BINS:
-        return RunResult(2, "", f"blocked risky command without --allow-destructive: {' '.join(cmd)}")
+        return RunResult(
+            2, "", f"blocked risky command without --allow-destructive: {' '.join(cmd)}"
+        )
 
     p = subprocess.run(
         cmd,
         cwd=str(cwd),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         timeout=timeout,
         check=False,
@@ -206,20 +229,34 @@ def apply_unified_diff(base: Path, diff_text: str, apply: bool) -> str:
 
     # Prefer git apply if git repo
     if (base / ".git").exists():
-        rr = run_cmd(["git", "apply", str(tmp)], cwd=base, apply=True, allow_destructive=True, timeout=120)
+        rr = run_cmd(
+            ["git", "apply", str(tmp)],
+            cwd=base,
+            apply=True,
+            allow_destructive=True,
+            timeout=120,
+        )
         tmp.unlink(missing_ok=True)
         if rr.code == 0:
             return "patch applied with git apply"
         return f"git apply failed:\n{rr.err}\n{rr.out}"
 
-    rr = run_cmd(["patch", "-p0", "-i", str(tmp)], cwd=base, apply=True, allow_destructive=True, timeout=120)
+    rr = run_cmd(
+        ["patch", "-p0", "-i", str(tmp)],
+        cwd=base,
+        apply=True,
+        allow_destructive=True,
+        timeout=120,
+    )
     tmp.unlink(missing_ok=True)
     if rr.code == 0:
         return "patch applied with patch"
     return f"patch failed:\n{rr.err}\n{rr.out}"
 
 
-def ollama_chat(base_url: str, model: str, messages: List[Dict[str, str]], temperature: float = 0.2) -> str:
+def ollama_chat(
+    base_url: str, model: str, messages: list[dict[str, str]], temperature: float = 0.2
+) -> str:
     url = f"{base_url.rstrip('/')}/api/chat"
     payload = {
         "model": model,
@@ -234,8 +271,8 @@ def ollama_chat(base_url: str, model: str, messages: List[Dict[str, str]], tempe
     return data.get("message", {}).get("content", "")
 
 
-def parse_tool_lines(text: str) -> List[Dict[str, Any]]:
-    calls: List[Dict[str, Any]] = []
+def parse_tool_lines(text: str) -> list[dict[str, Any]]:
+    calls: list[dict[str, Any]] = []
     for line in text.splitlines():
         s = line.strip()
         if not (s.startswith("{") and s.endswith("}")):
@@ -255,12 +292,20 @@ def tool_help() -> str:
         {
             "tools": {
                 "fs_read": {"args": {"path": "relative/path"}},
-                "fs_write": {"args": {"path": "relative/path", "content": "..."}, "apply_required": True},
+                "fs_write": {
+                    "args": {"path": "relative/path", "content": "..."},
+                    "apply_required": True,
+                },
                 "fs_list": {"args": {"path": "relative/path"}},
                 "grep": {"args": {"pattern": "regex", "path": "relative/path"}},
                 "shell": {"args": {"cmd": "string or list", "timeout": 300}},
-                "patch": {"args": {"diff": "unified diff text"}, "apply_required": True},
-                "http_get": {"args": {"url": "http://127.0.0.1:3000/health", "timeout": 10}},
+                "patch": {
+                    "args": {"diff": "unified diff text"},
+                    "apply_required": True,
+                },
+                "http_get": {
+                    "args": {"url": "http://127.0.0.1:3000/health", "timeout": 10}
+                },
             }
         },
         indent=2,
@@ -269,7 +314,8 @@ def tool_help() -> str:
 
 # ---------------- Tools -----------------
 
-def tool_fs_read(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
+
+def tool_fs_read(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     rel = args.get("path")
     if not rel:
         return {"ok": False, "error": "missing path"}
@@ -282,7 +328,7 @@ def tool_fs_read(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": True, "content": read_text(path)}
 
 
-def tool_fs_write(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
+def tool_fs_write(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     rel = args.get("path")
     if not rel:
         return {"ok": False, "error": "missing path"}
@@ -294,7 +340,7 @@ def tool_fs_write(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": True, "result": msg}
 
 
-def tool_fs_list(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
+def tool_fs_list(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     rel = args.get("path", ".")
     root = ctx.base if rel in (".", "") else (ctx.base / rel)
     if root != ctx.base and not is_path_allowed(ctx.base, root):
@@ -308,7 +354,7 @@ def tool_fs_list(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": True, "items": items}
 
 
-def tool_grep(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
+def tool_grep(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     pattern = args.get("pattern", "")
     rel = args.get("path", ".")
     root = ctx.base if rel in (".", "") else (ctx.base / rel)
@@ -320,7 +366,7 @@ def tool_grep(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": False, "error": f"bad regex: {e}"}
 
     ctx.touched.append(str(root.relative_to(ctx.base)) if root != ctx.base else ".")
-    hits: List[Dict[str, Any]] = []
+    hits: list[dict[str, Any]] = []
     for p in root.rglob("*"):
         if p.is_dir() or p.name.startswith("."):
             continue
@@ -330,23 +376,40 @@ def tool_grep(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
             continue
         for i, line in enumerate(txt.splitlines(), start=1):
             if rx.search(line):
-                hits.append({"file": str(p.relative_to(ctx.base)), "line": i, "text": line[:240]})
+                hits.append(
+                    {
+                        "file": str(p.relative_to(ctx.base)),
+                        "line": i,
+                        "text": line[:240],
+                    }
+                )
                 if len(hits) >= 200:
                     return {"ok": True, "hits": hits, "truncated": True}
     return {"ok": True, "hits": hits}
 
 
-def tool_shell(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
+def tool_shell(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     cmd = args.get("cmd")
     if not cmd:
         return {"ok": False, "error": "missing cmd"}
     cmd_list = shlex.split(cmd) if isinstance(cmd, str) else list(cmd)
     ctx.touched.append(f"$ {' '.join(cmd_list)}")
-    rr = run_cmd(cmd_list, cwd=ctx.base, apply=ctx.apply, allow_destructive=ctx.allow_destructive, timeout=int(args.get("timeout", 300)))
-    return {"ok": rr.code == 0, "code": rr.code, "stdout": rr.out[-8000:], "stderr": rr.err[-8000:]}
+    rr = run_cmd(
+        cmd_list,
+        cwd=ctx.base,
+        apply=ctx.apply,
+        allow_destructive=ctx.allow_destructive,
+        timeout=int(args.get("timeout", 300)),
+    )
+    return {
+        "ok": rr.code == 0,
+        "code": rr.code,
+        "stdout": rr.out[-8000:],
+        "stderr": rr.err[-8000:],
+    }
 
 
-def tool_patch(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
+def tool_patch(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     diff = args.get("diff", "")
     if not diff.strip():
         return {"ok": False, "error": "empty diff"}
@@ -356,7 +419,7 @@ def tool_patch(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": ok, "result": res}
 
 
-def tool_http_get(ctx: ToolContext, args: Dict[str, Any]) -> Dict[str, Any]:
+def tool_http_get(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     url = args.get("url")
     if not url:
         return {"ok": False, "error": "missing url"}
@@ -386,7 +449,8 @@ TOOLS = {
 
 # ---------------- State -----------------
 
-def load_agent_state(base: Path) -> Dict[str, Any]:
+
+def load_agent_state(base: Path) -> dict[str, Any]:
     state_path = base / "config" / "agent_state.json"
     if not state_path.exists():
         return {"version": 1, "history": []}
@@ -396,7 +460,7 @@ def load_agent_state(base: Path) -> Dict[str, Any]:
         return {"version": 1, "history": []}
 
 
-def save_agent_state(base: Path, state: Dict[str, Any], apply: bool) -> None:
+def save_agent_state(base: Path, state: dict[str, Any], apply: bool) -> None:
     state_path = base / "config" / "agent_state.json"
     if not apply:
         return
@@ -405,15 +469,15 @@ def save_agent_state(base: Path, state: Dict[str, Any], apply: bool) -> None:
 
 def record_run(
     base: Path,
-    state: Dict[str, Any],
+    state: dict[str, Any],
     model: str,
     ollama: str,
     apply: bool,
     allow_destructive: bool,
     task: str,
     final: str,
-    verification: List[str],
-    touched: List[str],
+    verification: list[str],
+    touched: list[str],
 ) -> None:
     entry = {
         "timestamp": utc_now(),
@@ -433,7 +497,7 @@ def record_run(
     state["last_run"] = entry
 
 
-def state_context_snippet(state: Dict[str, Any], max_items: int = 5) -> str:
+def state_context_snippet(state: dict[str, Any], max_items: int = 5) -> str:
     hist = state.get("history", [])
     if not hist:
         return "(no prior agent runs recorded)"
@@ -449,6 +513,7 @@ def state_context_snippet(state: Dict[str, Any], max_items: int = 5) -> str:
 
 # ---------------- Tool loop -----------------
 
+
 def run_tool_loop(
     *,
     base: Path,
@@ -460,16 +525,18 @@ def run_tool_loop(
     allow_destructive: bool,
     max_steps: int = 30,
     temperature: float = 0.2,
-    extra_messages: Optional[List[Dict[str, str]]] = None,
-) -> Tuple[int, str, List[str]]:
+    extra_messages: list[dict[str, str]] | None = None,
+) -> tuple[int, str, list[str]]:
     """Run an agent tool loop.
 
     Returns: (exit_code, final_text_or_error, touched_items)
     """
 
-    ctx = ToolContext(base=base, apply=apply, allow_destructive=allow_destructive, touched=[])
+    ctx = ToolContext(
+        base=base, apply=apply, allow_destructive=allow_destructive, touched=[]
+    )
 
-    messages: List[Dict[str, str]] = [
+    messages: list[dict[str, str]] = [
         {"role": "system", "content": system_prompt},
     ]
     if extra_messages:
@@ -498,12 +565,14 @@ def run_tool_loop(
             )
             continue
 
-        tool_outputs: List[str] = []
+        tool_outputs: list[str] = []
         for obj in calls:
             tool = obj.get("tool")
             args = obj.get("args", {})
             if tool not in TOOLS:
-                tool_outputs.append(json.dumps({"ok": False, "error": f"unknown tool: {tool}"}))
+                tool_outputs.append(
+                    json.dumps({"ok": False, "error": f"unknown tool: {tool}"})
+                )
                 continue
             try:
                 out = TOOLS[tool](ctx, args)
@@ -518,7 +587,7 @@ def run_tool_loop(
                 "content": (
                     f"STEP {step} TOOL_RESULTS:\n"
                     + "\n".join(tool_outputs)
-                    + "\n\nContinue. End with {\"final\":\"...\"} including verification commands and rollback notes."
+                    + '\n\nContinue. End with {"final":"..."} including verification commands and rollback notes.'
                 ),
             }
         )
@@ -526,9 +595,9 @@ def run_tool_loop(
     return 4, f"Max steps reached ({max_steps}) without a final response.", ctx.touched
 
 
-def extract_verification_lines(final_text: str) -> List[str]:
+def extract_verification_lines(final_text: str) -> list[str]:
     """Heuristic: lines beginning with '$ ' are commands."""
-    out: List[str] = []
+    out: list[str] = []
     for ln in final_text.splitlines():
         s = ln.strip()
         if s.startswith("$ "):

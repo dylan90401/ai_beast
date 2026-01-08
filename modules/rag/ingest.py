@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-import argparse, os, sys, hashlib
+import argparse
+import hashlib
+import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, List, Dict, Any
+
 
 def sha256_bytes(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
-def iter_files(root: Path, exts: List[str]) -> Iterable[Path]:
+
+def iter_files(root: Path, exts: list[str]) -> Iterable[Path]:
     for p in root.rglob("*"):
         if not p.is_file():
             continue
@@ -15,6 +19,7 @@ def iter_files(root: Path, exts: List[str]) -> Iterable[Path]:
         if exts and p.suffix.lower().lstrip(".") not in exts:
             continue
         yield p
+
 
 def read_text_best_effort(path: Path, max_bytes: int) -> str:
     data = path.read_bytes()
@@ -28,7 +33,8 @@ def read_text_best_effort(path: Path, max_bytes: int) -> str:
             pass
     return data.decode("utf-8", errors="ignore")
 
-def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
+
+def chunk_text(text: str, chunk_size: int, overlap: int) -> list[str]:
     text = text.replace("\r\n", "\n")
     if chunk_size <= 0:
         return [text]
@@ -43,16 +49,26 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
         i = max(0, j - overlap)
     return [c.strip() for c in chunks if c.strip()]
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True, help="Directory to ingest")
     ap.add_argument("--qdrant", default="http://127.0.0.1:6333", help="Qdrant URL")
     ap.add_argument("--collection", default="ai_beast", help="Collection name")
-    ap.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2", help="Embedding model")
+    ap.add_argument(
+        "--model",
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        help="Embedding model",
+    )
     ap.add_argument("--chunk-size", type=int, default=1200)
     ap.add_argument("--overlap", type=int, default=200)
     ap.add_argument("--max-bytes", type=int, default=2_000_000)
-    ap.add_argument("--ext", action="append", default=[], help="Allowed extension (repeat). Example: --ext md --ext txt")
+    ap.add_argument(
+        "--ext",
+        action="append",
+        default=[],
+        help="Allowed extension (repeat). Example: --ext md --ext txt",
+    )
     ap.add_argument("--apply", action="store_true", help="Actually write to Qdrant")
     args = ap.parse_args()
 
@@ -65,8 +81,11 @@ def main():
         from qdrant_client import QdrantClient
         from qdrant_client.http.models import Distance, VectorParams
         from sentence_transformers import SentenceTransformer
-    except Exception as e:
-        print("[rag] missing deps. Install: pip install -r modules/rag/requirements.txt", file=sys.stderr)
+    except Exception:
+        print(
+            "[rag] missing deps. Install: pip install -r modules/rag/requirements.txt",
+            file=sys.stderr,
+        )
         raise
 
     print(f"[rag] qdrant={args.qdrant} collection={args.collection}")
@@ -107,7 +126,9 @@ def main():
         chunks = chunk_text(text, args.chunk_size, args.overlap)
         if not chunks:
             continue
-        vectors = embedder.encode(chunks, show_progress_bar=False, convert_to_numpy=True)
+        vectors = embedder.encode(
+            chunks, show_progress_bar=False, convert_to_numpy=True
+        )
         for idx, chunk in enumerate(chunks):
             pid += 1
             payload = {
@@ -120,12 +141,16 @@ def main():
         # flush in batches
         if len(points) >= 128:
             if not args.apply:
-                print(f"[rag] DRYRUN would upsert {len(points)} points (latest file: {f})")
+                print(
+                    f"[rag] DRYRUN would upsert {len(points)} points (latest file: {f})"
+                )
                 points.clear()
             else:
                 client.upsert(
                     collection_name=args.collection,
-                    points=[{"id": i, "vector": v, "payload": p} for (i, v, p) in points],
+                    points=[
+                        {"id": i, "vector": v, "payload": p} for (i, v, p) in points
+                    ],
                 )
                 print(f"[rag] upserted {len(points)} points (latest file: {f})")
                 points.clear()
@@ -140,6 +165,7 @@ def main():
             )
             print(f"[rag] upserted {len(points)} points (final)")
     print("[rag] done")
+
 
 if __name__ == "__main__":
     main()

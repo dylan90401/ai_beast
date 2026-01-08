@@ -4,26 +4,27 @@ Deterministic verifier for AI Beast workspace.
 - No writes, no patches.
 - Exits non-zero on failure.
 """
+
 import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Tuple, List
 
-def run(cmd: List[str], cwd: Path, timeout: int = 300) -> Tuple[int, str, str]:
+
+def run(cmd: list[str], cwd: Path, timeout: int = 300) -> tuple[int, str, str]:
     p = subprocess.run(
         cmd,
         cwd=str(cwd),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         timeout=timeout,
         check=False,
     )
     return p.returncode, p.stdout, p.stderr
 
-def load_env_file(p: Path) -> Dict[str, str]:
-    env: Dict[str, str] = {}
+
+def load_env_file(p: Path) -> dict[str, str]:
+    env: dict[str, str] = {}
     if not p.exists():
         return env
     for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -38,9 +39,15 @@ def load_env_file(p: Path) -> Dict[str, str]:
         env[k.strip()] = v.strip().strip('"').strip("'")
     return env
 
+
 def curl_ok(url: str, timeout: int = 8) -> bool:
-    code, _, _ = run(["curl", "-fsS", "--max-time", str(timeout), url], cwd=Path.cwd(), timeout=timeout + 2)
+    code, _, _ = run(
+        ["curl", "-fsS", "--max-time", str(timeout), url],
+        cwd=Path.cwd(),
+        timeout=timeout + 2,
+    )
     return code == 0
+
 
 def main() -> int:
     base = Path.cwd().resolve()
@@ -61,21 +68,45 @@ def main() -> int:
         return ports.get(name, default)
 
     # 1) Preflight
-    code, out, err = run([str(base / "bin" / "beast"), "preflight", "--verbose"], cwd=base, timeout=300)
+    code, out, err = run(
+        [str(base / "bin" / "beast"), "preflight", "--verbose"], cwd=base, timeout=300
+    )
     add("beast preflight", code == 0, (err or out)[-800:])
 
     # 2) Status
-    code2, out2, err2 = run([str(base / "bin" / "beast"), "status", "--verbose"], cwd=base, timeout=180)
+    code2, out2, err2 = run(
+        [str(base / "bin" / "beast"), "status", "--verbose"], cwd=base, timeout=180
+    )
     add("beast status", code2 == 0, (err2 or out2)[-800:])
 
     # 3) Endpoints (best-effort)
-    add("ollama /api/version", curl_ok(f"http://{bind_addr}:{port('PORT_OLLAMA','11434')}/api/version"), f"{bind_addr}:{port('PORT_OLLAMA','11434')}")
-    add("qdrant /healthz", curl_ok(f"http://{bind_addr}:{port('PORT_QDRANT','6333')}/healthz"), f"{bind_addr}:{port('PORT_QDRANT','6333')}")
-    add("comfyui /", curl_ok(f"http://{bind_addr}:{port('PORT_COMFYUI','8188')}/"), f"{bind_addr}:{port('PORT_COMFYUI','8188')}")
-    add("webui /", curl_ok(f"http://{bind_addr}:{port('PORT_WEBUI','3000')}/"), f"{bind_addr}:{port('PORT_WEBUI','3000')}")
+    add(
+        "ollama /api/version",
+        curl_ok(f"http://{bind_addr}:{port('PORT_OLLAMA', '11434')}/api/version"),
+        f"{bind_addr}:{port('PORT_OLLAMA', '11434')}",
+    )
+    add(
+        "qdrant /healthz",
+        curl_ok(f"http://{bind_addr}:{port('PORT_QDRANT', '6333')}/healthz"),
+        f"{bind_addr}:{port('PORT_QDRANT', '6333')}",
+    )
+    add(
+        "comfyui /",
+        curl_ok(f"http://{bind_addr}:{port('PORT_COMFYUI', '8188')}/"),
+        f"{bind_addr}:{port('PORT_COMFYUI', '8188')}",
+    )
+    add(
+        "webui /",
+        curl_ok(f"http://{bind_addr}:{port('PORT_WEBUI', '3000')}/"),
+        f"{bind_addr}:{port('PORT_WEBUI', '3000')}",
+    )
 
     # 4) Compose generation (dry-run)
-    code3, out3, err3 = run([str(base / "bin" / "beast"), "compose", "gen", "--dry-run", "--verbose"], cwd=base, timeout=180)
+    code3, out3, err3 = run(
+        [str(base / "bin" / "beast"), "compose", "gen", "--dry-run", "--verbose"],
+        cwd=base,
+        timeout=180,
+    )
     add("compose gen (dry-run)", code3 == 0, (err3 or out3)[-800:])
 
     any_fail = any(not ok for _, ok, _ in checks)
@@ -87,6 +118,7 @@ def main() -> int:
     print("-" * 28)
     print("Result:", "FAIL" if any_fail else "PASS")
     return 1 if any_fail else 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

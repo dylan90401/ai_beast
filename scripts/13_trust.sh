@@ -26,17 +26,17 @@ mkdir -p "$BASE_DIR/provenance" "$QUAR"
 
 # basic helper: compute sha256
 sha256(){
-  python3 - <<PY
+  python3 - "$1" <<'PY'
 import hashlib,sys,pathlib
 p=pathlib.Path(sys.argv[1])
 h=hashlib.sha256(p.read_bytes()).hexdigest()
 print(h)
-PY "$1"
+PY
 }
 
 # record provenance event (append jsonl)
 prov(){
-  python3 - <<PY
+  python3 - "$1" <<'PY'
 import json, time, pathlib, os, sys
 p=pathlib.Path(os.environ["PROV_DB"])
 p.parent.mkdir(parents=True, exist_ok=True)
@@ -46,7 +46,7 @@ p.write_text("", encoding="utf-8") if not p.exists() else None
 with p.open("a", encoding="utf-8") as f:
   f.write(json.dumps(event)+"\n")
 print("[trust] provenance recorded:", event.get("type"), event.get("name",""))
-PY "$1"
+PY
 }
 
 check_allowlist_models(){

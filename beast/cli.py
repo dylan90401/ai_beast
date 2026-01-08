@@ -3,12 +3,24 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Any
 
 from beast.runtime import docker_compose_cmd, ensure_runtime_ready, run
 
+
+class CLI:
+    """Lightweight CLI wrapper for tests and scripting."""
+
+    def __init__(self, base_dir: Path | None = None) -> None:
+        self.base_dir = base_dir or ROOT
+        self.config_dir = self.base_dir / "config"
+
+    def show_status(self) -> int:
+        print("AI Beast Status")
+        print(f"Base directory: {self.base_dir}")
+        print(f"Config directory: {self.config_dir}")
+        return 0
 
 ROOT = Path(os.environ.get("BEAST_ROOT", Path(__file__).resolve().parents[1]))
 REGISTRY = ROOT / "packs" / "registry.json"
@@ -35,7 +47,7 @@ def _compose_files(extra_packs: list[str] | None = None) -> list[Path]:
     reg = _load_registry()
     enabled = set(_enabled_packs(reg))
     if extra_packs:
-        enabled |= set([p.strip() for p in extra_packs if p.strip()])
+        enabled |= {p.strip() for p in extra_packs if p.strip()}
 
     files = [COMPOSE_BASE]
     for pack in sorted(enabled):
@@ -75,9 +87,13 @@ def cmd_preflight() -> None:
 def cmd_bootstrap() -> None:
     # Delegate OS-specific bootstrap scripts (keeps system changes in bash)
     if os.uname().sysname.lower().startswith("darwin"):
-        run([str(ROOT / "scripts" / "20_bootstrap_macos.sh")], cwd=str(ROOT), check=True)
+        run(
+            [str(ROOT / "scripts" / "20_bootstrap_macos.sh")], cwd=str(ROOT), check=True
+        )
     else:
-        run([str(ROOT / "scripts" / "21_bootstrap_linux.sh")], cwd=str(ROOT), check=True)
+        run(
+            [str(ROOT / "scripts" / "21_bootstrap_linux.sh")], cwd=str(ROOT), check=True
+        )
     print("OK: bootstrap complete")
 
 
@@ -144,11 +160,12 @@ def cmd_eval(category: str | None, output_format: str, save_path: str | None) ->
     except ImportError:
         # Fallback for non-package installation
         import sys
+
         sys.path.insert(0, str(ROOT))
         from modules.evaluation import Evaluator
-    
+
     evaluator = Evaluator(ROOT)
-    
+
     if category:
         # Run specific category
         if category == "system":
@@ -164,11 +181,11 @@ def cmd_eval(category: str | None, output_format: str, save_path: str | None) ->
     else:
         # Run all evaluations
         evaluator.run_all_evaluations()
-    
+
     # Generate and display report
     report = evaluator.generate_report(output_format)
     print(report)
-    
+
     # Save if requested
     if save_path:
         evaluator.save_report(save_path, output_format)
@@ -183,7 +200,12 @@ def main() -> None:
     sub.add_parser("bootstrap")
 
     up = sub.add_parser("up")
-    up.add_argument("--with", dest="with_packs", default="", help="Comma-separated packs to include temporarily")
+    up.add_argument(
+        "--with",
+        dest="with_packs",
+        default="",
+        help="Comma-separated packs to include temporarily",
+    )
 
     sub.add_parser("down")
     sub.add_parser("status")
@@ -206,18 +228,15 @@ def main() -> None:
     eval_parser.add_argument(
         "--category",
         choices=["system", "docker", "config", "extensions"],
-        help="Specific category to evaluate (default: all)"
+        help="Specific category to evaluate (default: all)",
     )
     eval_parser.add_argument(
         "--format",
         choices=["json", "text"],
         default="text",
-        help="Output format (default: text)"
+        help="Output format (default: text)",
     )
-    eval_parser.add_argument(
-        "--save",
-        help="Save report to file"
-    )
+    eval_parser.add_argument("--save", help="Save report to file")
 
     args = p.parse_args()
 

@@ -9,7 +9,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 from rich.console import Console
@@ -18,11 +18,27 @@ from rich.panel import Panel
 console = Console()
 
 DEFAULT_OLLAMA = "http://127.0.0.1:11434"
-DEFAULT_MODEL = os.environ.get("AI_BEAST_AGENT_MODEL", "llama3.2:latest")
+DEFAULT_MODEL = (
+    os.environ.get("AI_BEAST_AGENT_MODEL")
+    or os.environ.get("FEATURE_AGENT_MODEL_DEFAULT")
+    or "llama3.2:latest"
+)
 
 SAFE_SUBDIRS = {
-    "config","bin","scripts","apps","docker","data","models","outputs","logs","backups","extensions",".vscode"
+    "config",
+    "bin",
+    "scripts",
+    "apps",
+    "docker",
+    "data",
+    "models",
+    "outputs",
+    "logs",
+    "backups",
+    "extensions",
+    ".vscode",
 }
+
 
 @dataclass
 class RunResult:
@@ -30,9 +46,11 @@ class RunResult:
     out: str
     err: str
 
+
 def die(msg: str, code: int = 1) -> None:
     console.print(Panel(msg, title="Error", style="red"))
     sys.exit(code)
+
 
 def base_dir_from_cwd() -> Path:
     cwd = Path.cwd().resolve()
@@ -41,8 +59,12 @@ def base_dir_from_cwd() -> Path:
     for p in [cwd] + list(cwd.parents)[:6]:
         if (p / "bin" / "beast").exists():
             return p
-    die("Cannot locate BASE_DIR (expected bin/beast). cd into your AI Beast workspace root.", 2)
+    die(
+        "Cannot locate BASE_DIR (expected bin/beast). cd into your AI Beast workspace root.",
+        2,
+    )
     raise RuntimeError
+
 
 def is_path_allowed(base: Path, target: Path) -> bool:
     try:
@@ -55,8 +77,10 @@ def is_path_allowed(base: Path, target: Path) -> bool:
     except Exception:
         return False
 
+
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
+
 
 def write_text(path: Path, content: str, apply: bool) -> str:
     if not apply:
@@ -65,22 +89,25 @@ def write_text(path: Path, content: str, apply: bool) -> str:
     path.write_text(content, encoding="utf-8")
     return f"wrote {path}"
 
-def run_cmd(cmd: List[str], cwd: Path, apply: bool, timeout: int = 300) -> RunResult:
+
+def run_cmd(cmd: list[str], cwd: Path, apply: bool, timeout: int = 300) -> RunResult:
     # For DRYRUN: allow safe commands, block obvious destructive ones.
-    destructive = {"rm","mv","cp","chmod","chown"}
+    destructive = {"rm", "mv", "cp", "chmod", "chown"}
     if not apply and cmd and Path(cmd[0]).name in destructive:
-        return RunResult(2, "", f"[dry-run] blocked potentially destructive command: {' '.join(cmd)}")
+        return RunResult(
+            2, "", f"[dry-run] blocked potentially destructive command: {' '.join(cmd)}"
+        )
 
     p = subprocess.run(
         cmd,
         cwd=str(cwd),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         timeout=timeout,
         check=False,
     )
     return RunResult(p.returncode, p.stdout, p.stderr)
+
 
 def apply_unified_diff(base: Path, diff_text: str, apply: bool) -> str:
     if not apply:
@@ -100,17 +127,26 @@ def apply_unified_diff(base: Path, diff_text: str, apply: bool) -> str:
         return "patch applied with patch"
     return f"patch failed:\n{rr.err}\n{rr.out}"
 
-def ollama_chat(base_url: str, model: str, messages: List[Dict[str, str]], temperature: float = 0.2) -> str:
+
+def ollama_chat(
+    base_url: str, model: str, messages: list[dict[str, str]], temperature: float = 0.2
+) -> str:
     url = f"{base_url.rstrip('/')}/api/chat"
-    payload = {"model": model, "messages": messages, "stream": False, "options": {"temperature": temperature}}
+    payload = {
+        "model": model,
+        "messages": messages,
+        "stream": False,
+        "options": {"temperature": temperature},
+    }
     r = requests.post(url, json=payload, timeout=300)
     if r.status_code != 200:
         die(f"Ollama chat failed: HTTP {r.status_code}\n{r.text}", 3)
     data = r.json()
     return data.get("message", {}).get("content", "")
 
-def parse_tool_lines(text: str) -> List[Dict[str, Any]]:
-    calls: List[Dict[str, Any]] = []
+
+def parse_tool_lines(text: str) -> list[dict[str, Any]]:
+    calls: list[dict[str, Any]] = []
     for line in text.splitlines():
         line = line.strip()
         if not (line.startswith("{") and line.endswith("}")):
@@ -123,22 +159,32 @@ def parse_tool_lines(text: str) -> List[Dict[str, Any]]:
             continue
     return calls
 
+
 def tool_help() -> str:
     return json.dumps(
         {
             "tools": {
                 "fs_read": {"args": {"path": "relative/path"}},
-                "fs_write": {"args": {"path": "relative/path", "content": "..."}, "apply_required": True},
+                "fs_write": {
+                    "args": {"path": "relative/path", "content": "..."},
+                    "apply_required": True,
+                },
                 "fs_list": {"args": {"path": "relative/path"}},
                 "grep": {"args": {"pattern": "regex", "path": "relative/path"}},
                 "shell": {"args": {"cmd": "string or list", "timeout": 300}},
-                "patch": {"args": {"diff": "unified diff text"}, "apply_required": True},
+                "patch": {
+                    "args": {"diff": "unified diff text"},
+                    "apply_required": True,
+                },
             }
         },
         indent=2,
     )
 
-def tool_fs_read(base: Path, args: Dict[str, Any], touched: List[str]) -> Dict[str, Any]:
+
+def tool_fs_read(
+    base: Path, args: dict[str, Any], touched: list[str]
+) -> dict[str, Any]:
     path = base / args["path"]
     if not is_path_allowed(base, path):
         return {"ok": False, "error": f"read denied: {args['path']}"}
@@ -147,7 +193,10 @@ def tool_fs_read(base: Path, args: Dict[str, Any], touched: List[str]) -> Dict[s
     touched.append(str(path.relative_to(base)))
     return {"ok": True, "content": read_text(path)}
 
-def tool_fs_write(base: Path, args: Dict[str, Any], apply: bool, touched: List[str]) -> Dict[str, Any]:
+
+def tool_fs_write(
+    base: Path, args: dict[str, Any], apply: bool, touched: list[str]
+) -> dict[str, Any]:
     path = base / args["path"]
     if not is_path_allowed(base, path):
         return {"ok": False, "error": f"write denied: {args['path']}"}
@@ -155,7 +204,10 @@ def tool_fs_write(base: Path, args: Dict[str, Any], apply: bool, touched: List[s
     msg = write_text(path, args.get("content", ""), apply=apply)
     return {"ok": True, "result": msg}
 
-def tool_fs_list(base: Path, args: Dict[str, Any], touched: List[str]) -> Dict[str, Any]:
+
+def tool_fs_list(
+    base: Path, args: dict[str, Any], touched: list[str]
+) -> dict[str, Any]:
     path = base / args.get("path", ".")
     if path == base:
         root_ok = True
@@ -166,10 +218,14 @@ def tool_fs_list(base: Path, args: Dict[str, Any], touched: List[str]) -> Dict[s
     if not path.exists():
         return {"ok": False, "error": "not found"}
     touched.append(str(path.relative_to(base)) if path != base else ".")
-    items = [{"name": p.name, "type": "dir" if p.is_dir() else "file"} for p in sorted(path.iterdir())]
+    items = [
+        {"name": p.name, "type": "dir" if p.is_dir() else "file"}
+        for p in sorted(path.iterdir())
+    ]
     return {"ok": True, "items": items}
 
-def tool_grep(base: Path, args: Dict[str, Any], touched: List[str]) -> Dict[str, Any]:
+
+def tool_grep(base: Path, args: dict[str, Any], touched: list[str]) -> dict[str, Any]:
     pattern = args.get("pattern", "")
     root = base / args.get("path", ".")
     if root != base and not is_path_allowed(base, root):
@@ -186,21 +242,34 @@ def tool_grep(base: Path, args: Dict[str, Any], touched: List[str]) -> Dict[str,
             continue
         for i, line in enumerate(text.splitlines(), start=1):
             if rx.search(line):
-                hits.append({"file": str(p.relative_to(base)), "line": i, "text": line[:240]})
+                hits.append(
+                    {"file": str(p.relative_to(base)), "line": i, "text": line[:240]}
+                )
                 if len(hits) >= 200:
                     return {"ok": True, "hits": hits, "truncated": True}
     return {"ok": True, "hits": hits}
 
-def tool_shell(base: Path, args: Dict[str, Any], apply: bool, touched: List[str]) -> Dict[str, Any]:
+
+def tool_shell(
+    base: Path, args: dict[str, Any], apply: bool, touched: list[str]
+) -> dict[str, Any]:
     cmd = args.get("cmd")
     if not cmd:
         return {"ok": False, "error": "missing cmd"}
     cmd_list = shlex.split(cmd) if isinstance(cmd, str) else cmd
     touched.append(f"$ {' '.join(cmd_list)}")
     rr = run_cmd(cmd_list, cwd=base, apply=apply, timeout=int(args.get("timeout", 300)))
-    return {"ok": rr.code == 0, "code": rr.code, "stdout": rr.out[-8000:], "stderr": rr.err[-8000:]}
+    return {
+        "ok": rr.code == 0,
+        "code": rr.code,
+        "stdout": rr.out[-8000:],
+        "stderr": rr.err[-8000:],
+    }
 
-def tool_patch(base: Path, args: Dict[str, Any], apply: bool, touched: List[str]) -> Dict[str, Any]:
+
+def tool_patch(
+    base: Path, args: dict[str, Any], apply: bool, touched: list[str]
+) -> dict[str, Any]:
     diff_text = args.get("diff", "")
     if not diff_text.strip():
         return {"ok": False, "error": "empty diff"}
@@ -209,7 +278,27 @@ def tool_patch(base: Path, args: Dict[str, Any], apply: bool, touched: List[str]
     ok = "failed" not in result.lower()
     return {"ok": ok, "result": result}
 
-def update_state(base: Path, model: str, ollama: str, apply: bool, task: str, summary: str, verification: List[str], files_touched: List[str]) -> None:
+
+TOOLS = {
+    "fs_read": tool_fs_read,
+    "fs_write": tool_fs_write,
+    "fs_list": tool_fs_list,
+    "grep": tool_grep,
+    "shell": tool_shell,
+    "patch": tool_patch,
+}
+
+
+def update_state(
+    base: Path,
+    model: str,
+    ollama: str,
+    apply: bool,
+    task: str,
+    summary: str,
+    verification: list[str],
+    files_touched: list[str],
+) -> None:
     state_path = base / "config" / "agent_state.json"
     if not state_path.exists():
         return
@@ -230,6 +319,7 @@ def update_state(base: Path, model: str, ollama: str, apply: bool, task: str, su
     if apply:
         write_text(state_path, json.dumps(state, indent=2), apply=True)
 
+
 def run_tool_loop(
     base: Path,
     ollama: str,
@@ -239,14 +329,14 @@ def run_tool_loop(
     apply: bool = False,
     max_steps: int = 30,
     temperature: float = 0.2,
-    extra_messages: Optional[List[Dict[str, str]]] = None,
-) -> Tuple[int, str]:
+    extra_messages: list[dict[str, str]] | None = None,
+) -> tuple[int, str]:
     """
     Tool-using loop. Returns (exit_code, final_text_or_error).
     In DRYRUN (apply=False) the agent may run read-only shell commands and will not write/patch files.
     """
 
-    messages: List[Dict[str, str]] = [
+    messages: list[dict[str, str]] = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_content},
     ]
@@ -266,18 +356,22 @@ def run_tool_loop(
         if not calls:
             # Nudge protocol compliance
             messages.append({"role": "assistant", "content": content})
-            messages.append({
-                "role": "user",
-                "content": "You MUST respond with one JSON tool call per line or a final JSON. Try again using the tool protocol.",
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": "You MUST respond with one JSON tool call per line or a final JSON. Try again using the tool protocol.",
+                }
+            )
             continue
 
-        tool_outputs: List[str] = []
+        tool_outputs: list[str] = []
         for obj in calls:
             tool = obj.get("tool")
             args_dict = obj.get("args", {})
             if tool not in TOOLS:
-                tool_outputs.append(json.dumps({"ok": False, "error": f"unknown tool: {tool}"}))
+                tool_outputs.append(
+                    json.dumps({"ok": False, "error": f"unknown tool: {tool}"})
+                )
                 continue
             fn = TOOLS[tool]
             try:
@@ -292,25 +386,33 @@ def run_tool_loop(
             tool_outputs.append(json.dumps(out))
 
         messages.append({"role": "assistant", "content": content})
-        messages.append({
-            "role": "user",
-            "content": (
-                f"STEP {step} TOOL_RESULTS:\n"
-                + "\n".join(tool_outputs)
-                + "\n\nContinue. End with {\"final\":...} including verification commands and rollback notes."
-            ),
-        })
+        messages.append(
+            {
+                "role": "user",
+                "content": (
+                    f"STEP {step} TOOL_RESULTS:\n"
+                    + "\n".join(tool_outputs)
+                    + '\n\nContinue. End with {"final":...} including verification commands and rollback notes.'
+                ),
+            }
+        )
 
     return 4, f"Max steps reached ({max_steps}) without a final response."
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="KRYPTOS Builder Agent (Ollama + deterministic tools)")
+    ap = argparse.ArgumentParser(
+        description="KRYPTOS Builder Agent (Ollama + deterministic tools)"
+    )
     ap.add_argument("task", nargs="*", help="Task prompt (quoted string recommended)")
     ap.add_argument("--ollama", default=DEFAULT_OLLAMA)
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument("--system", default="apps/agent/prompts/kryptos_builder.system.md")
-    ap.add_argument("--apply", action="store_true", help="Actually write/patch/run (otherwise dry-run)")
+    ap.add_argument(
+        "--apply",
+        action="store_true",
+        help="Actually write/patch/run (otherwise dry-run)",
+    )
     ap.add_argument("--max-steps", type=int, default=30)
     ap.add_argument("--temperature", type=float, default=0.2)
     args = ap.parse_args()
@@ -325,34 +427,62 @@ def main() -> None:
         die("Provide a task prompt.", 2)
 
     system_prompt = read_text(system_path)
-    messages: List[Dict[str, str]] = [
+    messages: list[dict[str, str]] = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"BASE_DIR={str(base)}\nAPPLY={args.apply}\nTOOLS={tool_help()}\n\nTASK:\n{task}"},
+        {
+            "role": "user",
+            "content": f"BASE_DIR={str(base)}\nAPPLY={args.apply}\nTOOLS={tool_help()}\n\nTASK:\n{task}",
+        },
     ]
 
-    console.print(Panel(f"Model: {args.model}\nOllama: {args.ollama}\nAPPLY: {args.apply}", title="KRYPTOS Agent"))
+    console.print(
+        Panel(
+            f"Model: {args.model}\nOllama: {args.ollama}\nAPPLY: {args.apply}",
+            title="KRYPTOS Agent",
+        )
+    )
 
-    touched: List[str] = []
+    touched: list[str] = []
 
     for step in range(1, args.max_steps + 1):
-        content = ollama_chat(args.ollama, args.model, messages, temperature=args.temperature)
+        content = ollama_chat(
+            args.ollama, args.model, messages, temperature=args.temperature
+        )
         calls = parse_tool_lines(content)
 
         for obj in calls:
             if "final" in obj:
                 final_text = obj["final"]
                 # heuristic: extract verification commands lines starting with "$ "
-                verification = [ln.strip()[2:] for ln in final_text.splitlines() if ln.strip().startswith("$ ")]
-                update_state(base, args.model, args.ollama, args.apply, task, final_text[:4000], verification, touched)
+                verification = [
+                    ln.strip()[2:]
+                    for ln in final_text.splitlines()
+                    if ln.strip().startswith("$ ")
+                ]
+                update_state(
+                    base,
+                    args.model,
+                    args.ollama,
+                    args.apply,
+                    task,
+                    final_text[:4000],
+                    verification,
+                    touched,
+                )
                 console.print(Panel(final_text, title="Result", style="green"))
                 return
 
         if not calls:
             messages.append({"role": "assistant", "content": content})
-            messages.append({"role": "user", "content": "Use the tool protocol: one JSON tool call per line, or a single final JSON."})
+            messages.append(
+                {
+                    "role": "user",
+                    "content": "Use the tool protocol: one JSON tool call per line, or a single final JSON.",
+                }
+            )
             continue
 
-        tool_outputs: List[str] = []
+        tool_outputs: list[str] = []
         for obj in calls:
             tool = obj.get("tool")
             a = obj.get("args", {})
@@ -372,9 +502,17 @@ def main() -> None:
             tool_outputs.append(json.dumps(out))
 
         messages.append({"role": "assistant", "content": content})
-        messages.append({"role": "user", "content": f"STEP {step} TOOL_RESULTS:\n" + "\n".join(tool_outputs) + "\n\nContinue. End with {\"final\":...} including verification and rollback notes."})
+        messages.append(
+            {
+                "role": "user",
+                "content": f"STEP {step} TOOL_RESULTS:\n"
+                + "\n".join(tool_outputs)
+                + '\n\nContinue. End with {"final":...} including verification and rollback notes.',
+            }
+        )
 
     die(f"Max steps reached ({args.max_steps}) without a final response.", 4)
+
 
 if __name__ == "__main__":
     main()

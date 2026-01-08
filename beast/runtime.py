@@ -3,8 +3,8 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -40,10 +40,12 @@ def docker_compose_cmd() -> list[str]:
     try:
         run(["docker", "compose", "version"], check=True)
         return ["docker", "compose"]
-    except Exception:
+    except Exception as err:
         # fallback legacy
         if which("docker-compose") is None:
-            raise RuntimeError("Neither `docker compose` nor `docker-compose` found")
+            raise RuntimeError(
+                "Neither `docker compose` nor `docker-compose` found"
+            ) from err
         return ["docker-compose"]
 
 
@@ -64,6 +66,9 @@ def ensure_runtime_ready() -> None:
         try:
             run(["colima", "status"], check=True)
         except Exception:
-            run(["colima", "start", "--cpu", "6", "--memory", "12", "--disk", "80"], check=True)
+            run(
+                ["colima", "start", "--cpu", "6", "--memory", "12", "--disk", "80"],
+                check=True,
+            )
     else:
         run(["docker", "info"], check=True)

@@ -28,6 +28,68 @@ cp config/ai-beast.env.example config/ai-beast.env
 ./bin/beast dashboard   # local control panel UI
 ```
 
+## Build System
+
+This repo is buildable via standard targets:
+
+```bash
+# Run all checks (format, lint, test, shellcheck)
+make check
+
+# Individual targets
+make fmt          # Format Python code with ruff
+make lint         # Lint Python code with ruff
+make test         # Run pytest
+make shellcheck   # Check shell scripts
+
+# Validation
+make docker-config  # Validate docker compose
+make preflight      # Run beast preflight
+
+# Clean
+make clean        # Remove Python cache files
+```
+
+### Installing dev dependencies
+
+```bash
+# Option 1: Automated dev setup (recommended)
+make dev-setup
+
+# Option 2: Manual setup with pipx (for externally-managed Python)
+brew install pipx
+pipx install ruff
+pipx install pytest
+
+# Option 3: Manual setup with venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+
+# Install shellcheck for shell script linting
+brew install shellcheck
+```
+
+## Tools
+
+The repo includes command-line tools for operations and diagnostics:
+
+```bash
+# Check service health
+make tools-health
+# Or directly: python3 tools/cli.py health
+
+# Run security checks (secret scanning, permissions)
+make tools-security
+# Or directly: python3 tools/cli.py security
+
+# Collect diagnostics (metrics, disk usage, etc.)
+make tools-diagnostics
+# Or directly: python3 tools/cli.py diagnostics
+```
+
+See [tools/README.md](tools/README.md) and [docs/FEATURE_CATALOG.md](docs/FEATURE_CATALOG.md) for complete feature inventory.
+
 ## Workspace Evaluation
 
 Evaluate workspace health, configuration, and services:

@@ -38,3 +38,9 @@ packs.rag_ingest_pro: false
 packs.observability_otel: false
 packs.artifact_store_minio: false
 packs.mlx_runtime: false
+
+# Models
+models.gpt5_codex_preview: true
+
+# Agent defaults
+agent.model_default: gpt-5-codex-preview
