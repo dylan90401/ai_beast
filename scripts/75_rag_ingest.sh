@@ -31,13 +31,13 @@ fi
 
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
-pip3 -q show qdrant-client >/dev/null 2>&1 || {
+pip -q show qdrant-client >/dev/null 2>&1 || {
   echo "[rag] deps missing. Install:" >&2
-  echo "  source \"$VENV_DIR/bin/activate\" && pip3 install -r \"$BASE_DIR/modules/rag/requirements.txt\"" >&2
+  echo "  source \"$VENV_DIR/bin/activate\" && pip install -r \"$BASE_DIR/modules/rag/requirements.txt\"" >&2
   exit 2
 }
 
-cmd=(python3 "$BASE_DIR/modules/rag/ingest.py" --dir "$DIR" --qdrant "$QDRANT_URL" --collection "$COLLECTION")
+cmd=(python "$BASE_DIR/modules/rag/ingest.py" --dir "$DIR" --qdrant "$QDRANT_URL" --collection "$COLLECTION")
 if [[ "$APPLY" -eq 1 ]]; then cmd+=(--apply); fi
 
 echo "[rag] run: ${cmd[*]}"

@@ -7,7 +7,7 @@ die(){ echo "[beast] ERROR: $*" >&2; exit 1; }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="${BASE_DIR:-$(cd "$script_dir/.." && pwd)}"
-PY_AGENT="$BASE_DIR/apps/agent/.venv/bin/python3"
+PY_AGENT="$BASE_DIR/apps/agent/.venv/bin/python"
 if [[ -x "$PY_AGENT" ]]; then :; else PY_AGENT="python3"; fi
 
 # Load environment (non-fatal) so clients inherit defaults/features
@@ -26,12 +26,11 @@ UX (most-used):
     --guts-dir=PATH     Override GUTS_DIR (native apps/venv)
     --heavy-dir=PATH    Override HEAVY_DIR (models/data/outputs)
   preflight             Check system deps, ports, disk, permissions
-  bootstrap             Install macOS deps + prep runtimes (brew/python3/docker)
+  bootstrap             Install macOS deps + prep runtimes (brew/python/docker)
   up                    Start native + docker services (alias: services up)
   down                  Stop services (alias: services down)
   status                Show URLs + health summary
   logs <service>         Tail logs (native or docker)
-  dashboard              Start local admin dashboard (foreground)
 agent "<task>"          Run single builder agent (DRYRUN default)
 agent-multi "<task>"    Run multi-agent pipeline (default: build)
 agent-pipeline <p> "<task>"  Run named pipeline (build|harden|docs)
@@ -81,7 +80,6 @@ case "$cmd" in
   bootstrap) "$BASE_DIR/scripts/20_bootstrap_macos.sh" "${@:-}" ;;
   status) "$BASE_DIR/scripts/32_status.sh" "${@:-}" ;;
   logs) "$BASE_DIR/scripts/33_logs.sh" "${@:-}" ;;
-  dashboard) BASE_DIR="$BASE_DIR" python3 "$BASE_DIR/apps/dashboard/dashboard.py" ;;
 
   up) "$BASE_DIR/scripts/30_services.sh" up "${@:-}" ;;
   down) "$BASE_DIR/scripts/30_services.sh" down "${@:-}" ;;

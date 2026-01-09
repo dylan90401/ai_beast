@@ -46,14 +46,14 @@ pip_reqs_if_any(){
   [[ -n "${VENV_DIR:-}" ]] || { log "No VENV_DIR set; skipping pip requirements for $node_dir"; return 0; }
 
   if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN: would pip3 install -r $req (venv=$VENV_DIR)"
+    log "DRYRUN: would pip install -r $req (venv=$VENV_DIR)"
     return 0
   fi
 
   # shellcheck disable=SC1091
   source "$VENV_DIR/bin/activate"
-  pip3 install -U pip wheel setuptools >/dev/null
-  pip3 install -r "$req" || log "WARN: pip3 install failed for $req"
+  python -m pip install -U pip wheel setuptools >/dev/null
+  python -m pip install -r "$req" || log "WARN: pip install failed for $req"
   deactivate || true
 }
 

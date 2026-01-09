@@ -19,7 +19,7 @@ services:
 
   # comfyui:
   #   image: python:3.11-slim
-  #   command: ["bash","-lc","python3 -m http.server 8188"]
+  #   command: ["bash","-lc","python -m http.server 8188"]
   #   ports: ["8188:8188"]
   #   restart: unless-stopped
 
@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
   comfyui:
     image: python:3.11-slim
-    command: ["bash","-lc","python3 -m http.server 8188"]
+    command: ["bash","-lc","python -m http.server 8188"]
     ports:
       - "8188:8188"
     restart: unless-stopped

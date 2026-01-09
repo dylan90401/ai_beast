@@ -30,7 +30,7 @@ make dev-setup
 # Option B: Manual with venv
 python3 -m venv .venv
 source .venv/bin/activate
-pip3 install -e ".[dev]"
+pip install -e ".[dev]"
 
 # Option C: Manual with pipx (CLI tools only)
 brew install pipx
@@ -203,7 +203,7 @@ If Python can't find modules:
 
 ```bash
 # Install in editable mode
-pip3 install -e .
+pip install -e .
 
 # Or add to PYTHONPATH
 export PYTHONPATH="$PWD:$PYTHONPATH"
@@ -215,8 +215,8 @@ If tests fail due to missing dependencies:
 
 ```bash
 # Install all dependencies
-pip3 install -r requirements.txt
-pip3 install -r requirements-dev.txt
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 ### Shellcheck Errors After Patching

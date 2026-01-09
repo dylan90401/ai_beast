@@ -5,7 +5,7 @@ This module ingests files from a directory into Qdrant.
 Requirements (install into the AI Beast venv):
 ```bash
 source "$VENV_DIR/bin/activate"
-pip3 install -r modules/rag/requirements.txt
+pip install -r modules/rag/requirements.txt
 ```
 
 Run:

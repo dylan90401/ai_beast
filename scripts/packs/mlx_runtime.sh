@@ -34,12 +34,12 @@ fi
 log "Installing mlx_runtime pack..."
 
 # Install pip packages
-if [[ -f "$BASE_DIR/.venv/bin/pip3" ]]; then
-  log "Installing pip3 packages..."
+if [[ -f "$BASE_DIR/.venv/bin/pip" ]]; then
+  log "Installing pip packages..."
   # shellcheck disable=SC2086
-  "$BASE_DIR/.venv/bin/pip3" install --quiet $PIP_PACKAGES
+  "$BASE_DIR/.venv/bin/pip" install --quiet $PIP_PACKAGES
 elif command -v pip3 >/dev/null 2>&1; then
-  log "Installing pip3 packages (system)..."
+  log "Installing pip packages (system)..."
   # shellcheck disable=SC2086
   pip3 install --quiet --user $PIP_PACKAGES
 fi
@@ -61,7 +61,7 @@ log "Pack installed!"
 log "MLX models dir: $MODELS_DIR/mlx"
 log ""
 log "Quick test:"
-log "  python3 -c 'import mlx; print(mlx.__version__)'"
+log "  python -c 'import mlx; print(mlx.__version__)'"
 log ""
 log "Download a model:"
 log "  mlx_lm.download --model mlx-community/Llama-3.2-1B-Instruct-4bit"

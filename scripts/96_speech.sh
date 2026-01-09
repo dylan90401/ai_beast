@@ -39,7 +39,7 @@ start_bg(){
 
   # shellcheck disable=SC1091
   source "$venv/bin/activate"
-  nohup python3 -m uvicorn apps.speech_api.server:app --app-dir "$BASE_DIR" --host "$HOST" --port "$PORT"     > "$LOG_DIR/speech_api.out.log" 2> "$LOG_DIR/speech_api.err.log" &
+  nohup python -m uvicorn apps.speech_api.server:app --app-dir "$BASE_DIR" --host "$HOST" --port "$PORT"     > "$LOG_DIR/speech_api.out.log" 2> "$LOG_DIR/speech_api.err.log" &
   echo $! > "$pidfile"
   deactivate || true
   log "Started Speech API (pid $(cat "$pidfile")) at http://$HOST:$PORT"
@@ -83,7 +83,7 @@ launchd_install(){
     <array>
       <string>/bin/bash</string>
       <string>-lc</string>
-      <string>cd "${BASE_DIR}" &amp;&amp; source "${venv}/bin/activate" &amp;&amp; exec python3 -m uvicorn apps.speech_api.server:app --app-dir "${BASE_DIR}" --host "${HOST}" --port "${PORT}"</string>
+      <string>cd "${BASE_DIR}" &amp;&amp; source "${venv}/bin/activate" &amp;&amp; exec python -m uvicorn apps.speech_api.server:app --app-dir "${BASE_DIR}" --host "${HOST}" --port "${PORT}"</string>
     </array>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><true/>

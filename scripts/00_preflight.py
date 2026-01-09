@@ -265,7 +265,7 @@ def main():
     log_info("[8/8] Checking Python packages...")
     missing_packages = check_python_packages()
     if missing_packages:
-        log_info("Install with: pip3 install " + " ".join(missing_packages))
+        log_info("Install with: pip install " + " ".join(missing_packages))
 
     print()
     log_success("Preflight checks complete")

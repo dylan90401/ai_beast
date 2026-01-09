@@ -41,15 +41,6 @@ def run_command(command, cwd=None, check=True):
         logger.error(f"Error output: {e.stderr}")
         raise
 
-def find_pip3():
-    """Find the pip3 executable, preferring the current Python environment."""
-    exe_dir = os.path.dirname(sys.executable)
-    candidates = [os.path.join(exe_dir, "pip3")]
-    for candidate in candidates:
-        if os.path.exists(candidate):
-            return candidate
-    return shutil.which("pip3")
-
 def backup_project(base_dir):
     """Create a backup of the current project."""
     logger.info("Creating project backup...")
@@ -88,17 +79,13 @@ def update_dependencies(base_dir):
     logger.info("Updating Python dependencies...")
 
     try:
-        pip_cmd = find_pip3()
-        if not pip_cmd:
-            raise RuntimeError("pip3 not found in PATH or alongside the active python3")
-
         # Update pip
-        run_command([pip_cmd, 'install', '--upgrade', 'pip'])
+        run_command([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
 
         # Update requirements
         requirements_file = os.path.join(base_dir, 'requirements.txt')
         if os.path.exists(requirements_file):
-            run_command([pip_cmd, 'install', '-r', requirements_file])
+            run_command([sys.executable, '-m', 'pip', 'install', '-r', requirements_file])
             logger.info("Dependencies updated successfully")
         else:
             logger.warning("requirements.txt not found, skipping dependency update")
