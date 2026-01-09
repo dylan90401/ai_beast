@@ -1,0 +1,204 @@
+# Open WebUI Configuration for AI Beast
+# This file defines comprehensive configuration for Open WebUI integration
+
+name: open_webui
+description: ChatGPT-style web interface for Ollama and local LLMs
+version: "0.2.0"
+category: interface
+
+# Extension metadata
+metadata:
+  author: AI Beast
+  homepage: https://github.com/open-webui/open-webui
+  documentation: https://docs.openwebui.com/
+  license: MIT
+
+# Service configuration
+service:
+  enabled: true
+  image: ghcr.io/open-webui/open-webui:main
+  container_name: ai_beast_open_webui
+  profiles:
+    - webui
+    - open_webui
+    - full
+    - prodish
+
+  # Port mapping
+  ports:
+    - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_WEBUI:-3000}:8080"
+
+  # Environment variables
+  environment:
+    # Ollama connection
+    OLLAMA_BASE_URL: "http://host.docker.internal:${PORT_OLLAMA:-11434}"
+    OLLAMA_API_BASE_URL: "http://host.docker.internal:${PORT_OLLAMA:-11434}/api"
+
+    # Qdrant for RAG
+    QDRANT_URL: "http://qdrant:6333"
+    RAG_EMBEDDING_ENGINE: "ollama"
+    RAG_EMBEDDING_MODEL: "nomic-embed-text"
+    RAG_EMBEDDING_MODEL_AUTO_UPDATE: "true"
+    RAG_TOP_K: "5"
+    CHUNK_SIZE: "1000"
+    CHUNK_OVERLAP: "100"
+
+    # Authentication (disabled for local use)
+    WEBUI_AUTH: "false"
+    ENABLE_SIGNUP: "false"
+    DEFAULT_USER_ROLE: "admin"
+
+    # RAG Features
+    ENABLE_RAG_WEB_SEARCH: "true"
+    ENABLE_RAG_WEB_LOADER: "true"
+    RAG_WEB_SEARCH_ENGINE: "searxng"
+    SEARXNG_QUERY_URL: "http://searxng:8080/search?q=<query>"
+
+    # Model Settings
+    DEFAULT_MODELS: "llama3.2:latest"
+    MODEL_FILTER_ENABLED: "false"
+    ENABLE_MODEL_FILTER: "false"
+
+    # File Upload
+    ENABLE_IMAGE_GENERATION: "true"
+    ENABLE_COMMUNITY_SHARING: "false"
+    UPLOAD_DIR: "/app/backend/data/uploads"
+
+    # Admin settings
+    WEBUI_NAME: "AI Beast Chat"
+    WEBUI_URL: "http://localhost:${PORT_WEBUI:-3000}"
+    ENABLE_ADMIN_EXPORT: "true"
+    ENABLE_ADMIN_CHAT_ACCESS: "true"
+
+    # Performance
+    AIOHTTP_CLIENT_TIMEOUT: "300"
+    ENABLE_OLLAMA_API: "true"
+
+  # Volumes
+  volumes:
+    - open_webui_data:/app/backend/data
+    - "${MODELS_DIR:-./models}:/models:ro"
+    - "${DATA_DIR:-./data}/uploads:/app/backend/data/uploads"
+
+  # Dependencies
+  depends_on:
+    qdrant:
+      condition: service_healthy
+      required: false
+    searxng:
+      condition: service_started
+      required: false
+
+  # Network
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+  # Resource limits
+  deploy:
+    resources:
+      limits:
+        memory: 2G
+      reservations:
+        memory: 512M
+
+  # Health check
+  healthcheck:
+    test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+  # Restart policy
+  restart: unless-stopped
+
+# Volume definitions
+volumes:
+  open_webui_data:
+    driver: local
+
+# Integration features
+features:
+  # Enable RAG with Qdrant
+  rag:
+    enabled: true
+    vector_store: qdrant
+    embedding_model: nomic-embed-text
+    chunk_size: 1000
+    chunk_overlap: 100
+
+  # Enable web search with SearXNG
+  web_search:
+    enabled: true
+    engine: searxng
+    results_count: 5
+
+  # Model management
+  models:
+    auto_pull: true
+    default_model: llama3.2:latest
+    recommended:
+      - llama3.2:latest
+      - llama3.2:1b
+      - mistral:latest
+      - nomic-embed-text
+
+# Default settings to apply via API
+default_settings:
+  general:
+    system_prompt: |
+      You are a helpful AI assistant running on AI Beast.
+      Be concise, accurate, and helpful in your responses.
+    title_generation_prompt_template: "Create a concise title for this conversation in 5 words or less"
+
+  models:
+    default_model: llama3.2:latest
+    params:
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+
+  rag:
+    enabled: true
+    top_k: 5
+    relevance_threshold: 0.5
+    template: |
+      Use the following context to answer the question.
+      If you don't know the answer, say so.
+
+      Context:
+      {context}
+
+      Question: {query}
+
+  interface:
+    default_locale: en-US
+    show_username_in_chats: false
+    chat_direction: "ltr"
+
+# Documentation
+docs:
+  url: https://github.com/open-webui/open-webui
+  notes: |
+    Open WebUI provides a ChatGPT-like interface for Ollama.
+
+    Features:
+    - Chat with multiple models
+    - RAG with document upload
+    - Web search integration
+    - Model management
+    - User authentication (optional)
+    - Conversation history
+    - Custom system prompts
+
+    Access at: http://localhost:${PORT_WEBUI:-3000}
+
+    Default credentials (when auth enabled):
+    - Email: admin@localhost
+    - Password: (set on first login)
+
+    Keyboard shortcuts:
+    - Ctrl+Enter: Send message
+    - Ctrl+Shift+S: New chat
+    - Ctrl+Shift+Backspace: Delete chat

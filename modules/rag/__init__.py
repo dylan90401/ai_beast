@@ -20,6 +20,15 @@ from .ingest import (
     iter_files,
     read_text_best_effort,
 )
+from .parallel_ingest import (
+    BatchStats,
+    IngestionResult,
+    IngestionStatus,
+    IngestionTask,
+    ParallelIngestor,
+    parallel_ingest_directory,
+    parallel_ingest_directory_sync,
+)
 from .query import (
     collection_info,
     delete_collection,
@@ -36,6 +45,14 @@ __all__ = [
     "ingest_directory",
     "read_text_best_effort",
     "iter_files",
+    # Parallel ingestion
+    "ParallelIngestor",
+    "IngestionTask",
+    "IngestionResult",
+    "IngestionStatus",
+    "BatchStats",
+    "parallel_ingest_directory",
+    "parallel_ingest_directory_sync",
     # Query functions
     "search",
     "get_context",

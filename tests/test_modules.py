@@ -167,3 +167,24 @@ def test_tools_cli_imports():
     assert callable(check_health)
     assert callable(verify_security)
     assert callable(collect_diagnostics)
+
+
+def test_registry_catalog_smoke(tmp_path):
+    """Smoke test: ModelRegistry CRUD works (uses pooled SQLite connections)."""
+    from modules.registry.catalog import ModelFamily, ModelMetadata, ModelRegistry
+
+    reg = ModelRegistry(db_path=tmp_path / "models.db")
+    meta = ModelMetadata(
+        id="test-model-1",
+        name="Test Model",
+        version="1.0",
+        family=ModelFamily.OTHER,
+        size_bytes=123,
+        tags=["test"],
+        languages=["en"],
+    )
+
+    assert reg.register(meta) is True
+    loaded = reg.get("test-model-1")
+    assert loaded is not None
+    assert loaded.id == meta.id

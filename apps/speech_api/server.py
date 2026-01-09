@@ -1,9 +1,12 @@
-import os, tempfile, subprocess, json
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import JSONResponse, FileResponse
-from pydantic import BaseModel
+import os
+import subprocess
+import tempfile
+
+from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 
 app = FastAPI(title="AI Beast Speech API", version="v1")
+FILE_UPLOAD = File(...)
 
 BACKEND = os.getenv("SPEECH_BACKEND", "auto")  # auto|faster_whisper|whisper_cpp
 FW_MODEL = os.getenv("FASTER_WHISPER_MODEL", "small")  # tiny|base|small|medium|large-v3 etc
@@ -49,7 +52,7 @@ def transcribe_whisper_cpp(path: str):
     txt_path = os.path.join(outdir, "out.txt")
     text_out = ""
     if os.path.exists(txt_path):
-        with open(txt_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(txt_path, encoding="utf-8", errors="ignore") as f:
             text_out = f.read().strip()
     return {"backend":"whisper.cpp", "returncode":p.returncode, "text":text_out, "stderr":p.stderr[-2000:], "stdout":p.stdout[-2000:]}
 
@@ -63,7 +66,7 @@ def health():
     }
 
 @app.post("/transcribe")
-async def transcribe(file: UploadFile = File(...), backend: str = Form("auto")):
+async def transcribe(file: UploadFile = FILE_UPLOAD, backend: str = Form("auto")):
     # Save upload
     suffix = os.path.splitext(file.filename or "")[1] or ".wav"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:

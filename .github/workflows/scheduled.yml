@@ -1,0 +1,114 @@
+name: Scheduled Tasks
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ==========================================================================
+  # Dependency Updates Check
+  # ==========================================================================
+  dependency-check:
+    name: Check for Updates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Check for outdated packages
+        run: |
+          pip install pip-tools
+          pip list --outdated --format=json > outdated.json
+          
+          if [[ -s outdated.json && $(cat outdated.json) != "[]" ]]; then
+            echo "## Outdated Packages" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat outdated.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "All packages are up to date!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ==========================================================================
+  # Security Audit
+  # ==========================================================================
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install audit tools
+        run: pip install pip-audit safety bandit
+      
+      - name: Run pip-audit
+        continue-on-error: true
+        run: |
+          pip install -r requirements.txt
+          pip-audit --format json --output pip-audit.json || true
+      
+      - name: Run safety check
+        continue-on-error: true
+        run: safety check --full-report || true
+      
+      - name: Run bandit
+        continue-on-error: true
+        run: bandit -r modules beast -f json -o bandit.json || true
+      
+      - name: Generate summary
+        run: |
+          echo "## Security Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "Date: $(date -Iseconds)" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ -f pip-audit.json ]]; then
+            VULN_COUNT=$(jq '. | length' pip-audit.json 2>/dev/null || echo "0")
+            echo "- pip-audit: $VULN_COUNT vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ -f bandit.json ]]; then
+            ISSUES=$(jq '.results | length' bandit.json 2>/dev/null || echo "0")
+            echo "- bandit: $ISSUES issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-${{ github.run_number }}
+          path: |
+            pip-audit.json
+            bandit.json
+          retention-days: 30
+
+  # ==========================================================================
+  # Docker Image Cleanup
+  # ==========================================================================
+  cleanup-images:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    
+    steps:
+      - name: Delete old container images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ai_beast
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true

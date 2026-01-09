@@ -10,6 +10,7 @@ Features:
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
 import re
@@ -17,12 +18,14 @@ import shutil
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from modules.core.metadata_db import get_metadata_db
 
 class ModelLocation(Enum):
     """Where models are stored."""
@@ -87,6 +90,72 @@ def _extract_quant(filename: str) -> str:
     return ""
 
 
+def _validate_download_url(url: str) -> tuple[bool, str]:
+    raw = (url or "").strip()
+    if not raw:
+        return False, "URL is required"
+    if any(ch.isspace() for ch in raw):
+        return False, "URL cannot contain whitespace"
+    if len(raw) > 2048:
+        return False, "URL too long"
+    parsed = urllib.parse.urlparse(raw)
+    if parsed.scheme not in ("http", "https"):
+        return False, "URL must start with http or https"
+    if not parsed.netloc:
+        return False, "URL must include a hostname"
+
+    # Disallow credentials in URLs (reduces accidental secret leakage)
+    if parsed.username or parsed.password:
+        return False, "URL must not include credentials"
+
+    allow_local = os.environ.get("AI_BEAST_ALLOW_LOCAL_URLS", "0") in ("1", "true", "True")
+    if not allow_local:
+        host = (parsed.hostname or "").lower()
+        if host in ("localhost", "127.0.0.1", "::1") or host.endswith(".local"):
+            return False, "Local URLs are not allowed"
+
+        # Block private/local IP literals (SSRF hardening)
+        try:
+            ip = ipaddress.ip_address(host)
+            if (
+                ip.is_private
+                or ip.is_loopback
+                or ip.is_link_local
+                or ip.is_reserved
+                or ip.is_multicast
+                or ip.is_unspecified
+            ):
+                return False, "Local/private IPs are not allowed"
+        except ValueError:
+            # Not an IP literal; hostname checks above are sufficient here.
+            pass
+    return True, raw
+
+
+def _safe_filename(name: str) -> str:
+    if not name:
+        return ""
+    if any(sep in name for sep in ("/", "\\")):
+        return ""
+    cleaned = Path(name).name
+    if cleaned in (".", "..") or "\x00" in cleaned or cleaned != name:
+        return ""
+    return cleaned
+
+
+def _resolve_dest(dest_dir: Path, filename: str) -> tuple[bool, Path | str]:
+    try:
+        dest_dir = dest_dir.expanduser().resolve()
+    except Exception:
+        return False, "Invalid destination directory"
+    dest_path = (dest_dir / filename).resolve()
+    try:
+        dest_path.relative_to(dest_dir)
+    except ValueError:
+        return False, "Destination path escapes target directory"
+    return True, dest_path
+
+
 class LLMManager:
     """Manages LLM models: Ollama + local files."""
 
@@ -101,6 +170,31 @@ class LLMManager:
         self._model_cache: dict[str, ModelInfo] = {}
         self._cache_time: float = 0
         self._cache_ttl: float = 30.0  # seconds
+
+        # Optional: file-system watcher that invalidates scan cache on changes.
+        # Disabled by default to avoid extra background threads unless desired.
+        self._cache_watcher = None
+        if os.environ.get("AI_BEAST_ENABLE_FS_WATCHER", "0") in ("1", "true", "True"):
+            try:
+                from modules.cache.watcher import CacheManager
+
+                cm = CacheManager(auto_start=True)
+                cache_key = "llm_scan"
+                cm.create_cache(cache_key)
+
+                def _invalidate_scan_cache() -> None:
+                    self._cache_time = 0
+
+                cm.on_invalidate(cache_key, _invalidate_scan_cache)
+
+                patterns = {f"*{ext}" for ext in self.MODEL_EXTENSIONS}
+                cm.watch_directory(self.llm_models_dir, cache_key=cache_key, patterns=patterns)
+                cm.watch_directory(self.models_dir, cache_key=cache_key, patterns=patterns)
+                cm.watch_directory(self.heavy_dir / "models" / "llm", cache_key=cache_key, patterns=patterns)
+                self._cache_watcher = cm
+            except Exception:
+                # Watcher is a best-effort enhancement; never break core functionality.
+                self._cache_watcher = None
 
     def _detect_base_dir(self) -> Path:
         """Detect BASE_DIR from environment or default."""
@@ -333,39 +427,62 @@ class LLMManager:
         Returns:
             dict with 'ok', 'path', 'error' keys
         """
+        ok, cleaned_url = _validate_download_url(url)
+        if not ok:
+            return {"ok": False, "error": cleaned_url}
+        parsed = urllib.parse.urlparse(cleaned_url)
+        safe_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+
         # Determine filename
         if not filename:
-            filename = url.split("/")[-1].split("?")[0]
-            if not filename:
-                filename = f"model_{int(time.time())}.gguf"
+            filename = cleaned_url.split("/")[-1].split("?")[0]
+        filename = _safe_filename(filename or "")
+        if not filename:
+            filename = f"model_{int(time.time())}.gguf"
+        if Path(filename).suffix.lower() not in self.MODEL_EXTENSIONS:
+            return {"ok": False, "error": "Filename must be a model file (gguf/safetensors/bin/pt/pth/onnx)"}
 
         # Determine destination path
         if destination == ModelLocation.CUSTOM and custom_path:
             dest_dir = Path(custom_path)
+            if not dest_dir.is_absolute():
+                return {"ok": False, "error": "Custom path must be absolute"}
         elif destination == ModelLocation.EXTERNAL:
             dest_dir = self.heavy_dir / "models" / "llm"
         else:
             dest_dir = self.llm_models_dir
 
+        ok, resolved = _resolve_dest(dest_dir, filename)
+        if not ok:
+            return {"ok": False, "error": resolved}
+        dest_dir = resolved.parent
         dest_dir.mkdir(parents=True, exist_ok=True)
-        dest_path = dest_dir / filename
+        dest_path = resolved
         temp_path = dest_dir / f".{filename}.part"
 
         # Track download
-        download_id = hashlib.md5(url.encode()).hexdigest()[:8]
+        download_id = hashlib.md5(cleaned_url.encode()).hexdigest()[:8]
         with self._download_lock:
             if download_id in self._downloads:
                 return {"ok": False, "error": "Download already in progress"}
             self._downloads[download_id] = {
-                "url": url,
+                "url": cleaned_url,
                 "path": str(dest_path),
                 "progress": 0,
                 "status": "starting",
             }
+        try:
+            get_metadata_db().record_event(
+                "download",
+                "model_download_started",
+                {"download_id": download_id, "url": safe_url, "destination": destination.value},
+            )
+        except Exception:
+            pass
 
         def _download():
             try:
-                req = urllib.request.Request(url)
+                req = urllib.request.Request(cleaned_url)
                 req.add_header("User-Agent", "AI-Beast/1.0")
 
                 with urllib.request.urlopen(req, timeout=60) as resp:
@@ -407,6 +524,14 @@ class LLMManager:
                         "status": "complete",
                         "path": str(dest_path),
                     })
+                try:
+                    get_metadata_db().record_event(
+                        "download",
+                        "model_download_complete",
+                        {"download_id": download_id, "url": safe_url, "path": str(dest_path)},
+                    )
+                except Exception:
+                    pass
 
                 # Invalidate cache
                 self._cache_time = 0
@@ -424,6 +549,14 @@ class LLMManager:
                     temp_path.unlink()
                 if callback:
                     callback({"status": "error", "error": str(e)})
+                try:
+                    get_metadata_db().record_event(
+                        "download",
+                        "model_download_error",
+                        {"download_id": download_id, "url": safe_url, "error": str(e)},
+                    )
+                except Exception:
+                    pass
 
         thread = threading.Thread(target=_download, daemon=True)
         thread.start()
@@ -454,14 +587,45 @@ class LLMManager:
 
     def delete_local_model(self, path: str) -> dict:
         """Delete a local model file."""
-        fp = Path(path)
+        fp = Path(path).expanduser()
+
+        # Resolve once for containment checks (blocks ../ traversal)
+        try:
+            fp_resolved = fp.resolve(strict=False)
+        except (OSError, RuntimeError) as e:
+            return {"ok": False, "error": f"Invalid path: {e}"}
+
         if not fp.exists():
             return {"ok": False, "error": "File not found"}
+        if not fp.is_file():
+            return {"ok": False, "error": "Path is not a file"}
 
-        # Safety check: only delete from known model directories
-        allowed_parents = [self.llm_models_dir, self.models_dir, self.heavy_dir]
-        if not any(str(fp).startswith(str(p)) for p in allowed_parents):
+        # Safety check: only delete from model directories (never from base_dir/heavy_dir root)
+        heavy_models_dir = self.heavy_dir / "models" / "llm"
+        allowed_parents = [
+            self.llm_models_dir,
+            self.models_dir,
+            heavy_models_dir,
+        ]
+        allowed_resolved: list[Path] = []
+        for parent in allowed_parents:
+            try:
+                allowed_resolved.append(parent.expanduser().resolve(strict=False))
+            except OSError:
+                continue
+
+        if not allowed_resolved:
+            return {"ok": False, "error": "No allowed model directories configured"}
+
+        if not any(fp_resolved.is_relative_to(parent) for parent in allowed_resolved):
             return {"ok": False, "error": "Path not in allowed model directories"}
+
+        # Additional defense: if fp is a symlink, only allow if resolved target is also in an allowed dir
+        try:
+            if fp.is_symlink() and not any(fp_resolved.is_relative_to(parent) for parent in allowed_resolved):
+                return {"ok": False, "error": "Symlink target escapes allowed directories"}
+        except OSError as e:
+            return {"ok": False, "error": f"Unable to stat path: {e}"}
 
         try:
             fp.unlink()

@@ -1,0 +1,2257 @@
+{
+  "version": 1,
+  "capabilities": {
+    "text2image": {
+      "title": "Text -> Image",
+      "description": "Generate images with ComfyUI workflows.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_manager"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Requires ComfyUI models; install separately.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ],
+      "webui": {
+        "category": "Media",
+        "path": ""
+      }
+    },
+    "text2video": {
+      "title": "Text -> Video",
+      "description": "Video generation via ComfyUI + VideoHelperSuite nodes.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_video"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Enable ComfyUI Video extension and install video workflows.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ],
+      "webui": {
+        "category": "Media",
+        "path": ""
+      }
+    },
+    "text2audio": {
+      "title": "Text -> Audio",
+      "description": "Speech synthesis via the local Speech API.",
+      "packs": [
+        "speech_stack"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_SPEECH_API"
+      ],
+      "portal": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "api": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "health": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "notes": "Start the service with the Speech Up action.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Speech API",
+          "port": "PORT_SPEECH_API",
+          "path": "docs"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speech Up",
+          "type": "beast_cmd",
+          "cmd": "speech_up"
+        },
+        {
+          "label": "Speech Down",
+          "type": "beast_cmd",
+          "cmd": "speech_down"
+        }
+      ],
+      "webui": {
+        "category": "Audio",
+        "path": ""
+      }
+    },
+    "text2music": {
+      "title": "Text -> Music",
+      "description": "Music prompts via audio tooling (models required).",
+      "packs": [
+        "media_synth",
+        "speech_stack"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_SPEECH_API"
+      ],
+      "portal": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "api": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "health": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "notes": "Needs a music-capable model + workflow.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Speech API",
+          "port": "PORT_SPEECH_API",
+          "path": "docs"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speech Up",
+          "type": "beast_cmd",
+          "cmd": "speech_up"
+        },
+        {
+          "label": "Speech Down",
+          "type": "beast_cmd",
+          "cmd": "speech_down"
+        }
+      ],
+      "webui": {
+        "category": "Audio",
+        "path": ""
+      }
+    },
+    "rag_search": {
+      "title": "RAG Search",
+      "description": "Web search + retrieval foundation for RAG.",
+      "packs": [
+        "osint"
+      ],
+      "extensions": [
+        "searxng"
+      ],
+      "ports": [
+        "PORT_SEARXNG"
+      ],
+      "portal": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "notes": "SearXNG provides search; combine with Qdrant for RAG.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "SearXNG",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "SearXNG POST Search",
+          "port": "PORT_SEARXNG",
+          "path": "search",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          "body": "q=ai+beast&format=json"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open SearXNG",
+          "type": "open_url",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        }
+      ],
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      }
+    },
+    "rag_ingest": {
+      "title": "RAG Ingest",
+      "description": "Document ingestion pipeline (Tika + Unstructured).",
+      "packs": [
+        "rag_ingest_pro"
+      ],
+      "extensions": [
+        "apache_tika",
+        "unstructured_api"
+      ],
+      "ports": [
+        "PORT_TIKA",
+        "PORT_UNSTRUCTURED"
+      ],
+      "portal": {
+        "port": "PORT_TIKA",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_UNSTRUCTURED",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_TIKA",
+        "path": ""
+      },
+      "notes": "Enable pack to pull ingestion services.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Apache Tika",
+          "port": "PORT_TIKA",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "Unstructured API",
+          "port": "PORT_UNSTRUCTURED",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Tika",
+          "type": "open_url",
+          "port": "PORT_TIKA",
+          "path": ""
+        },
+        {
+          "label": "Open Unstructured",
+          "type": "open_url",
+          "port": "PORT_UNSTRUCTURED",
+          "path": ""
+        }
+      ],
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      }
+    },
+    "rag_vector_db": {
+      "title": "Vector DB",
+      "description": "Qdrant vector store for embeddings + retrieval.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "qdrant"
+      ],
+      "ports": [
+        "PORT_QDRANT"
+      ],
+      "portal": {
+        "port": "PORT_QDRANT",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_QDRANT",
+        "path": "collections"
+      },
+      "health": {
+        "port": "PORT_QDRANT",
+        "path": "readyz"
+      },
+      "notes": "Ensure Qdrant is running before ingest or search.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Qdrant",
+          "port": "PORT_QDRANT",
+          "path": "readyz"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Qdrant",
+          "type": "open_url",
+          "port": "PORT_QDRANT",
+          "path": ""
+        }
+      ],
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      }
+    },
+    "agent_builders": {
+      "title": "Agent Builders",
+      "description": "Low-code builders for workflows and agents.",
+      "packs": [
+        "agent_builders"
+      ],
+      "extensions": [
+        "langflow",
+        "flowise",
+        "dify"
+      ],
+      "ports": [
+        "PORT_LANGFLOW",
+        "PORT_FLOWISE",
+        "PORT_DIFY"
+      ],
+      "portal": {
+        "port": "PORT_LANGFLOW",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_FLOWISE",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_LANGFLOW",
+        "path": ""
+      },
+      "notes": "Enable the pack to bring up Langflow/Flowise/Dify.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Langflow",
+          "port": "PORT_LANGFLOW",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "Flowise",
+          "port": "PORT_FLOWISE",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "Dify",
+          "port": "PORT_DIFY",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Langflow",
+          "type": "open_url",
+          "port": "PORT_LANGFLOW",
+          "path": ""
+        },
+        {
+          "label": "Open Flowise",
+          "type": "open_url",
+          "port": "PORT_FLOWISE",
+          "path": ""
+        },
+        {
+          "label": "Open Dify",
+          "type": "open_url",
+          "port": "PORT_DIFY",
+          "path": ""
+        }
+      ]
+    },
+    "code_runner": {
+      "title": "Code Runner",
+      "description": "JupyterLab for notebooks and code execution.",
+      "packs": [
+        "dataviz_ml"
+      ],
+      "extensions": [
+        "jupyter"
+      ],
+      "ports": [
+        "PORT_JUPYTER"
+      ],
+      "portal": {
+        "port": "PORT_JUPYTER",
+        "path": "lab"
+      },
+      "api": {
+        "port": "PORT_JUPYTER",
+        "path": "api"
+      },
+      "health": {
+        "port": "PORT_JUPYTER",
+        "path": "api/status"
+      },
+      "notes": "Jupyter token is set in the container; open the portal to sign in.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Jupyter",
+          "port": "PORT_JUPYTER",
+          "path": "api/status"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Jupyter",
+          "type": "open_url",
+          "port": "PORT_JUPYTER",
+          "path": "lab"
+        }
+      ],
+      "webui": {
+        "category": "Code",
+        "path": ""
+      }
+    },
+    "ollama_chat": {
+      "title": "Ollama Runtime",
+      "description": "Local model runtime for chat and embeddings.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_OLLAMA"
+      ],
+      "portal": {
+        "port": "PORT_OLLAMA",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "health": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "notes": "Ollama must be running on the host.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Ollama API",
+          "port": "PORT_OLLAMA",
+          "path": "api/tags"
+        },
+        {
+          "type": "ollama_model",
+          "name": "Ollama model",
+          "model": "llama3.2:latest"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Ollama Status",
+          "type": "beast_cmd",
+          "cmd": "status"
+        },
+        {
+          "label": "Pull Llama3.2",
+          "type": "ollama_pull",
+          "model": "llama3.2:latest"
+        },
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        }
+      ],
+      "ollama": {
+        "model": "llama3.2:latest",
+        "purpose": "chat"
+      },
+      "webui": {
+        "category": "Chat",
+        "path": ""
+      }
+    },
+    "open_webui_chat": {
+      "title": "Open WebUI",
+      "description": "Chat UI backed by Ollama.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "open_webui"
+      ],
+      "ports": [
+        "PORT_WEBUI"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "health": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "notes": "Use to chat with local models and RAG.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "Open WebUI",
+          "port": "PORT_WEBUI",
+          "path": "health"
+        },
+        {
+          "type": "ollama_model",
+          "name": "Ollama model",
+          "model": "llama3.2:latest"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        },
+        {
+          "label": "Pull Llama3.2",
+          "type": "ollama_pull",
+          "model": "llama3.2:latest"
+        }
+      ],
+      "ollama": {
+        "model": "llama3.2:latest",
+        "embedding_model": "nomic-embed-text"
+      },
+      "webui": {
+        "category": "Chat",
+        "path": ""
+      }
+    },
+    "photo2video": {
+      "title": "Photo -> Video",
+      "description": "Animate images into video via ComfyUI workflows.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_video"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Install image-to-video workflows in ComfyUI.",
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ],
+      "webui": {
+        "category": "Media",
+        "path": ""
+      }
+    },
+    "defcon_stack": {
+      "title": "DEFCON Stack",
+      "description": "Offensive security + reconnaissance baseline.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Requires local tool installs; run tests from tool registry.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nmap",
+          "tool": "nmap"
+        },
+        {
+          "type": "tool",
+          "name": "nuclei",
+          "tool": "nuclei"
+        },
+        {
+          "type": "tool",
+          "name": "sqlmap",
+          "tool": "sqlmap"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nmap",
+          "type": "tool_run",
+          "tool": "nmap",
+          "entrypoint": "nmap",
+          "args": "--version"
+        }
+      ]
+    },
+    "offsec_suite": {
+      "title": "OFFSEC Suite",
+      "description": "Exploitation and testing workflow tools.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "metasploit",
+          "tool": "metasploit"
+        },
+        {
+          "type": "tool",
+          "name": "hydra",
+          "tool": "hydra"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run msfconsole",
+          "type": "tool_run",
+          "tool": "metasploit",
+          "entrypoint": "msfconsole",
+          "args": "-v"
+        }
+      ]
+    },
+    "osint_suite": {
+      "title": "OSINT Suite",
+      "description": "Open-source intelligence tooling.",
+      "packs": [
+        "osint",
+        "networking"
+      ],
+      "extensions": [
+        "searxng"
+      ],
+      "ports": [
+        "PORT_SEARXNG"
+      ],
+      "portal": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "SearXNG",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        },
+        {
+          "type": "tool",
+          "name": "amass",
+          "tool": "amass"
+        },
+        {
+          "type": "tool",
+          "name": "theHarvester",
+          "tool": "theharvester"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open SearXNG",
+          "type": "open_url",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        }
+      ]
+    },
+    "sigint_suite": {
+      "title": "SIGINT Suite",
+      "description": "Signal intelligence tooling and analysis.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "rtl_433",
+          "tool": "rtl_433"
+        },
+        {
+          "type": "tool",
+          "name": "gnuradio",
+          "tool": "gnuradio"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run rtl_433",
+          "type": "tool_run",
+          "tool": "rtl_433",
+          "entrypoint": "rtl_433",
+          "args": "-V"
+        }
+      ]
+    },
+    "networking_suite": {
+      "title": "Networking Suite",
+      "description": "Discovery and network diagnostics tools.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nmap",
+          "tool": "nmap"
+        },
+        {
+          "type": "tool",
+          "name": "masscan",
+          "tool": "masscan"
+        },
+        {
+          "type": "tool",
+          "name": "traceroute",
+          "tool": "traceroute"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nmap",
+          "type": "tool_run",
+          "tool": "nmap",
+          "entrypoint": "nmap",
+          "args": "--version"
+        }
+      ]
+    },
+    "analysis_suite": {
+      "title": "Analysis Suite",
+      "description": "Binary, data, and packet analysis tools.",
+      "packs": [
+        "defsec",
+        "dataviz_ml"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "wireshark",
+          "tool": "wireshark"
+        },
+        {
+          "type": "tool",
+          "name": "tshark",
+          "tool": "tshark"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run tshark",
+          "type": "tool_run",
+          "tool": "tshark",
+          "entrypoint": "tshark",
+          "args": "-v"
+        }
+      ]
+    },
+    "vuln_scanning": {
+      "title": "Vulnerability Scanning",
+      "description": "Web and infrastructure vulnerability scanners.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nuclei",
+          "tool": "nuclei"
+        },
+        {
+          "type": "tool",
+          "name": "nikto",
+          "tool": "nikto"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nuclei",
+          "type": "tool_run",
+          "tool": "nuclei",
+          "entrypoint": "nuclei",
+          "args": "-version"
+        }
+      ]
+    },
+    "web_enum": {
+      "title": "Web Enumeration",
+      "description": "HTTP probing, fuzzing, and content discovery.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "httpx",
+          "tool": "httpx"
+        },
+        {
+          "type": "tool",
+          "name": "ffuf",
+          "tool": "ffuf"
+        },
+        {
+          "type": "tool",
+          "name": "feroxbuster",
+          "tool": "feroxbuster"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run httpx",
+          "type": "tool_run",
+          "tool": "httpx",
+          "entrypoint": "httpx",
+          "args": "-version"
+        }
+      ]
+    },
+    "recon_suite": {
+      "title": "Recon Suite",
+      "description": "Passive and active recon tooling.",
+      "packs": [
+        "osint",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "subfinder",
+          "tool": "subfinder"
+        },
+        {
+          "type": "tool",
+          "name": "amass",
+          "tool": "amass"
+        },
+        {
+          "type": "tool",
+          "name": "assetfinder",
+          "tool": "assetfinder"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run subfinder",
+          "type": "tool_run",
+          "tool": "subfinder",
+          "entrypoint": "subfinder",
+          "args": "-version"
+        }
+      ]
+    },
+    "credential_audit": {
+      "title": "Credential Audit",
+      "description": "Password auditing and breach checks.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "hashcat",
+          "tool": "hashcat"
+        },
+        {
+          "type": "tool",
+          "name": "john",
+          "tool": "john"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run hashcat",
+          "type": "tool_run",
+          "tool": "hashcat",
+          "entrypoint": "hashcat",
+          "args": "--version"
+        }
+      ]
+    },
+    "packet_capture": {
+      "title": "Packet Capture",
+      "description": "Network capture and inspection.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "tcpdump",
+          "tool": "tcpdump"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run tcpdump",
+          "type": "tool_run",
+          "tool": "tcpdump",
+          "entrypoint": "tcpdump",
+          "args": "--version"
+        }
+      ]
+    },
+    "malware_analysis": {
+      "title": "Malware Analysis",
+      "description": "Static and dynamic malware analysis utilities.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "radare2",
+          "tool": "radare2"
+        },
+        {
+          "type": "tool",
+          "name": "yara",
+          "tool": "yara"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run yara",
+          "type": "tool_run",
+          "tool": "yara",
+          "entrypoint": "yara",
+          "args": "--version"
+        }
+      ]
+    },
+    "forensics_suite": {
+      "title": "Forensics Suite",
+      "description": "Disk and file forensics tooling.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "volatility3",
+          "tool": "volatility3"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run volatility",
+          "type": "tool_run",
+          "tool": "volatility3",
+          "entrypoint": "vol",
+          "args": "--help"
+        }
+      ]
+    },
+    "red_team_ops": {
+      "title": "Red Team Ops",
+      "description": "Operational tooling for red team workflows.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "impacket",
+          "tool": "impacket"
+        },
+        {
+          "type": "tool",
+          "name": "crackmapexec",
+          "tool": "crackmapexec"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run impacket",
+          "type": "tool_run",
+          "tool": "impacket",
+          "entrypoint": "impacket-GetUserSPNs",
+          "args": "-h"
+        }
+      ]
+    },
+    "blue_team_ops": {
+      "title": "Blue Team Ops",
+      "description": "Monitoring and detection workflows.",
+      "packs": [
+        "defsec",
+        "observability_otel"
+      ],
+      "extensions": [
+        "otel_collector"
+      ],
+      "ports": [
+        "PORT_OTEL_HTTP"
+      ],
+      "health": {
+        "port": "PORT_OTEL_HTTP",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "tcp",
+          "name": "OTel HTTP",
+          "port": "PORT_OTEL_HTTP"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open OTel",
+          "type": "open_url",
+          "port": "PORT_OTEL_HTTP",
+          "path": ""
+        }
+      ]
+    },
+    "gpu_presence": {
+      "title": "GPU Presence",
+      "description": "Detects GPU availability for acceleration.",
+      "packs": [],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nvidia-smi",
+          "tool": "nvidia-smi"
+        }
+      ],
+      "actions": []
+    },
+    "open_webui_internal": {
+      "title": "Open WebUI Internal",
+      "description": "Internal compose check using service name.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "open_webui"
+      ],
+      "ports": [
+        "PORT_WEBUI"
+      ],
+      "notes": "Runs inside compose network (requires allow).",
+      "checks": [
+        {
+          "type": "compose_http",
+          "name": "Open WebUI (internal)",
+          "service": "open-webui",
+          "port": "PORT_WEBUI",
+          "service_port": 8080,
+          "path": "health"
+        }
+      ],
+      "actions": []
+    },
+    "tool_aircrack_ng": {
+      "title": "Aircrack-ng",
+      "description": "Wireless auditing toolkit.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/aircrack-ng.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "aircrack-ng",
+          "tool": "aircrack-ng"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run aircrack-ng --help",
+          "type": "tool_run",
+          "tool": "aircrack-ng",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_beef": {
+      "title": "BeEF",
+      "description": "Browser exploitation framework.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/beef.tar.gz. Requires runtime setup.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "beef",
+          "tool": "beef"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run BeEF",
+          "type": "tool_run",
+          "tool": "beef",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_burp_suite": {
+      "title": "Burp Suite",
+      "description": "Web application security testing.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Commercial. Install from _ai_tools/burp-suite.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "burp-suite",
+          "tool": "burp-suite"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run Burp",
+          "type": "tool_run",
+          "tool": "burp-suite",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_cobalt_strike": {
+      "title": "Cobalt Strike",
+      "description": "Commercial adversary simulation suite.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Commercial. Install from _ai_tools/cobalt-strike.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "cobalt-strike",
+          "tool": "cobalt-strike"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run Cobalt Strike",
+          "type": "tool_run",
+          "tool": "cobalt-strike",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_core_impact": {
+      "title": "Core Impact",
+      "description": "Commercial penetration testing platform.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Commercial. Install from _ai_tools/core-impact.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "core-impact",
+          "tool": "core-impact"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run Core Impact",
+          "type": "tool_run",
+          "tool": "core-impact",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_dsniff": {
+      "title": "dsniff",
+      "description": "Password sniffing and MITM utilities.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/dsniff.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "dsniff",
+          "tool": "dsniff"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run dsniff --help",
+          "type": "tool_run",
+          "tool": "dsniff",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_empire": {
+      "title": "Empire",
+      "description": "Post-exploitation framework.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/empire.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "empire",
+          "tool": "empire"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run Empire",
+          "type": "tool_run",
+          "tool": "empire",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_ettercap": {
+      "title": "Ettercap",
+      "description": "MITM and network interception suite.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/ettercap.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "ettercap",
+          "tool": "ettercap"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run ettercap --help",
+          "type": "tool_run",
+          "tool": "ettercap",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_impacket": {
+      "title": "Impacket",
+      "description": "Network protocol tooling for lateral movement.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/impacket.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "impacket",
+          "tool": "impacket"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run impacket-GetUserSPNs -h",
+          "type": "tool_run",
+          "tool": "impacket",
+          "entrypoint": "impacket-GetUserSPNs",
+          "args": "-h"
+        }
+      ]
+    },
+    "tool_john_the_ripper": {
+      "title": "John the Ripper",
+      "description": "Password auditing and cracking.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/john-the-ripper.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "john-the-ripper",
+          "tool": "john-the-ripper"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run john --help",
+          "type": "tool_run",
+          "tool": "john-the-ripper",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_nessus": {
+      "title": "Nessus",
+      "description": "Vulnerability scanning platform.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Commercial. Install from _ai_tools/nessus.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nessus",
+          "tool": "nessus"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run Nessus",
+          "type": "tool_run",
+          "tool": "nessus",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_netcat": {
+      "title": "Netcat",
+      "description": "Network debugging and data transfer.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/netcat.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "netcat",
+          "tool": "netcat"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run netcat -h",
+          "type": "tool_run",
+          "tool": "netcat",
+          "args": "-h"
+        }
+      ]
+    },
+    "tool_nmap": {
+      "title": "Nmap",
+      "description": "Network discovery and security auditing.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/nmap.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nmap",
+          "tool": "nmap"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nmap --version",
+          "type": "tool_run",
+          "tool": "nmap",
+          "args": "--version"
+        }
+      ]
+    },
+    "tool_power_sploit": {
+      "title": "PowerSploit",
+      "description": "PowerShell post-exploitation scripts.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/power-sploit.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "power-sploit",
+          "tool": "power-sploit"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run PowerSploit",
+          "type": "tool_run",
+          "tool": "power-sploit",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_powershell_empire": {
+      "title": "PowerShell Empire",
+      "description": "Post-exploitation agent framework.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/powershell-empire.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "powershell-empire",
+          "tool": "powershell-empire"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run PowerShell Empire",
+          "type": "tool_run",
+          "tool": "powershell-empire",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_sharp_shooter": {
+      "title": "Sharp Shooter",
+      "description": "Red team payload and delivery tooling.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/sharp-shooter.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "sharp-shooter",
+          "tool": "sharp-shooter"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run Sharp Shooter",
+          "type": "tool_run",
+          "tool": "sharp-shooter",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_sqlmap": {
+      "title": "SQLMap",
+      "description": "Automated SQL injection testing.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/sqlmap.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "sqlmap",
+          "tool": "sqlmap"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run sqlmap --version",
+          "type": "tool_run",
+          "tool": "sqlmap",
+          "args": "--version"
+        }
+      ]
+    },
+    "tool_sqlninja": {
+      "title": "SQLNinja",
+      "description": "SQL Server exploitation tool.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/sqlninja.tar.gz.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "sqlninja",
+          "tool": "sqlninja"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run sqlninja --help",
+          "type": "tool_run",
+          "tool": "sqlninja",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_wireshark": {
+      "title": "Wireshark",
+      "description": "Packet analysis and inspection.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install from _ai_tools/wireshark.tar.gz or system package.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "wireshark",
+          "tool": "wireshark"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run wireshark --help",
+          "type": "tool_run",
+          "tool": "wireshark",
+          "args": "--help"
+        }
+      ]
+    },
+    "tool_metasploit": {
+      "title": "Metasploit",
+      "description": "Exploit development and testing framework.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install separately or add metasploit to _ai_tools.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "metasploit",
+          "tool": "metasploit"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run msfconsole -v",
+          "type": "tool_run",
+          "tool": "metasploit",
+          "entrypoint": "msfconsole",
+          "args": "-v"
+        }
+      ]
+    },
+    "audio2text": {
+      "title": "Audio -> Text",
+      "description": "Transcribe audio files via the Speech API (Whisper backend).",
+      "packs": [
+        "speech_stack"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_SPEECH_API"
+      ],
+      "portal": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "api": {
+        "port": "PORT_SPEECH_API",
+        "path": "transcribe"
+      },
+      "health": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "notes": "Upload audio to /transcribe (multipart).",
+      "webui": {
+        "category": "Audio",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Speech API",
+          "port": "PORT_SPEECH_API",
+          "path": "docs"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speech Up",
+          "type": "beast_cmd",
+          "cmd": "speech_up"
+        },
+        {
+          "label": "Speech Down",
+          "type": "beast_cmd",
+          "cmd": "speech_down"
+        }
+      ]
+    },
+    "image2image": {
+      "title": "Image -> Image",
+      "description": "Image-to-image workflows via ComfyUI.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_manager"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Install image-to-image workflows in ComfyUI.",
+      "webui": {
+        "category": "Media",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ]
+    },
+    "image2text": {
+      "title": "Image -> Text",
+      "description": "Vision-language captioning using Ollama vision models.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_OLLAMA",
+        "PORT_WEBUI"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "health": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "notes": "Requires a vision-capable model in Ollama.",
+      "ollama": {
+        "model": "llama3.2-vision:latest",
+        "purpose": "vision"
+      },
+      "webui": {
+        "category": "Vision",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Ollama API",
+          "port": "PORT_OLLAMA",
+          "path": "api/tags"
+        },
+        {
+          "type": "ollama_model",
+          "name": "Vision model",
+          "model": "llama3.2-vision:latest"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Pull Vision Model",
+          "type": "ollama_pull",
+          "model": "llama3.2-vision:latest"
+        },
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        }
+      ]
+    },
+    "text2code": {
+      "title": "Text -> Code",
+      "description": "Code generation and refactoring with a coder-tuned model.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_OLLAMA",
+        "PORT_WEBUI"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "health": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "notes": "Recommended coder model in Ollama.",
+      "ollama": {
+        "model": "qwen2.5-coder:latest",
+        "purpose": "code"
+      },
+      "webui": {
+        "category": "Code",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Ollama API",
+          "port": "PORT_OLLAMA",
+          "path": "api/tags"
+        },
+        {
+          "type": "ollama_model",
+          "name": "Coder model",
+          "model": "qwen2.5-coder:latest"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Pull Coder Model",
+          "type": "ollama_pull",
+          "model": "qwen2.5-coder:latest"
+        },
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        }
+      ]
+    },
+    "rag_chat": {
+      "title": "RAG Chat",
+      "description": "Chat UI backed by Ollama + Qdrant with web search.",
+      "packs": [
+        "networking",
+        "osint"
+      ],
+      "extensions": [
+        "open_webui",
+        "qdrant",
+        "searxng"
+      ],
+      "ports": [
+        "PORT_WEBUI",
+        "PORT_QDRANT",
+        "PORT_SEARXNG"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "health": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "notes": "Requires Open WebUI configured with Qdrant + SearXNG.",
+      "ollama": {
+        "model": "llama3.2:latest",
+        "embedding_model": "nomic-embed-text"
+      },
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Open WebUI",
+          "port": "PORT_WEBUI",
+          "path": "health"
+        },
+        {
+          "type": "http",
+          "name": "Qdrant",
+          "port": "PORT_QDRANT",
+          "path": "readyz"
+        },
+        {
+          "type": "http",
+          "name": "SearXNG",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        },
+        {
+          "label": "Pull Llama3.2",
+          "type": "ollama_pull",
+          "model": "llama3.2:latest"
+        }
+      ]
+    },
+    "workflow_automation": {
+      "title": "Workflow Automation",
+      "description": "n8n workflows for task automation and integrations.",
+      "packs": [
+        "agent_builders"
+      ],
+      "extensions": [
+        "n8n"
+      ],
+      "ports": [
+        "PORT_N8N"
+      ],
+      "portal": {
+        "port": "PORT_N8N",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_N8N",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_N8N",
+        "path": ""
+      },
+      "notes": "Use n8n to orchestrate multi-step automations.",
+      "webui": {
+        "category": "Automation",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "n8n",
+          "port": "PORT_N8N",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open n8n",
+          "type": "open_url",
+          "port": "PORT_N8N",
+          "path": ""
+        }
+      ]
+    },
+    "uptime_monitoring": {
+      "title": "Uptime Monitoring",
+      "description": "Uptime Kuma for service monitoring and alerting.",
+      "packs": [
+        "observability_otel"
+      ],
+      "extensions": [
+        "uptime_kuma"
+      ],
+      "ports": [
+        "PORT_KUMA"
+      ],
+      "portal": {
+        "port": "PORT_KUMA",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_KUMA",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_KUMA",
+        "path": ""
+      },
+      "notes": "Create checks for internal services.",
+      "webui": {
+        "category": "Observability",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Uptime Kuma",
+          "port": "PORT_KUMA",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Kuma",
+          "type": "open_url",
+          "port": "PORT_KUMA",
+          "path": ""
+        }
+      ]
+    },
+    "container_admin": {
+      "title": "Container Admin",
+      "description": "Portainer UI for container management.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "portainer"
+      ],
+      "ports": [
+        "PORT_PORTAINER"
+      ],
+      "portal": {
+        "port": "PORT_PORTAINER",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_PORTAINER",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_PORTAINER",
+        "path": ""
+      },
+      "notes": "Manage containers and stacks through Portainer.",
+      "webui": {
+        "category": "Operations",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Portainer",
+          "port": "PORT_PORTAINER",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Portainer",
+          "type": "open_url",
+          "port": "PORT_PORTAINER",
+          "path": ""
+        }
+      ]
+    },
+    "object_storage": {
+      "title": "Object Storage",
+      "description": "MinIO S3-compatible storage for artifacts and datasets.",
+      "packs": [
+        "artifact_store_minio"
+      ],
+      "extensions": [
+        "minio"
+      ],
+      "ports": [
+        "PORT_MINIO",
+        "PORT_MINIO_CONSOLE"
+      ],
+      "portal": {
+        "port": "PORT_MINIO_CONSOLE",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_MINIO",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_MINIO",
+        "path": ""
+      },
+      "notes": "Use MinIO for model artifacts and datasets.",
+      "webui": {
+        "category": "Storage",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "MinIO API",
+          "port": "PORT_MINIO",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "MinIO Console",
+          "port": "PORT_MINIO_CONSOLE",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open MinIO Console",
+          "type": "open_url",
+          "port": "PORT_MINIO_CONSOLE",
+          "path": ""
+        }
+      ]
+    },
+    "reverse_proxy": {
+      "title": "Reverse Proxy",
+      "description": "Traefik edge routing and TLS termination.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "traefik"
+      ],
+      "ports": [
+        "PORT_TRAEFIK_HTTP",
+        "PORT_TRAEFIK_DASHBOARD"
+      ],
+      "portal": {
+        "port": "PORT_TRAEFIK_DASHBOARD",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_TRAEFIK_DASHBOARD",
+        "path": "api/rawdata"
+      },
+      "health": {
+        "port": "PORT_TRAEFIK_DASHBOARD",
+        "path": ""
+      },
+      "notes": "Use Traefik to route services in prodish deployments.",
+      "webui": {
+        "category": "Networking",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Traefik",
+          "port": "PORT_TRAEFIK_DASHBOARD",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Traefik",
+          "type": "open_url",
+          "port": "PORT_TRAEFIK_DASHBOARD",
+          "path": ""
+        }
+      ]
+    },
+    "queue_workers": {
+      "title": "Queue Workers",
+      "description": "Background job queue and workers (RQ + Redis).",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "redis"
+      ],
+      "ports": [
+        "PORT_REDIS"
+      ],
+      "portal": {
+        "port": "PORT_REDIS",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_REDIS",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_REDIS",
+        "path": ""
+      },
+      "notes": "Use ./bin/beast queue worker to run background jobs.",
+      "webui": {
+        "category": "Operations",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "tcp",
+          "name": "Redis",
+          "port": "PORT_REDIS"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Queue Status",
+          "type": "beast_cmd",
+          "cmd": "queue status"
+        }
+      ]
+    }
+  }
+}

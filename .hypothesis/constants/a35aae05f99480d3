@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/capabilities/registry.py
+# hypothesis_version: 6.150.0
+
+[-20000, 200, 400, '-T', '-f', '-fsS', '127.0.0.1', 'AI_BEAST_BIND_ADDR', 'GET', 'User-Agent', 'actions', 'actions_append', 'ai-beast-cap-check', 'body', 'body_env', 'body_json', 'capabilities', 'capability', 'capability_check', 'check', 'checks', 'checks_append', 'cmd', 'code', 'compose', 'compose_file', 'compose_http', 'container_port', 'curl', 'docker', 'docker-compose.yml', 'error', 'exec', 'headers', 'headers_env', 'http', 'id', 'method', 'missing port', 'missing service', 'missing url', 'name', 'ok', 'path', 'port', 'returncode', 'service', 'service_port', 'status', 'stderr', 'stdout', 'tcp', 'test', 'timeout', 'title', 'tool', 'type', 'url', 'utf-8', 'version']

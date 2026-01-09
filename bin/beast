@@ -60,6 +60,7 @@ Power-user:
   comfy postinstall     ComfyUI post-install actions (nodes, allowlist, audits)
   rag ingest            Ingest docs into vector DB (Qdrant)
   llm status|list       LLM model inventory + storage info
+  queue worker|enqueue|status  Start RQ worker, enqueue task, or show queue info
 
 Examples:
   ./bin/beast init --apply [--defaults] [--guts-dir=/path] [--heavy-dir=/path]
@@ -249,6 +250,14 @@ verify)
     case "$sub" in
       ingest) "$BASE_DIR/scripts/75_rag_ingest.sh" "${@:-}" ;;
       *) die "Usage: beast rag ingest ..." ;;
+    esac
+    ;;
+
+  queue)
+    sub="${1:-}"; shift || true
+    case "$sub" in
+      worker|enqueue|status) "$BASE_DIR/scripts/87_queue.sh" "$sub" "${@:-}" ;;
+      *) die "Usage: beast queue {worker|enqueue|status}" ;;
     esac
     ;;
 

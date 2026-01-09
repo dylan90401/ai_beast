@@ -11,11 +11,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from modules.tools.registry import run_tool
-
 import requests
 from rich.console import Console
 from rich.panel import Panel
+
+from modules.tools.registry import run_tool
 
 console = Console()
 

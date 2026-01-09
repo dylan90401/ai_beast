@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/agent/agent_runner.py
+# hypothesis_version: 6.150.0
+
+[0.5, 0.7, 2.0, 200, 2048, '/', 'a', 'agent_traces.jsonl', 'base_url', 'content', 'echo', 'error', 'fail_on_error', 'id', 'input', 'llama3.2:latest', 'max_tokens', 'message', 'messages', 'model', 'ollama', 'options', 'outputs/traces', 'prompt', 'provider', 'response', 'retry_attempts', 'role', 'status', 'stream', 'success', 'system', 'system_prompt', 'temperature', 'test_id', 'timeout_seconds', 'trace_file', 'trace_id', 'user', 'w']

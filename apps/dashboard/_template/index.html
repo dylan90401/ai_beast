@@ -288,6 +288,31 @@
       <div id="serviceList" class="tool-list"></div>
     </section>
 
+    <section class="card" style="--delay: 390ms;">
+      <h3>Queue (RQ)</h3>
+      <div class="muted" style="margin-bottom: 8px;">Enqueue tasks for background workers. Only tasks in <code>modules.queue.tasks</code> are allowed.</div>
+      <div class="row" style="gap: 8px; margin-bottom: 8px;">
+        <input id="queueTask" class="token-input" placeholder="modules.queue.tasks.heartbeat" style="flex: 2;">
+        <button class="btn" onclick="enqueueHeartbeat()">Heartbeat</button>
+        <button class="btn primary" onclick="enqueueQueueTask()">Enqueue</button>
+      </div>
+      <textarea id="queuePayload" class="token-input" placeholder='{"args":["hello"],"kwargs":{}}' style="width: 100%; min-height: 70px;"></textarea>
+      <div class="row" style="margin-top: 10px; gap: 8px;">
+        <select id="queueStatusFilter" class="token-input" style="max-width: 180px;" onchange="loadQueueJobs()">
+          <option value="">All</option>
+          <option value="queued">Queued</option>
+          <option value="started">Started</option>
+          <option value="finished">Finished</option>
+          <option value="failed">Failed</option>
+        </select>
+        <button class="btn ghost" onclick="loadQueueJobs()">Refresh Jobs</button>
+        <button class="btn ghost" onclick="cleanupQueueJobs('finished')">Clear Finished</button>
+        <button class="btn ghost" onclick="cleanupQueueJobs('failed')">Clear Failed</button>
+        <button class="btn ghost" onclick="cleanupQueueJobs('queued')">Clear Queued</button>
+      </div>
+      <div id="queueJobList" class="tool-list" style="margin-top: 8px;"></div>
+    </section>
+
     <section class="card" style="--delay: 420ms;">
       <h3>Command Output</h3>
       <div id="log" class="terminal">Ready.</div>
@@ -301,6 +326,8 @@
     packs: [],
     extensions: [],
     metrics: {},
+    capabilities: [],
+    capabilityActions: {},
   };
 
   const EXT_INFO = {
@@ -469,6 +496,21 @@
     return `http://${bind(cfg)}:${p}${suffix}`;
   }
 
+  function openUrl(target) {
+    if (!target) return;
+    window.open(target, '_blank', 'noopener,noreferrer');
+  }
+
+  function resolveCapabilityUrl(ref) {
+    if (!ref) return '';
+    if (typeof ref === 'function') return ref(state.config);
+    if (typeof ref === 'string') return ref;
+    const portKey = ref.port || '';
+    const path = ref.path || '';
+    if (!portKey) return ref.url || '';
+    return url(state.config, portKey, path);
+  }
+
   function saveToken() {
     state.token = document.getElementById('token').value.trim();
     localStorage.setItem('beast_token', state.token);
@@ -500,6 +542,13 @@
     return res.json();
   }
 
+  async function loadCapabilities() {
+    const data = await apiGet('/api/capabilities');
+    if (data.ok) {
+      state.capabilities = data.items || [];
+    }
+  }
+
   async function refreshAll() {
     try {
       const health = await fetch('/api/health');
@@ -507,7 +556,7 @@
     } catch (e) {
       setHealth(false);
     }
-    await Promise.all([loadConfig(), loadPacks(), loadExtensions(), loadMetrics()]);
+    await Promise.all([loadConfig(), loadPacks(), loadExtensions(), loadMetrics(), loadQueueJobs(), loadCapabilities()]);
     renderServices();
     renderCapabilities();
     await checkHealth();
@@ -550,6 +599,8 @@
     const el = document.getElementById('systemMetrics');
     const disk = state.metrics.disk_usage || {};
     const mem = state.metrics.memory || {};
+    const db = state.metrics.metadata_db || {};
+    const dbStatus = (db.ok === true) ? 'ok' : (db.ok === false ? 'down' : 'unknown');
     const rows = [
       metricRow('Base Dir', state.config.BASE_DIR || 'unknown'),
       metricRow('Guts Dir', state.config.GUTS_DIR || 'n/a'),
@@ -561,6 +612,8 @@
       metricRow('Disk Used', disk.total_gb ? `${disk.used_gb} / ${disk.total_gb} GB (${disk.percent_used}%)` : 'n/a'),
       metricRow('Disk Free', disk.free_gb ? `${disk.free_gb} GB` : 'n/a'),
       metricRow('Memory Used', mem.total_gb ? `${mem.used_gb} / ${mem.total_gb} GB (${mem.percent_used}%)` : 'n/a'),
+      metricRow('Metadata DB', `${db.backend || 'unknown'} (${dbStatus})`),
+      metricRow('Metadata DSN', db.dsn || 'n/a'),
       metricRow('Bind Addr', bind(state.config)),
     ];
     el.innerHTML = rows.join('');
@@ -585,7 +638,9 @@
   function renderCapabilities() {
     const el = document.getElementById('capabilityList');
     if (!el) return;
-    el.innerHTML = CAPABILITIES.map(cap => {
+    const caps = state.capabilities.length ? state.capabilities : CAPABILITIES;
+    state.capabilityActions = {};
+    el.innerHTML = caps.map(cap => {
       const enabled = capabilityEnabled(cap);
       const portal = typeof cap.portal === 'function' ? cap.portal(state.config) : cap.portal;
       const api = typeof cap.api === 'function' ? cap.api(state.config) : cap.api;
@@ -593,19 +648,90 @@
       const links = [];
       if (portal) links.push({ label: 'Portal', url: portal });
       if (api) links.push({ label: 'API', url: api });
+      if (cap.webui) {
+        const webuiUrl = url(state.config, 'PORT_WEBUI', cap.webui.path || '');
+        if (webuiUrl) links.push({ label: 'WebUI', url: webuiUrl });
+      }
       const ports = (cap.ports || []).map(key => `${key}=${port(state.config, key, '-')}`);
+      const actions = (cap.actions || []).slice();
+      if (cap.ollama && cap.ollama.model) {
+        const model = cap.ollama.model;
+        const exists = actions.some(a => a.type === 'ollama_pull' && a.model === model);
+        if (!exists) {
+          actions.unshift({ label: `Pull ${model}`, type: 'ollama_pull', model });
+        }
+      }
+      state.capabilityActions[cap.id] = actions;
+      const actionsHtml = actions.map((act, idx) => {
+        return `<button class="btn ghost" onclick="handleCapabilityAction('${cap.id}', ${idx})">${act.label}</button>`;
+      }).join('');
+      const integrationNotes = [];
+      if (cap.webui && cap.webui.category) integrationNotes.push(`WebUI: ${cap.webui.category}`);
+      if (cap.ollama && cap.ollama.model) integrationNotes.push(`Ollama: ${cap.ollama.model}`);
+      if (cap.ollama && cap.ollama.embedding_model) integrationNotes.push(`Embed: ${cap.ollama.embedding_model}`);
+      const notes = [cap.notes || '', ...integrationNotes].filter(Boolean).join(' • ');
       return toolCard({
         id: `cap-${cap.id}`,
         title: cap.title,
         description: cap.description,
-        notes: cap.notes || '',
+        notes,
         enabled,
         onToggle: `toggleCapability('${cap.id}', ${!enabled})`,
         links,
         ports,
         health,
+        actions: actionsHtml,
       });
     }).join('');
+  }
+
+  async function runToolAction(action) {
+    const payload = {
+      name: action.tool || '',
+      entrypoint: action.entrypoint || '',
+      args: action.args || '',
+      allow: false,
+    };
+    if (!payload.name) {
+      const log = document.getElementById('log');
+      if (log) log.textContent = 'Tool action missing tool name.';
+      return;
+    }
+    const res = await apiPost('/api/tools/run', payload);
+    const log = document.getElementById('log');
+    if (log) {
+      const msg = `${(res.cmd || []).join(' ')}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+      log.textContent = msg || `Ran ${payload.name}.`;
+    }
+  }
+
+  async function handleCapabilityAction(capId, idx) {
+    const actions = state.capabilityActions[capId] || [];
+    const action = actions[idx];
+    if (!action) return;
+    if (action.type === 'open_url') {
+      openUrl(resolveCapabilityUrl(action));
+      return;
+    }
+    if (action.type === 'beast_cmd') {
+      await runCmd(action.cmd);
+      return;
+    }
+    if (action.type === 'tool_run') {
+      await runToolAction(action);
+      return;
+    }
+    if (action.type === 'ollama_pull') {
+      const model = action.model || '';
+      if (!model) {
+        const log = document.getElementById('log');
+        if (log) log.textContent = 'Missing Ollama model name.';
+        return;
+      }
+      const res = await apiPost('/api/models/pull', { model });
+      const log = document.getElementById('log');
+      if (log) log.textContent = res.ok ? `Pulled model ${model}` : (res.error || `Failed to pull model ${model}`);
+    }
   }
 
   function metricRow(label, value) {
@@ -866,6 +992,11 @@
     }));
   }
 
+  function setLog(message) {
+    const log = document.getElementById('log');
+    log.textContent = message;
+  }
+
   async function runCmd(cmd) {
     const log = document.getElementById('log');
     log.textContent = `Running: ${cmd}...`;
@@ -877,6 +1008,116 @@
       log.textContent = `${data.cmd ? data.cmd.join(' ') : cmd}\n\n${data.stdout || ''}\n${data.stderr || ''}`.trim();
     } catch (e) {
       log.textContent = `Error: ${e}`;
+    }
+  }
+
+  async function enqueueQueueTask() {
+    const task = (document.getElementById('queueTask').value || '').trim();
+    const raw = (document.getElementById('queuePayload').value || '').trim();
+    if (!task) {
+      setLog('Queue task is required.');
+      return;
+    }
+    let payload = {};
+    if (raw) {
+      try {
+        payload = JSON.parse(raw);
+      } catch (e) {
+        setLog('Queue payload must be valid JSON.');
+        return;
+      }
+    }
+    const res = await apiPost('/api/queue/enqueue', { task, args: payload.args || [], kwargs: payload.kwargs || {} });
+    if (res.ok) {
+      setLog(`Enqueued ${task} (${res.job_id || 'job'})`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Queue enqueue failed.');
+    }
+  }
+
+  async function enqueueHeartbeat() {
+    const payload = { args: ["dashboard"], kwargs: { delay: 0.1 } };
+    const res = await apiPost('/api/queue/enqueue', { task: 'modules.queue.tasks.heartbeat', args: payload.args, kwargs: payload.kwargs });
+    if (res.ok) {
+      setLog(`Heartbeat queued (${res.job_id || 'job'})`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Queue enqueue failed.');
+    }
+  }
+
+  async function loadQueueJobs() {
+    const list = document.getElementById('queueJobList');
+    if (!list) return;
+    list.innerHTML = '<div class="muted">Loading jobs...</div>';
+    const filterEl = document.getElementById('queueStatusFilter');
+    const status = filterEl ? filterEl.value : '';
+    const qs = new URLSearchParams({ limit: '25' });
+    if (status) qs.set('status', status);
+    const data = await apiGet(`/api/queue/jobs?${qs.toString()}`);
+    if (!data.ok) {
+      list.innerHTML = `<div class="muted">${data.error || 'Failed to load jobs'}</div>`;
+      return;
+    }
+    const items = data.items || [];
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">No jobs yet.</div>';
+      return;
+    }
+    list.innerHTML = items.map(job => `
+      <div class="tool">
+        <div class="tool-header">
+          <div class="tool-title">${job.func_name || 'task'}</div>
+          <div class="spacer"></div>
+          <span class="pill">${job.status || 'unknown'}</span>
+          <button class="btn ghost" onclick="toggleJobDetails('${job.id}')">Details</button>
+          <button class="btn ghost" onclick="retryJob('${job.id}')">Retry</button>
+          <button class="btn ghost" onclick="deleteJob('${job.id}')">Delete</button>
+        </div>
+        <div class="tool-desc">${job.id}</div>
+        <div class="muted">${job.created_at || ''}</div>
+        <pre id="job-${job.id}" class="terminal" style="display:none; margin-top:8px;">${JSON.stringify({ args: job.args || [], kwargs: job.kwargs || {} }, null, 2)}</pre>
+      </div>
+    `).join('');
+  }
+
+  function toggleJobDetails(id) {
+    const el = document.getElementById(`job-${id}`);
+    if (!el) return;
+    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+  }
+
+  async function retryJob(id) {
+    const res = await apiPost('/api/queue/retry', { job_id: id });
+    if (res.ok) {
+      setLog(`Retried job ${id}`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Retry failed.');
+    }
+  }
+
+  async function deleteJob(id) {
+    if (!confirm(`Delete job ${id}?`)) return;
+    const res = await apiPost('/api/queue/delete', { job_id: id });
+    if (res.ok) {
+      setLog(`Deleted job ${id}`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Delete failed.');
+    }
+  }
+
+  async function cleanupQueueJobs(status) {
+    const label = status || 'all';
+    if (!confirm(`Clear ${label} jobs?`)) return;
+    const res = await apiPost('/api/queue/cleanup', { status, limit: 200 });
+    if (res.ok) {
+      setLog(`Cleared ${res.count || 0} ${label} jobs.`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Cleanup failed.');
     }
   }
 

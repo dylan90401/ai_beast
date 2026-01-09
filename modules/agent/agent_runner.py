@@ -5,12 +5,13 @@ Implements agent execution framework following AI Toolkit best practices.
 """
 
 import json
-import logging
 import time
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from modules.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class AgentRunner:

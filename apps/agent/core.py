@@ -25,9 +25,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from modules.tools.registry import run_tool
-
 import requests
+
+from modules.tools.registry import run_tool
 
 DEFAULT_OLLAMA = os.environ.get("AI_BEAST_OLLAMA", "http://127.0.0.1:11434")
 DEFAULT_MODEL = (

@@ -242,11 +242,10 @@ check_port_conflicts() {
         if [[ "${DRYRUN:-1}" -eq 1 ]]; then
           log "DRYRUN: would kill listeners on port ${val}"
         else
-          local pids
-          pids="$(lsof -tiTCP:"$val" -sTCP:LISTEN || true)"
-          if [[ -n "$pids" ]]; then
-            log "Killing processes on port ${val}: ${pids}"
-            kill $pids >/dev/null 2>&1 || true
+          mapfile -t pids < <(lsof -tiTCP:"$val" -sTCP:LISTEN || true)
+          if [[ "${#pids[@]}" -gt 0 ]]; then
+            log "Killing processes on port ${val}: ${pids[*]}"
+            kill "${pids[@]}" >/dev/null 2>&1 || true
             killed=$((killed+1))
           fi
         fi

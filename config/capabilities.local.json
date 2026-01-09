@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "capabilities": {
+    "open_webui_chat": {
+      "checks_append": [
+        {
+          "type": "http",
+          "name": "Open WebUI Auth Check",
+          "port": "PORT_WEBUI",
+          "path": "api/v1/models",
+          "method": "GET",
+          "headers_env": {
+            "Authorization": "OPEN_WEBUI_API_TOKEN"
+          }
+        }
+      ]
+    },
+    "rag_search": {
+      "checks_append": [
+        {
+          "type": "http",
+          "name": "SearXNG Auth Check",
+          "port": "PORT_SEARXNG",
+          "path": "search",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          "headers_env": {
+            "X-Api-Key": "SEARXNG_API_KEY"
+          },
+          "body": "q=ai+beast&format=json"
+        }
+      ]
+    }
+  }
+}

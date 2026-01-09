@@ -9,18 +9,28 @@ description = "AI Beast / Kryptos — AI Agent Development Framework for macOS"
 readme = "README.md"
 authors = [{name = "Dylan", email = "dylan90401@users.noreply.github.com"}]
 license = {text = "MIT"}
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "pyyaml>=6.0",
     "click>=8.1.0",
     "requests>=2.31.0",
     "pydantic>=2.0.0",
+    "structlog>=24.0.0",
+    "psycopg[binary]>=3.2.0",
+    "opentelemetry-api>=1.27.0",
+    "opentelemetry-sdk>=1.27.0",
+    "opentelemetry-exporter-otlp>=1.27.0",
+    "rq>=2.0.0",
+    "redis>=5.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
+    "hypothesis>=6.100.0",
+    "pytest-integration>=0.2.3",
+    "pre-commit>=3.7.0",
     "ruff>=0.1.0",
 ]
 
@@ -33,7 +43,7 @@ packages = ["beast", "tools", "modules", "apps"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py314"
 exclude = [
     ".git",
     ".venv",
@@ -67,3 +77,6 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: integration tests (set AI_BEAST_INTEGRATION=1 to enable)",
+]

@@ -9,13 +9,17 @@ import os
 import shlex
 import subprocess
 import tarfile
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
+from modules.core.logging import get_logger
+from modules.core.metadata_db import get_metadata_db
 from modules.utils import get_base_dir
 
+logger = get_logger(__name__)
 
 CONFIG_PATH = "config/tools.json"
 
@@ -425,11 +429,26 @@ def run_tool(
         else:
             return 400, {"ok": False, "error": "No test configured"}
     if runner == "docker":
+        started = time.time()
         result = _run_docker(tool_cfg, tool_cfg.get("entrypoint", ""))
     elif runner == "compose":
+        started = time.time()
         result = _run_compose(tool_cfg, base, tool_cfg.get("entrypoint", ""))
     else:
+        started = time.time()
         result = _run_local(tool_cfg, base, tool_cfg.get("entrypoint", ""))
+    try:
+        duration_ms = int((time.time() - started) * 1000)
+        db = get_metadata_db()
+        db.record_tool_run(
+            name,
+            bool(result.get("ok")),
+            returncode=result.get("returncode"),
+            duration_ms=duration_ms,
+            meta={"runner": runner, "mode": mode},
+        )
+    except Exception as exc:
+        logger.warning("Failed to record tool run", exc_info=exc)
     return 200, result
 
 

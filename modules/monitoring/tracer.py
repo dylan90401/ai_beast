@@ -6,15 +6,15 @@ Integrates with OpenTelemetry collector when enabled.
 """
 
 import json
-import logging
+import os
 import time
-import urllib.error
-import urllib.request
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from modules.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class Tracer:
@@ -28,8 +28,9 @@ class Tracer:
     ):
         """Initialize tracer."""
         self.service_name = service_name
-        self.otel_enabled = otel_enabled
-        self.otel_endpoint = otel_endpoint
+        self.otel_enabled = otel_enabled or os.environ.get("OTEL_ENABLED") in ("1", "true", "True")
+        self.otel_endpoint = otel_endpoint or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+        self._otel_tracer = None
 
         self.trace_dir = Path("outputs/traces")
         self.trace_dir.mkdir(parents=True, exist_ok=True)
@@ -48,11 +49,24 @@ class Tracer:
             logger.warning("OTEL endpoint must be http(s), disabling OTEL export")
             self.otel_enabled = False
             return
-        self._otel_headers = {
-            "Content-Type": "application/json",
-            "User-Agent": "ai-beast-tracer/1.0",
-        }
-        logger.info(f"OTEL endpoint configured: {self.otel_endpoint}")
+        try:
+            from opentelemetry import trace
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+            from opentelemetry.sdk.resources import Resource
+            from opentelemetry.sdk.trace import TracerProvider
+            from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        except Exception as exc:
+            logger.warning("OTEL dependencies missing, disabling OTEL export: %s", exc)
+            self.otel_enabled = False
+            return
+
+        resource = Resource.create({"service.name": self.service_name})
+        provider = TracerProvider(resource=resource)
+        exporter = OTLPSpanExporter(endpoint=self.otel_endpoint)
+        provider.add_span_processor(BatchSpanProcessor(exporter))
+        trace.set_tracer_provider(provider)
+        self._otel_tracer = trace.get_tracer(self.service_name)
+        logger.info("OTEL exporter configured: %s", self.otel_endpoint)
 
     @contextmanager
     def trace_operation(
@@ -70,8 +84,15 @@ class Tracer:
             "attributes": attributes or {},
         }
 
+        otel_span = None
+        if self._otel_tracer:
+            otel_span = self._otel_tracer.start_span(operation_name)
+            if attributes:
+                for key, value in attributes.items():
+                    otel_span.set_attribute(str(key), str(value))
+
         try:
-            logger.debug(f"Starting trace: {trace_id}")
+            logger.debug("Starting trace: %s", trace_id)
             yield span
 
             span["status"] = "success"
@@ -81,9 +102,15 @@ class Tracer:
             span["status"] = "error"
             span["error"] = str(e)
             span["duration_ms"] = (time.time() - start_time) * 1000
+            if otel_span:
+                otel_span.record_exception(e)
             raise
 
         finally:
+            if otel_span:
+                if span.get("status") == "error":
+                    otel_span.set_attribute("error", True)
+                otel_span.end()
             self._record_span(span)
 
     def _record_span(self, span: dict[str, Any]):
@@ -91,29 +118,6 @@ class Tracer:
         trace_file = self.trace_dir / f"{self.service_name}_traces.jsonl"
         with open(trace_file, "a") as f:
             f.write(json.dumps(span) + "\n")
-
-        if self.otel_enabled and self.otel_endpoint:
-            self._export_to_otel(span)
-
-    def _export_to_otel(self, span: dict[str, Any]):
-        """Export span to OTEL collector (best-effort JSON)."""
-        payload = {
-            "service": self.service_name,
-            "span": span,
-        }
-        data = json.dumps(payload).encode("utf-8")
-        try:
-            req = urllib.request.Request(
-                self.otel_endpoint,
-                data=data,
-                headers=self._otel_headers,
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                if resp.status >= 400:
-                    logger.warning("OTEL export failed: HTTP %s", resp.status)
-        except urllib.error.URLError as exc:
-            logger.warning("OTEL export failed: %s", exc)
 
 
 _tracer: Tracer | None = None

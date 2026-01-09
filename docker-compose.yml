@@ -1,23 +1,24 @@
-version: '3.8'
-
 services:
-  # Main AI Beast Application
+  # AI Beast Dashboard (core control plane)
   ai-beast:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ai-beast-app
+    container_name: ai-beast-dashboard
     ports:
-      - "8000:8000"
+      - "8787:8787"
     environment:
-      - ENVIRONMENT=production
+      - AI_BEAST_BIND_ADDR=0.0.0.0
+      - PORT_DASHBOARD=8787
       - LOG_LEVEL=INFO
-    env_file:
-      - .env
     volumes:
-      - ./src:/app/src
-      - ./logs:/app/logs
+      - ./config:/app/config
       - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./outputs:/app/outputs
+      - ./extensions:/app/extensions
+      - ./_ai_tools:/app/_ai_tools
     networks:
       - ai-beast-network
     restart: unless-stopped
@@ -47,7 +48,7 @@ services:
     environment:
       - POSTGRES_DB=ai_beast
       - POSTGRES_USER=ai_beast_user
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ai_beast_dev}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -73,6 +74,22 @@ services:
       - ai-beast-network
     restart: unless-stopped
 
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: ai-beast-otel-collector
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8888:8888"
+    volumes:
+      - ./extensions/otel_collector/otel-collector.config.yaml:/etc/otelcol/config.yaml:ro
+    command:
+      - "--config=/etc/otelcol/config.yaml"
+    networks:
+      - ai-beast-network
+    restart: unless-stopped
+
   # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:latest
@@ -89,6 +106,34 @@ services:
       - ai-beast-network
     restart: unless-stopped
 
+  # Redis exporter for Prometheus
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: ai-beast-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    networks:
+      - ai-beast-network
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  # Postgres exporter for Prometheus
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: ai-beast-postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://ai_beast_user:${POSTGRES_PASSWORD:-ai_beast_dev}@postgres:5432/ai_beast?sslmode=disable
+    networks:
+      - ai-beast-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
   # Grafana for visualization
   grafana:
     image: grafana/grafana:latest
@@ -97,7 +142,7 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-ai_beast}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
@@ -117,7 +162,4 @@ volumes:
   postgres-data:
   prometheus-data:
   grafana-data:
-
-
-  ## add all ollama and webui tools and dockerized tools
   

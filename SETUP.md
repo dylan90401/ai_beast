@@ -105,6 +105,25 @@ python3 -m pytest tests/test_evaluator.py -v
 python3 -m pytest --cov=modules --cov=beast --cov-report=html
 ```
 
+## Phase 2 Testing Setup
+
+```bash
+# Install dev deps (includes hypothesis + pytest-integration + pre-commit)
+pip3 install -r requirements-dev.txt
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run pre-commit checks manually
+pre-commit run --all-files
+```
+
+Integration tests are opt-in. To enable them:
+
+```bash
+AI_BEAST_INTEGRATION=1 python3 -m pytest -q -m integration
+```
+
 ## Using Python CLI
 
 ```bash

@@ -1,0 +1,196 @@
+# Traefik Dynamic Configuration - AI Beast Services
+# This file is auto-loaded and watched for changes
+
+http:
+  # ==========================================================================
+  # Routers - Define how incoming requests are matched and forwarded
+  # ==========================================================================
+  routers:
+    # Open WebUI - Main chat interface
+    webui:
+      rule: "Host(`ai.localhost`) || Host(`webui.ai-beast.local`)"
+      service: webui
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - ratelimit
+      # Uncomment for TLS
+      # tls:
+      #   certResolver: letsencrypt
+
+    # Dashboard - AI Beast management UI
+    dashboard:
+      rule: "Host(`dashboard.localhost`) || Host(`dashboard.ai-beast.local`)"
+      service: dashboard
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - ratelimit
+
+    # Ollama API - LLM inference endpoint
+    ollama:
+      rule: "Host(`ollama.localhost`) || Host(`ollama.ai-beast.local`)"
+      service: ollama
+      entryPoints:
+        - web
+      middlewares:
+        - ratelimit
+        - cors-headers
+
+    # Qdrant - Vector database
+    qdrant:
+      rule: "Host(`qdrant.localhost`) || Host(`qdrant.ai-beast.local`)"
+      service: qdrant
+      entryPoints:
+        - web
+      middlewares:
+        - ratelimit
+
+    # N8N - Workflow automation
+    n8n:
+      rule: "Host(`n8n.localhost`) || Host(`n8n.ai-beast.local`)"
+      service: n8n
+      entryPoints:
+        - web
+        - websecure
+
+    # Jupyter - Notebook environment
+    jupyter:
+      rule: "Host(`jupyter.localhost`) || Host(`jupyter.ai-beast.local`)"
+      service: jupyter
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - jupyter-headers
+
+    # Prometheus - Metrics
+    prometheus:
+      rule: "Host(`prometheus.localhost`) || Host(`prometheus.ai-beast.local`)"
+      service: prometheus
+      entryPoints:
+        - web
+
+    # Grafana - Dashboards
+    grafana:
+      rule: "Host(`grafana.localhost`) || Host(`grafana.ai-beast.local`)"
+      service: grafana
+      entryPoints:
+        - web
+        - websecure
+
+  # ==========================================================================
+  # Services - Backend service definitions
+  # ==========================================================================
+  services:
+    webui:
+      loadBalancer:
+        servers:
+          - url: "http://open-webui:8080"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 5s
+
+    dashboard:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8787"
+        passHostHeader: true
+
+    ollama:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:11434"
+        passHostHeader: true
+
+    qdrant:
+      loadBalancer:
+        servers:
+          - url: "http://qdrant:6333"
+
+    n8n:
+      loadBalancer:
+        servers:
+          - url: "http://n8n:5678"
+
+    jupyter:
+      loadBalancer:
+        servers:
+          - url: "http://jupyterlab:8888"
+
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://prometheus:9090"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://grafana:3000"
+
+  # ==========================================================================
+  # Middlewares - Request/Response modifications
+  # ==========================================================================
+  middlewares:
+    # Rate limiting to prevent abuse
+    ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1s
+
+    # CORS headers for API access
+    cors-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "*"
+        accessControlAllowOriginList:
+          - "*"
+        accessControlMaxAge: 100
+        addVaryHeader: true
+
+    # Jupyter-specific headers for WebSocket support
+    jupyter-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"
+
+    # Security headers
+    secure-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+
+    # Basic authentication (optional)
+    auth:
+      basicAuth:
+        # Generate with: htpasswd -nb admin password
+        # Default: admin:admin (DO NOT USE IN PRODUCTION)
+        users:
+          - "admin:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+
+    # Compress responses
+    compress:
+      compress: {}
+
+    # Strip prefix (useful for path-based routing)
+    strip-api:
+      stripPrefix:
+        prefixes:
+          - "/api"

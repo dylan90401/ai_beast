@@ -1,13 +1,35 @@
-# JupyterLab - code runner/notebook environment
+# JupyterLab - Interactive notebook environment for AI Beast
+# Provides data science notebooks, model experimentation, and RAG analysis
 services:
   jupyterlab:
-    image: jupyter/minimal-notebook:latest
+    image: jupyter/datascience-notebook:latest
     container_name: ai_beast_jupyterlab
-  ports:
-    - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_JUPYTER:-8890}:8888"
+    profiles: ["jupyter", "dev", "full"]
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_JUPYTER:-8890}:8888"
     environment:
       JUPYTER_ENABLE_LAB: "yes"
-      JUPYTER_TOKEN: "${AI_BEAST_JUPYTER_TOKEN:-ai-beast}"
+      JUPYTER_TOKEN: "${AI_BEAST_JUPYTER_TOKEN:-ai_beast}"
+      NB_USER: "jovyan"
+      CHOWN_HOME: "yes"
+      GRANT_SUDO: "yes"
     volumes:
+      # Working notebooks
       - "${DATA_DIR:-./data}/notebooks:/home/jovyan/work"
+      # Read-only access to models
+      - "${MODELS_DIR:-./models}:/home/jovyan/models:ro"
+      # Read-only access to AI Beast workspace
+      - "${BASE_DIR:-.}:/home/jovyan/ai_beast:ro"
+      # Persist Jupyter settings
+      - jupyter_data:/home/jovyan/.jupyter
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  jupyter_data:

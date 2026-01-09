@@ -72,7 +72,7 @@ docker_runtime_ensure(){
       fi
       docker_runtime_start_colima
       # Give the engine a moment to come up
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if docker_runtime_is_ready; then
           log "Docker engine reachable."
           return 0

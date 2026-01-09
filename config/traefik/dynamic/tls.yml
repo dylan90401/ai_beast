@@ -1,0 +1,41 @@
+# Traefik TLS Configuration
+# Configure certificates and TLS options
+
+tls:
+  # ==========================================================================
+  # TLS Options - Security configurations
+  # ==========================================================================
+  options:
+    default:
+      minVersion: VersionTLS12
+      sniStrict: true
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+
+    modern:
+      minVersion: VersionTLS13
+
+  # ==========================================================================
+  # Certificates - Local development certificates
+  # ==========================================================================
+  # Uncomment and configure for local HTTPS with self-signed certificates
+  # certificates:
+  #   - certFile: /etc/traefik/certs/local.crt
+  #     keyFile: /etc/traefik/certs/local.key
+  #     stores:
+  #       - default
+
+  # ==========================================================================
+  # Certificate Stores
+  # ==========================================================================
+  stores:
+    default:
+      defaultCertificate:
+        # Default certificate for unmatched domains
+        # certFile: /etc/traefik/certs/default.crt
+        # keyFile: /etc/traefik/certs/default.key

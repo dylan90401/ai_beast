@@ -28,13 +28,13 @@ set_secret(){
 }
 
 get_secret(){
-  [[ -n "$NAME" ]] || die "secret name required"
+  validate_secret_name "$NAME"
   require_security
   security find-generic-password -a "$USER" -s "$KEYCHAIN_SERVICE" -l "$NAME" -w 2>/dev/null || die "not found: $NAME"
 }
 
 del_secret(){
-  [[ -n "$NAME" ]] || die "secret name required"
+  validate_secret_name "$NAME"
   require_security
   security delete-generic-password -a "$USER" -s "$KEYCHAIN_SERVICE" -l "$NAME" >/dev/null || die "not found: $NAME"
   log "deleted: $NAME"

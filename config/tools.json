@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "tools": {
+    "aircrack-ng": {
+      "description": "Wireless auditing toolkit.",
+      "runner": "local",
+      "entrypoint": "aircrack-ng",
+      "args": "",
+      "test_command": "aircrack-ng --help",
+      "env": {}
+    },
+    "beef": {
+      "description": "Browser exploitation framework.",
+      "runner": "local",
+      "entrypoint": "beef",
+      "args": "",
+      "test_command": "beef --help",
+      "env": {}
+    },
+    "burp-suite": {
+      "description": "Web application security testing.",
+      "runner": "local",
+      "entrypoint": "burp-suite",
+      "args": "",
+      "test_command": "burp-suite --help",
+      "env": {}
+    },
+    "cobalt-strike": {
+      "description": "Commercial adversary simulation suite.",
+      "runner": "local",
+      "entrypoint": "cobalt-strike",
+      "args": "",
+      "test_command": "cobalt-strike --help",
+      "env": {}
+    },
+    "core-impact": {
+      "description": "Commercial penetration testing platform.",
+      "runner": "local",
+      "entrypoint": "core-impact",
+      "args": "",
+      "test_command": "core-impact --help",
+      "env": {}
+    },
+    "dsniff": {
+      "description": "Password sniffing and MITM utilities.",
+      "runner": "local",
+      "entrypoint": "dsniff",
+      "args": "",
+      "test_command": "dsniff --help",
+      "env": {}
+    },
+    "empire": {
+      "description": "Post-exploitation framework.",
+      "runner": "local",
+      "entrypoint": "empire",
+      "args": "",
+      "test_command": "empire --help",
+      "env": {}
+    },
+    "ettercap": {
+      "description": "MITM and network interception suite.",
+      "runner": "local",
+      "entrypoint": "ettercap",
+      "args": "",
+      "test_command": "ettercap --help",
+      "env": {}
+    },
+    "impacket": {
+      "description": "Network protocol tooling for lateral movement.",
+      "runner": "local",
+      "entrypoint": "impacket-GetUserSPNs",
+      "args": "-h",
+      "test_command": "impacket-GetUserSPNs -h",
+      "env": {}
+    },
+    "john-the-ripper": {
+      "description": "Password auditing and cracking.",
+      "runner": "local",
+      "entrypoint": "john",
+      "args": "",
+      "test_command": "john --help",
+      "env": {}
+    },
+    "nessus": {
+      "description": "Vulnerability scanning platform.",
+      "runner": "local",
+      "entrypoint": "nessus",
+      "args": "",
+      "test_command": "nessus --help",
+      "env": {}
+    },
+    "netcat": {
+      "description": "Network debugging and data transfer.",
+      "runner": "local",
+      "entrypoint": "nc",
+      "args": "",
+      "test_command": "nc -h",
+      "env": {}
+    },
+    "nmap": {
+      "description": "Network discovery and security auditing.",
+      "runner": "local",
+      "entrypoint": "nmap",
+      "args": "",
+      "test_command": "nmap --version",
+      "env": {}
+    },
+    "power-sploit": {
+      "description": "PowerShell post-exploitation scripts.",
+      "runner": "local",
+      "entrypoint": "power-sploit",
+      "args": "",
+      "test_command": "power-sploit --help",
+      "env": {}
+    },
+    "powershell-empire": {
+      "description": "Post-exploitation agent framework.",
+      "runner": "local",
+      "entrypoint": "powershell-empire",
+      "args": "",
+      "test_command": "powershell-empire --help",
+      "env": {}
+    },
+    "sharp-shooter": {
+      "description": "Red team payload and delivery tooling.",
+      "runner": "local",
+      "entrypoint": "sharp-shooter",
+      "args": "",
+      "test_command": "sharp-shooter --help",
+      "env": {}
+    },
+    "sqlmap": {
+      "description": "Automated SQL injection testing.",
+      "runner": "local",
+      "entrypoint": "sqlmap",
+      "args": "",
+      "test_command": "sqlmap --version",
+      "env": {}
+    },
+    "sqlninja": {
+      "description": "SQL Server exploitation tool.",
+      "runner": "local",
+      "entrypoint": "sqlninja",
+      "args": "",
+      "test_command": "sqlninja --help",
+      "env": {}
+    },
+    "wireshark": {
+      "description": "Packet analysis and inspection.",
+      "runner": "local",
+      "entrypoint": "wireshark",
+      "args": "",
+      "test_command": "wireshark --help",
+      "env": {}
+    },
+    "metasploit": {
+      "description": "Exploit development and testing framework.",
+      "runner": "local",
+      "entrypoint": "msfconsole",
+      "args": "",
+      "test_command": "msfconsole -v",
+      "env": {}
+    }
+  }
+}

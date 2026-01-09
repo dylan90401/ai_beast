@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/tools/cli.py
+# hypothesis_version: 6.150.0
+
+[3000, 6333, 8188, 11434, '\nDisk Usage:', '  No issues found', '--base-dir', '.cache', '.env', 'AI Beast CLI tools', 'ComfyUI', 'Command to run', 'Ollama', 'Open WebUI', 'Qdrant', '__main__', 'ai-beast.env', 'command', 'config', 'diagnostics', 'diagnostics.json', 'disk_usage', 'features.yml', 'health', 'healthy', 'recommendation', 'security', 'valid', '✓', '✗']

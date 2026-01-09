@@ -377,6 +377,10 @@
         </div>
       </div>
       <div id="modelList" class="tool-list"></div>
+      <div style="margin-top: 12px;">
+        <div class="muted" style="margin-bottom: 6px;">Model Registry (versioned)</div>
+        <div id="modelRegistryList" class="tool-list"></div>
+      </div>
       <div id="storageInfo" class="muted" style="margin-top: 12px;"></div>
     </section>
 
@@ -396,6 +400,10 @@
       <div class="row" style="margin-bottom: 10px;">
         <button class="btn primary" onclick="runCapabilityChecks()">Run Checks</button>
         <span id="capCheckStatus" class="pill">idle</span>
+        <label class="row" style="gap: 6px; align-items: center; margin-left: 12px;">
+          <input id="capAllowToolRuns" type="checkbox">
+          <span class="muted">Allow tool checks</span>
+        </label>
       </div>
       <div id="capCheckResults" class="tool-list"></div>
     </section>
@@ -407,6 +415,31 @@
         <button class="btn" onclick="showToolManifest()">View Manifest</button>
         <button class="btn ghost" onclick="copyToolManifest()">Copy Manifest</button>
       </div>
+    </section>
+
+    <section class="card" style="--delay: 234ms;">
+      <h3>Queue (RQ)</h3>
+      <div class="muted" style="margin-bottom: 8px;">Enqueue tasks for background workers. Only tasks in <code>modules.queue.tasks</code> are allowed.</div>
+      <div class="row" style="gap: 8px; margin-bottom: 8px;">
+        <input id="queueTask" class="token-input" placeholder="modules.queue.tasks.heartbeat" style="flex: 2;">
+        <button class="btn" onclick="enqueueHeartbeat()">Heartbeat</button>
+        <button class="btn primary" onclick="enqueueQueueTask()">Enqueue</button>
+      </div>
+      <textarea id="queuePayload" class="token-input" placeholder='{"args":["hello"],"kwargs":{}}' style="width: 100%; min-height: 70px;"></textarea>
+      <div class="row" style="margin-top: 10px; gap: 8px;">
+        <select id="queueStatusFilter" class="token-input" style="max-width: 180px;" onchange="loadQueueJobs()">
+          <option value="">All</option>
+          <option value="queued">Queued</option>
+          <option value="started">Started</option>
+          <option value="finished">Finished</option>
+          <option value="failed">Failed</option>
+        </select>
+        <button class="btn ghost" onclick="loadQueueJobs()">Refresh Jobs</button>
+        <button class="btn ghost" onclick="cleanupQueueJobs('finished')">Clear Finished</button>
+        <button class="btn ghost" onclick="cleanupQueueJobs('failed')">Clear Failed</button>
+        <button class="btn ghost" onclick="cleanupQueueJobs('queued')">Clear Queued</button>
+      </div>
+      <div id="queueJobList" class="tool-list" style="margin-top: 8px;"></div>
     </section>
 
     <section class="card" style="--delay: 235ms;">
@@ -424,6 +457,10 @@
         <input id="aiToolArgs" class="token-input" style="flex: 1 1 260px;" placeholder="args (optional)"/>
         <button class="btn" onclick="runAiTool()">Run Tool</button>
       </div>
+      <label class="row" style="gap: 6px; align-items: center; margin-bottom: 8px;">
+        <input id="toolAllowRun" type="checkbox">
+        <span class="muted">Allow tool runs (unsandboxed)</span>
+      </label>
       <div id="aiToolEntryHint" class="muted" style="margin-bottom: 8px;"></div>
       <div id="aiToolsList" class="tool-list"></div>
     </section>
@@ -576,6 +613,8 @@
     extensions: [],
     metrics: {},
     hfSet: false,
+    capabilities: [],
+    capabilityActions: {},
     dockerContainers: [],
     dockerLogRaw: '',
     aiTools: [],
@@ -970,6 +1009,48 @@
     window.open(target, '_blank', 'noopener,noreferrer');
   }
 
+  function resolveCapabilityUrl(ref) {
+    if (!ref) return '';
+    if (typeof ref === 'function') return ref(state.config);
+    if (typeof ref === 'string') return ref;
+    const portKey = ref.port || '';
+    const path = ref.path || '';
+    if (!portKey) return ref.url || '';
+    return url(state.config, portKey, path);
+  }
+
+  async function handleCapabilityAction(capId, idx) {
+    const actions = state.capabilityActions[capId] || [];
+    const action = actions[idx];
+    if (!action) return;
+    if (action.type === 'open_url') {
+      openUrl(resolveCapabilityUrl(action));
+      return;
+    }
+    if (action.type === 'beast_cmd') {
+      await runCmd(action.cmd);
+      return;
+    }
+    if (action.type === 'tool_run') {
+      await runToolAction(action);
+      return;
+    }
+    if (action.type === 'ollama_pull') {
+      const model = action.model || '';
+      if (!model) {
+        setLog('Missing Ollama model name.');
+        return;
+      }
+      const res = await apiPost('/api/models/pull', { model });
+      if (res.ok) {
+        setLog(`Pulled model ${model}`);
+      } else {
+        setLog(res.error || `Failed to pull model ${model}`);
+      }
+      return;
+    }
+  }
+
   function saveToken() {
     state.token = document.getElementById('token').value.trim();
     localStorage.setItem('beast_token', state.token);
@@ -1026,7 +1107,7 @@
     } catch (e) {
       setHealth(false);
     }
-    await Promise.allSettled([checkHfToken(), loadConfig(), loadPacks(), loadExtensions(), loadMetrics(), refreshModels(), loadDockerContainers(), loadAiTools()]);
+    await Promise.allSettled([checkHfToken(), loadConfig(), loadPacks(), loadExtensions(), loadMetrics(), loadCapabilities(), refreshModels(), loadDockerContainers(), loadAiTools(), loadQueueJobs()]);
     renderServices();
     renderSegments();
     renderCapabilities();
@@ -1107,6 +1188,16 @@
       renderMetrics();
     } else if (data.error) {
       showBanner(`Metrics load failed: ${data.error}`, 'error');
+    }
+  }
+
+  async function loadCapabilities() {
+    const data = await apiGet('/api/capabilities');
+    if (data.ok) {
+      state.capabilities = data.items || [];
+      renderCapabilities();
+    } else if (data.error) {
+      showBanner(`Capabilities load failed: ${data.error}`, 'error');
     }
   }
 
@@ -1226,8 +1317,13 @@
   }
 
   async function runToolTest(name) {
+    const allow = !!(document.getElementById('toolAllowRun') || {}).checked;
+    if (!allow) {
+      setLog('Enable Allow tool runs to execute tests.');
+      return;
+    }
     setLog(`Testing ${name}...`, { open: false });
-    const res = await apiPost('/api/tools/test', { name });
+    const res = await apiPost('/api/tools/test', { name, allow });
     if (res && res.ok !== undefined) {
       const msg = res.status
         ? `Test ${name}: ${res.ok ? 'ok' : 'fail'} (${res.status})`
@@ -1239,14 +1335,45 @@
   }
 
   async function runTool(name) {
+    const allow = !!(document.getElementById('toolAllowRun') || {}).checked;
+    if (!allow) {
+      setLog('Enable Allow tool runs to execute.');
+      return;
+    }
     setLog(`Running ${name}...`, { open: false });
-    const res = await apiPost('/api/tools/run', { name });
+    const res = await apiPost('/api/tools/run', { name, allow });
     const msg = `${(res.cmd || []).join(' ')}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
     if (res && res.ok !== undefined) {
       setLog(msg || `Ran ${name}.`);
       return;
     }
     setLog(res.error || `Run failed for ${name}.`);
+  }
+
+  async function runToolAction(action) {
+    const allow = !!(document.getElementById('toolAllowRun') || {}).checked;
+    if (!allow) {
+      setLog('Enable Allow tool runs to execute.');
+      return;
+    }
+    const payload = {
+      name: action.tool || '',
+      entrypoint: action.entrypoint || '',
+      args: action.args || '',
+      allow,
+    };
+    if (!payload.name) {
+      setLog('Tool action missing tool name.');
+      return;
+    }
+    setLog(`Running ${payload.name}...`, { open: false });
+    const res = await apiPost('/api/tools/run', payload);
+    const msg = `${(res.cmd || []).join(' ')}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+    if (res && res.ok !== undefined) {
+      setLog(msg || `Ran ${payload.name}.`);
+      return;
+    }
+    setLog(res.error || `Run failed for ${payload.name}.`);
   }
 
   function openToolConfig(name) {
@@ -1405,6 +1532,11 @@
   }
 
   async function runAiTool() {
+    const allow = !!(document.getElementById('toolAllowRun') || {}).checked;
+    if (!allow) {
+      setLog('Enable Allow tool runs to execute.');
+      return;
+    }
     const picker = document.getElementById('aiToolRunPicker');
     const entry = document.getElementById('aiToolEntry');
     const args = document.getElementById('aiToolArgs');
@@ -1415,7 +1547,7 @@
       setLog('Pick a tool and entrypoint before running.');
       return;
     }
-    const payload = { name: tool, entrypoint, args: args ? args.value.trim() : '' };
+    const payload = { name: tool, entrypoint, args: args ? args.value.trim() : '', allow };
     setLog(`Running ${tool}: ${entrypoint} ${payload.args}`.trim(), { open: false });
     try {
       const res = await apiPost('/api/tools/run', payload);
@@ -1427,6 +1559,116 @@
       }
     } catch (e) {
       setLog(`Tool run error: ${e.message || e}`);
+    }
+  }
+
+  async function enqueueQueueTask() {
+    const task = (document.getElementById('queueTask').value || '').trim();
+    const raw = (document.getElementById('queuePayload').value || '').trim();
+    if (!task) {
+      setLog('Queue task is required.');
+      return;
+    }
+    let payload = {};
+    if (raw) {
+      try {
+        payload = JSON.parse(raw);
+      } catch (e) {
+        setLog('Queue payload must be valid JSON.');
+        return;
+      }
+    }
+    const res = await apiPost('/api/queue/enqueue', { task, args: payload.args || [], kwargs: payload.kwargs || {} });
+    if (res.ok) {
+      setLog(`Enqueued ${task} (${res.job_id || 'job'})`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Queue enqueue failed.');
+    }
+  }
+
+  async function enqueueHeartbeat() {
+    const payload = { args: ["dashboard"], kwargs: { delay: 0.1 } };
+    const res = await apiPost('/api/queue/enqueue', { task: 'modules.queue.tasks.heartbeat', args: payload.args, kwargs: payload.kwargs });
+    if (res.ok) {
+      setLog(`Heartbeat queued (${res.job_id || 'job'})`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Queue enqueue failed.');
+    }
+  }
+
+  async function loadQueueJobs() {
+    const list = document.getElementById('queueJobList');
+    if (!list) return;
+    list.innerHTML = '<div class="muted">Loading jobs...</div>';
+    const filterEl = document.getElementById('queueStatusFilter');
+    const status = filterEl ? filterEl.value : '';
+    const qs = new URLSearchParams({ limit: '25' });
+    if (status) qs.set('status', status);
+    const data = await apiGet(`/api/queue/jobs?${qs.toString()}`);
+    if (!data.ok) {
+      list.innerHTML = `<div class="muted">${data.error || 'Failed to load jobs'}</div>`;
+      return;
+    }
+    const items = data.items || [];
+    if (!items.length) {
+      list.innerHTML = '<div class="muted">No jobs yet.</div>';
+      return;
+    }
+    list.innerHTML = items.map(job => `
+      <div class="tool">
+        <div class="tool-header">
+          <div class="tool-title">${job.func_name || 'task'}</div>
+          <div class="spacer"></div>
+          <span class="pill">${job.status || 'unknown'}</span>
+          <button class="btn ghost" onclick="toggleJobDetails('${job.id}')">Details</button>
+          <button class="btn ghost" onclick="retryJob('${job.id}')">Retry</button>
+          <button class="btn ghost" onclick="deleteJob('${job.id}')">Delete</button>
+        </div>
+        <div class="tool-desc">${job.id}</div>
+        <div class="muted">${job.created_at || ''}</div>
+        <pre id="job-${job.id}" class="terminal" style="display:none; margin-top:8px;">${JSON.stringify({ args: job.args || [], kwargs: job.kwargs || {} }, null, 2)}</pre>
+      </div>
+    `).join('');
+  }
+
+  function toggleJobDetails(id) {
+    const el = document.getElementById(`job-${id}`);
+    if (!el) return;
+    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+  }
+
+  async function retryJob(id) {
+    const res = await apiPost('/api/queue/retry', { job_id: id });
+    if (res.ok) {
+      setLog(`Retried job ${id}`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Retry failed.');
+    }
+  }
+
+  async function deleteJob(id) {
+    if (!confirm(`Delete job ${id}?`)) return;
+    const res = await apiPost('/api/queue/delete', { job_id: id });
+    if (res.ok) {
+      setLog(`Deleted job ${id}`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Delete failed.');
+    }
+  }
+
+  async function cleanupQueueJobs(status) {
+    const label = status || 'all';
+    if (!confirm(`Clear ${label} jobs?`)) return;
+    const res = await apiPost('/api/queue/cleanup', { status, limit: 200 });
+    if (res.ok) {
+      setLog(`Cleared ${res.count || 0} ${label} jobs.`);
+      await loadQueueJobs();
+    } else {
+      setLog(res.error || 'Cleanup failed.');
     }
   }
 
@@ -1585,6 +1827,8 @@
     const el = document.getElementById('systemMetrics');
     const disk = state.metrics.disk_usage || {};
     const mem = state.metrics.memory || {};
+    const db = state.metrics.metadata_db || {};
+    const dbStatus = (db.ok === true) ? 'ok' : (db.ok === false ? 'down' : 'unknown');
     const rows = [
       metricRow('Base Dir', state.config.BASE_DIR || 'unknown'),
       metricRow('Guts Dir', state.config.GUTS_DIR || 'n/a'),
@@ -1596,6 +1840,8 @@
       metricRow('Disk Used', disk.total_gb ? `${disk.used_gb} / ${disk.total_gb} GB (${disk.percent_used}%)` : 'n/a'),
       metricRow('Disk Free', disk.free_gb ? `${disk.free_gb} GB` : 'n/a'),
       metricRow('Memory Used', mem.total_gb ? `${mem.used_gb} / ${mem.total_gb} GB (${mem.percent_used}%)` : 'n/a'),
+      metricRow('Metadata DB', `${db.backend || 'unknown'} (${dbStatus})`),
+      metricRow('Metadata DSN', db.dsn || 'n/a'),
       metricRow('Bind Addr', bind(state.config)),
     ];
     el.innerHTML = rows.join('');
@@ -1612,6 +1858,9 @@
   }
 
   function capabilityEnabled(cap) {
+    if (typeof cap.enabled === 'boolean') {
+      return cap.enabled;
+    }
     const packsOk = (cap.packs || []).every(packEnabled);
     const extsOk = (cap.extensions || []).every(extensionEnabled);
     return packsOk && extsOk;
@@ -1648,29 +1897,53 @@
   function renderCapabilities() {
     const el = document.getElementById('capabilityList');
     if (!el) return;
-    el.innerHTML = CAPABILITIES.map(cap => {
+    const caps = state.capabilities.length ? state.capabilities : CAPABILITIES;
+    state.capabilityActions = {};
+    el.innerHTML = caps.map(cap => {
       const enabled = capabilityEnabled(cap);
-      const portal = typeof cap.portal === 'function' ? cap.portal(state.config) : cap.portal;
-      const api = typeof cap.api === 'function' ? cap.api(state.config) : cap.api;
-      const health = cap.health ? cap.health(state.config) : api;
+      const portal = resolveCapabilityUrl(cap.portal);
+      const api = resolveCapabilityUrl(cap.api);
+      const health = resolveCapabilityUrl(cap.health) || api;
       const links = [];
       if (portal) links.push({ label: 'Portal', url: portal });
       if (api) links.push({ label: 'API', url: api });
+      if (cap.webui) {
+        const webuiPath = cap.webui.path || '';
+        const webuiUrl = url(state.config, 'PORT_WEBUI', webuiPath);
+        if (webuiUrl) links.push({ label: 'WebUI', url: webuiUrl });
+      }
       const ports = (cap.ports || []).map(key => `${key}=${port(state.config, key, '-')}`);
-      const actions = (cap.actions || []).map(act => {
-        return `<button class="btn ghost" onclick="${act.onclick}">${act.label}</button>`;
+      const actions = (cap.actions || []).slice();
+      if (cap.ollama && cap.ollama.model) {
+        const model = cap.ollama.model;
+        const exists = actions.some(a => a.type === 'ollama_pull' && a.model === model);
+        if (!exists) {
+          actions.unshift({ label: `Pull ${model}`, type: 'ollama_pull', model });
+        }
+      }
+      state.capabilityActions[cap.id] = actions;
+      const actionsHtml = actions.map((act, idx) => {
+        if (act.onclick) {
+          return `<button class="btn ghost" onclick="${act.onclick}">${act.label}</button>`;
+        }
+        return `<button class="btn ghost" onclick="handleCapabilityAction('${cap.id}', ${idx})">${act.label}</button>`;
       }).join('');
+      const integrationNotes = [];
+      if (cap.webui && cap.webui.category) integrationNotes.push(`WebUI: ${cap.webui.category}`);
+      if (cap.ollama && cap.ollama.model) integrationNotes.push(`Ollama: ${cap.ollama.model}`);
+      if (cap.ollama && cap.ollama.embedding_model) integrationNotes.push(`Embed: ${cap.ollama.embedding_model}`);
+      const notes = [cap.notes || '', ...integrationNotes].filter(Boolean).join(' • ');
       return toolCard({
         id: `cap-${cap.id}`,
         title: cap.title,
         description: cap.description,
-        notes: cap.notes || '',
+        notes,
         enabled,
         onToggle: `toggleCapability('${cap.id}', ${!enabled})`,
         links,
         ports,
         health,
-        actions,
+        actions: actionsHtml,
       });
     }).join('');
   }
@@ -1941,61 +2214,25 @@
   }
 
   async function toggleCapability(id, enable) {
-    const cap = CAPABILITIES.find(c => c.id === id);
-    if (!cap) return;
-    const log = document.getElementById('log');
-    if (enable) {
-      for (const pack of (cap.packs || [])) {
-        if (!packEnabled(pack)) {
-          await togglePack(pack, true);
-        }
+    try {
+      const res = await apiPost('/api/capabilities/toggle', { id, enable });
+      if (!res.ok) {
+        setLog(res.error || 'Capability toggle failed.');
+      } else {
+        setLog(`Capability ${id} ${enable ? 'enabled' : 'disabled'}.`);
       }
-      for (const ext of (cap.extensions || [])) {
-        if (!extensionEnabled(ext)) {
-          await toggleExtension(ext, true);
-        }
-      }
-      if ((cap.packs || []).includes('speech_stack')) {
-        await runCmd('speech_up');
-      }
-    } else {
-      for (const ext of (cap.extensions || [])) {
-        if (extensionEnabled(ext)) {
-          await toggleExtension(ext, false);
-        }
-      }
-      for (const pack of (cap.packs || [])) {
-        const stillNeeded = CAPABILITIES.some(other => {
-          if (other.id === cap.id) return false;
-          if (!capabilityEnabled(other)) return false;
-          return (other.packs || []).includes(pack);
-        });
-        if (!stillNeeded && packEnabled(pack)) {
-          await togglePack(pack, false);
-        }
-      }
-      if ((cap.packs || []).includes('speech_stack')) {
-        await runCmd('speech_down');
-      }
+    } catch (e) {
+      setLog(`Error: ${e.message || e}`);
     }
-    renderCapabilities();
+    await Promise.all([loadPacks(), loadExtensions(), loadCapabilities()]);
     renderSegments();
   }
 
   async function runCapabilityChecks() {
     setCapCheckStatus(null, 'running...');
-    const checks = CAPABILITIES.map(cap => {
-      const url = cap.health ? cap.health(state.config) : '';
-      return { name: cap.title, url };
-    }).filter(c => c.url);
-    if (!checks.length) {
-      setCapCheckStatus(false, 'no checks');
-      renderCapCheckResults([]);
-      setLog('No capability checks available.');
-      return;
-    }
     try {
-      const res = await apiPost('/api/validate', { checks });
+      const allow = !!(document.getElementById('capAllowToolRuns') || {}).checked;
+      const res = await apiPost('/api/capabilities/check', { allow_tool_runs: allow });
       if (res.ok) {
         renderCapCheckResults(res.results || []);
         setCapCheckStatus(true, 'done');
@@ -2074,6 +2311,7 @@
 
   // LLM Model Management
   state.models = [];
+  state.modelRegistry = [];
   state.ollamaRunning = false;
   state.availableModels = [];
   state.activeDownloads = {};
@@ -2093,6 +2331,7 @@
       console.error('Failed to load models:', e);
       showBanner('Model scan failed. Check dashboard token or Ollama.', 'error');
     }
+    await loadModelRegistry();
     await loadStorageInfo();
   }
 
@@ -2133,11 +2372,20 @@
       el.innerHTML = '<div class="muted">No models found. Drop GGUF/safetensors files in the models directory or pull from Ollama.</div>';
       return;
     }
+    const registryByName = {};
+    (state.modelRegistry || []).forEach(item => {
+      registryByName[item.name] = item;
+    });
     el.innerHTML = state.models.map(m => {
       const isOllama = m.location === 'ollama';
       const icon = isOllama ? '🦙' : '📄';
       const locLabel = m.location.charAt(0).toUpperCase() + m.location.slice(1);
       const quantLabel = m.quantization ? ` (${m.quantization})` : '';
+      const registry = registryByName[m.name];
+      const registryLabel = registry ? `v${registry.current_version || 'n/a'}` : 'unregistered';
+      const registerBtn = registry
+        ? `<button class="btn ghost" onclick="rollbackModelPrompt('${m.name.replace(/'/g, "\\'")}')">Rollback</button>`
+        : `<button class="btn ghost" onclick="registerModel('${m.name.replace(/'/g, "\\'")}', '${m.path.replace(/'/g, "\\'")}')">Register</button>`;
       return `
         <div class="tool">
           <div class="tool-header">
@@ -2145,12 +2393,93 @@
             <div class="spacer"></div>
             <span class="pill">${m.size_human}</span>
             <span class="pill">${locLabel}</span>
+            <span class="pill">${registryLabel}</span>
+            ${registerBtn}
             <button class="btn ghost" onclick="deleteModel('${m.path.replace(/'/g, "\\'")}')">🗑</button>
           </div>
           <div class="tool-desc">${m.model_type} | ${m.path}</div>
         </div>
       `;
     }).join('');
+  }
+
+  async function loadModelRegistry() {
+    try {
+      const data = await apiGet('/api/models/registry');
+      if (data.ok) {
+        state.modelRegistry = data.items || [];
+        renderModelRegistry();
+      }
+    } catch (e) {}
+  }
+
+  function renderModelRegistry() {
+    const el = document.getElementById('modelRegistryList');
+    if (!el) return;
+    if (!state.modelRegistry.length) {
+      el.innerHTML = '<div class="muted">No registry entries yet.</div>';
+      return;
+    }
+    el.innerHTML = state.modelRegistry.map(item => {
+      const label = item.current_version ? `v${item.current_version}` : 'n/a';
+      return `
+        <div class="tool">
+          <div class="tool-header">
+            <div class="tool-title">📘 ${item.name}</div>
+            <div class="spacer"></div>
+            <span class="pill">${label}</span>
+            <button class="btn ghost" onclick="rollbackModelPrompt('${item.name.replace(/'/g, "\\'")}')">Rollback</button>
+            <button class="btn ghost" onclick="showModelVersions('${item.name.replace(/'/g, "\\'")}')">Versions</button>
+          </div>
+          <div class="tool-desc">${item.kind || 'unknown'} | ${item.path || 'n/a'}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function registerModel(name, path) {
+    const version = prompt('Register version label (e.g., v1):', 'v1');
+    if (!version) return;
+    const model = (state.models || []).find(m => m.name === name) || {};
+    const payload = {
+      name,
+      version,
+      kind: model.model_type || '',
+      path,
+      checksum: model.sha256 || '',
+      source_url: model.source_url || '',
+    };
+    const res = await apiPost('/api/models/registry/register', payload);
+    if (res.ok) {
+      setLog(`Registered ${name} at ${version}.`);
+      await loadModelRegistry();
+      renderModels();
+    } else {
+      setLog(res.error || 'Registry update failed.');
+    }
+  }
+
+  async function rollbackModelPrompt(name) {
+    const version = prompt(`Rollback ${name} to version:`);
+    if (!version) return;
+    const res = await apiPost('/api/models/registry/rollback', { name, version });
+    if (res.ok) {
+      setLog(`Rolled back ${name} to ${version}.`);
+      await loadModelRegistry();
+      renderModels();
+    } else {
+      setLog(res.error || 'Rollback failed.');
+    }
+  }
+
+  async function showModelVersions(name) {
+    const data = await apiGet(`/api/models/registry/versions?name=${encodeURIComponent(name)}`);
+    if (!data.ok) {
+      setLog(data.error || 'Failed to load versions.');
+      return;
+    }
+    const lines = (data.items || []).map(v => `${v.version} | ${v.created_at}`);
+    setLog(lines.length ? `Versions for ${name}:\n${lines.join('\n')}` : `No versions for ${name}.`);
   }
 
   async function deleteModel(path) {

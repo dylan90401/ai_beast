@@ -1,28 +1,55 @@
-# Traefik - Reverse proxy and load balancer (prodish profile)
+# Traefik - Reverse proxy, load balancer, and SSL/TLS termination
+# Provides unified access point for all AI Beast services
 services:
   traefik:
     image: traefik:v3.0
     container_name: ai_beast_traefik
+    profiles: ["traefik", "prodish", "full"]
     command:
       - "--api.insecure=true"
       - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--log.level=INFO"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@localhost}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme.json"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entrypoint=metrics"
+      - "--entrypoints.metrics.address=:8082"
     ports:
       - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_HTTP:-80}:80"
       - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_HTTPS:-443}:443"
       - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_DASHBOARD:-8080}:8080"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:8082:8082"  # Metrics endpoint
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_data:/etc/traefik
+      - ./config/traefik/dynamic:/etc/traefik/dynamic:ro
+      - traefik_logs:/var/log/traefik
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      # Dashboard router
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`) || Host(`traefik.ai-beast.local`)"
       - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web,websecure"
+      # Middleware for dashboard auth (optional)
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_ADMIN_AUTH:-}"
 
 volumes:
   traefik_data:
+  traefik_logs:

@@ -72,3 +72,38 @@ def collect_metrics(base_dir: Path) -> dict:
         metrics["error"] = str(e)
 
     return metrics
+
+
+def render_prometheus_metrics(metrics: dict) -> str:
+    from modules.monitoring.prometheus import build_prometheus_metrics
+
+    return build_prometheus_metrics(metrics)
+
+
+# Export exporter components
+from modules.monitoring.exporter import (
+    MetricsRegistry,
+    MetricsServer,
+    get_registry,
+    record_model_download,
+    record_ollama_request,
+    record_rag_ingestion,
+    update_service_health,
+    track_duration,
+    track_counter,
+)
+
+__all__ = [
+    "check_service_health",
+    "collect_metrics",
+    "render_prometheus_metrics",
+    "MetricsRegistry",
+    "MetricsServer",
+    "get_registry",
+    "record_model_download",
+    "record_ollama_request",
+    "record_rag_ingestion",
+    "update_service_health",
+    "track_duration",
+    "track_counter",
+]

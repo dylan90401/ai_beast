@@ -1,0 +1,126 @@
+# .dockerignore for AI Beast
+# Optimized for faster builds by excluding unnecessary files
+
+# Python artifacts
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+
+# Testing
+**/.pytest_cache
+**/.coverage
+**/htmlcov
+**/coverage.xml
+tests/
+.tox/
+
+# Type checking / Linting
+**/.mypy_cache
+**/.ruff_cache
+**/.dmypy.json
+.pre-commit-config.yaml
+
+# Build artifacts
+**/dist
+**/build
+**/*.egg-info
+**/*.egg
+*.whl
+*.tar.gz
+
+# Version control
+.git
+.gitignore
+.gitattributes
+.github/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Environment
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+.conda/
+
+# Documentation (except README)
+docs/
+*.md
+!README.md
+
+# Data directories (mounted as volumes instead)
+data/
+models/
+outputs/
+logs/
+backups/
+quarantine/
+provenance/
+run/
+workflows/
+
+# Large files
+*.gguf
+*.bin
+*.safetensors
+*.onnx
+*.pt
+*.pth
+*.h5
+
+# Secrets (never include)
+config/secrets/
+*.key
+*.pem
+*.crt
+*.p12
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+~*
+
+# Local development
+*.local
+*.local.*
+docker/volumes/
+
+# Notebooks (if not needed in container)
+*.ipynb
+.ipynb_checkpoints/
+
+# AI Tools extraction
+_ai_tools/
+
+# Workspace files
+*.code-workspace
+.vscode/
+
+# Archives
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z

@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/beast/runtime.py
+# hypothesis_version: 6.150.0
+
+['--cpu', '--disk', '--memory', '12', '6', '80', 'DOCKER_RUNTIME', 'colima', 'compose', 'docker', 'docker CLI not found', 'docker-compose', 'info', 'start', 'status', 'version']
