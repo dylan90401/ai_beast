@@ -39,7 +39,7 @@ def check_required_tools():
     """Check for required system tools."""
     logger.info("Checking required system tools...")
 
-    required_tools = ['git', 'pip', 'python3']
+    required_tools = ['git', 'pip3', 'python3']
     missing_tools = []
 
     for tool in required_tools:

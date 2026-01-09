@@ -15,11 +15,24 @@ Rules:
 - Never hardcode paths. Source `config/paths.env`.
 - Keep compose fragments focused (one feature/service group).
 
-- comfyui_manager: installs ComfyUI-Manager custom node
-
-## Newly added extensions
-- apache_tika
-- unstructured_api
-- otel_collector (minimal)
-- minio (minimal)
-- jupyter
+Inventory (installed/enabled):
+- apache_tika (Docker)
+- comfyui_manager (ComfyUI custom node)
+- comfyui_video (ComfyUI VideoHelperSuite)
+- dify (Docker)
+- example_segment / example_service (templates)
+- flowise (Docker)
+- jupyter (Docker)
+- langflow (Docker)
+- minio (Docker)
+- n8n (Docker)
+- open_webui (Docker)
+- otel_collector (Docker)
+- portainer (Docker)
+- postgres (Docker)
+- qdrant (Docker)
+- redis (Docker)
+- searxng (Docker)
+- traefik (Docker)
+- unstructured_api (Docker)
+- uptime_kuma (Docker)

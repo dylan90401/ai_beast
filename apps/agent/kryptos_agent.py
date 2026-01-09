@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from modules.tools.registry import run_tool
+
 import requests
 from rich.console import Console
 from rich.panel import Panel
@@ -176,6 +178,14 @@ def tool_help() -> str:
                     "args": {"diff": "unified diff text"},
                     "apply_required": True,
                 },
+                "ai_tool_run": {
+                    "args": {
+                        "name": "nmap",
+                        "mode": "run or test",
+                        "entrypoint": "bin/nmap",
+                        "args": "--version",
+                    }
+                },
             }
         },
         indent=2,
@@ -267,6 +277,28 @@ def tool_shell(
     }
 
 
+def tool_ai_tool_run(
+    base: Path, args: dict[str, Any], touched: list[str]
+) -> dict[str, Any]:
+    name = args.get("name")
+    if not name:
+        return {"ok": False, "error": "missing name"}
+    mode = args.get("mode") or "run"
+    entrypoint = args.get("entrypoint")
+    tool_args = args.get("args")
+    touched.append(f"tool:{name}:{mode}")
+    code, obj = run_tool(
+        name=str(name),
+        mode=str(mode),
+        entrypoint=str(entrypoint) if entrypoint else None,
+        args=str(tool_args) if tool_args else None,
+        base=base,
+    )
+    if code != 200:
+        return {"ok": False, "error": obj.get("error", "tool error")}
+    return obj
+
+
 def tool_patch(
     base: Path, args: dict[str, Any], apply: bool, touched: list[str]
 ) -> dict[str, Any]:
@@ -286,6 +318,7 @@ TOOLS = {
     "grep": tool_grep,
     "shell": tool_shell,
     "patch": tool_patch,
+    "ai_tool_run": tool_ai_tool_run,
 }
 
 
@@ -499,6 +532,8 @@ def main() -> None:
                 out = tool_shell(base, a, args.apply, touched)
             elif tool == "patch":
                 out = tool_patch(base, a, args.apply, touched)
+            elif tool == "ai_tool_run":
+                out = tool_ai_tool_run(base, a, touched)
             tool_outputs.append(json.dumps(out))
 
         messages.append({"role": "assistant", "content": content})

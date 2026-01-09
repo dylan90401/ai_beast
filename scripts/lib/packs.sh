@@ -191,7 +191,9 @@ packs_install_pip() {
   log_info "Installing pip packages for $pack..."
   
   local pip_cmd="pip3"
-  if [[ -n "$venv" && -f "$venv/bin/pip" ]]; then
+  if [[ -n "$venv" && -f "$venv/bin/pip3" ]]; then
+    pip_cmd="$venv/bin/pip3"
+  elif [[ -n "$venv" && -f "$venv/bin/pip" ]]; then
     pip_cmd="$venv/bin/pip"
   fi
   

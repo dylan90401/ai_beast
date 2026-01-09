@@ -3,7 +3,7 @@
 Back-compat wrapper for v23: `kryptos_agent_multi.py` now delegates to kryptos_agent_hub.py.
 
 Usage:
-  python apps/agent/kryptos_agent_multi.py [--apply] [--pipeline build|harden|docs] "task..."
+  python3 apps/agent/kryptos_agent_multi.py [--apply] [--pipeline build|harden|docs] "task..."
 """
 
 import subprocess

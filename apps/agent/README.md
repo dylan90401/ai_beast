@@ -11,7 +11,7 @@ From workspace root:
 ```bash
 python3 -m venv apps/agent/.venv
 source apps/agent/.venv/bin/activate
-pip install -r apps/agent/requirements.txt
+pip3 install -r apps/agent/requirements.txt
 ```
 
 ## Run (single-agent)
@@ -60,19 +60,19 @@ Run a named pipeline:
 
 ```bash
 # default: supervisor -> implementer(tool) -> verifier(tool)
-python apps/agent/kryptos_agent_hub.py --pipeline build "Run preflight, fix issues, verify status."
+python3 apps/agent/kryptos_agent_hub.py --pipeline build "Run preflight, fix issues, verify status."
 
 # harden: adds auditor + verifier_strict (read-only)
-python apps/agent/kryptos_agent_hub.py --pipeline harden "Audit for hardcoded ports/paths and propose fixes."
+python3 apps/agent/kryptos_agent_hub.py --pipeline harden "Audit for hardcoded ports/paths and propose fixes."
 
 # docs: supervisor -> docs(tool)
-python apps/agent/kryptos_agent_hub.py --pipeline docs "Update README quickstart to match current CLI."
+python3 apps/agent/kryptos_agent_hub.py --pipeline docs "Update README quickstart to match current CLI."
 ```
 
 ## Strict deterministic verification (no LLM)
 
 ```bash
-python apps/agent/verifier_strict.py
+python3 apps/agent/verifier_strict.py
 ```
 
 This runs:

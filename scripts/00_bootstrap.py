@@ -52,20 +52,21 @@ def setup_virtual_environment(venv_dir):
 
     # Activate virtual environment and upgrade pip
     if sys.platform == "win32":
-        pip_path = os.path.join(venv_dir, "Scripts", "pip")
-        python_path = os.path.join(venv_dir, "Scripts", "python")
+        pip3_path = os.path.join(venv_dir, "Scripts", "pip3")
     else:
-        pip_path = os.path.join(venv_dir, "bin", "pip")
-        python_path = os.path.join(venv_dir, "bin", "python")
+        pip3_path = os.path.join(venv_dir, "bin", "pip3")
+    pip_path = pip3_path
+    if not os.path.exists(pip_path):
+        raise FileNotFoundError(f"pip3 not found in virtualenv: {pip_path}")
 
     run_command([pip_path, "install", "--upgrade", "pip"])
-    return python_path
+    return pip_path
 
-def install_requirements(requirements_file, python_path):
+def install_requirements(requirements_file, pip_path):
     """Install Python requirements from file."""
     logger.info(f"Installing requirements from {requirements_file}")
     if os.path.exists(requirements_file):
-        run_command([python_path, "-m", "pip", "install", "-r", requirements_file])
+        run_command([pip_path, "install", "-r", requirements_file])
     else:
         logger.warning(f"Requirements file not found: {requirements_file}")
 
@@ -137,11 +138,11 @@ def main():
 
         # Setup virtual environment
         venv_dir = os.path.join(base_dir, "venv")
-        python_path = setup_virtual_environment(venv_dir)
+        pip_path = setup_virtual_environment(venv_dir)
 
         # Install requirements
         requirements_file = os.path.join(base_dir, "requirements.txt")
-        install_requirements(requirements_file, python_path)
+        install_requirements(requirements_file, pip_path)
 
         # Setup ComfyUI
         comfyui_dir = os.path.join(base_dir, "apps", "comfyui", "ComfyUI")

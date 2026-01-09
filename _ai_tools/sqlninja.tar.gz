@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<link rel="icon" href="img/s.ico" type="image/ico" />
+<link rel="shortcut icon" href="img/s.ico" />
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="description" content="sqlninja home page" />
+<meta name="keywords" content="sqlninja, sql ninja, sql server, sql injection, penetration testing, ethical hacking, security, sqlnina download" />
+<meta name="author" content="icesurfer" />
+<link rel="stylesheet" type="text/css" href="default.css" media="screen" />
+<title>sqlninja - a SQL Server injection &amp; takeover tool</title>
+</head>
+
+<body style="text-align:center; ">
+<div class="container" style="margin-left:auto; margin-right:auto;">
+<div class="header">
+	<center>	<img style="font-family: Verdana; width: 654px; height: 130px;" alt="sqlninja logo" src="logo.png" /><br />
+</center>	</div>
+<div class="header2">
+<center><br/>...a SQL Server injection &amp; takeover tool</center>
+</div>
+	
+<div class="stripes"><span></span></div>
+	
+<div class="nav">
+		<a href="index.html">About</a> 
+		<a href="sqlninjademo.html">Demo</a>
+		<a href="download.html">Download</a>
+		<a href="sqlninja-howto.html" >Documentation</a>
+		<a href="faq.html">FAQ</a>
+		
+<div class="clearer"><span></span></div>
+	</div>
+	
+<div class="stripes"><span></span></div>
+	
+<div class="main">
+		
+<div class="left">
+			
+<div class="content" align="left">
+<h1>The following versions are available:</h1>
+
+<h3><a href="http://sourceforge.net/projects/sqlninja/files/sqlninja/sqlninja-0.2.999-alpha1.tgz/download">
+0.2.999-alpha1</a></h3>
+<p>The alpha of the new release, with all the newest cool stuff! Data extraction via WAITFOR and DNS tunnel, plus vbscript-based upload! Download it and find some bugs :)</p>
+
+<h3><a href="http://sourceforge.net/projects/sqlninja/files/sqlninja/sqlninja-0.2.6-r1.tgz/download"
+>
+0.2.6-r1</a></h3>
+<p>The stable version. It lacks the data extraction module, but it has been tested a lot more extensively</p>
+
+<h3>
+<a href="http://sqlninja.svn.sourceforge.net/viewvc/sqlninja/">
+SVN snapshot</a></h3>
+<p>This is the hemorrhaging edge version! It supports Powershell stagers with metasploit. It is a work-in-progress, not 100% documented, and likely to have several bugs, so not for the faint hearted. Come on, give it a try, show chicks how brave you are, and report some bugs!<br><br>To download the latest snapshot, use the following command:<br><br>
+<b>$ svn co svn://svn.code.sf.net/p/sqlninja/code/ sqlninja-devel</b>
+
+</p>
+<p>
+If your AV complains, it is because the Churrasco executable in the tarball is recognized as a virus. So nothing to worry about.
+</p>
+<br />
+<br />
+
+<h1>Prerequisites</h1>
+<p>In order to use sqlninja, the following Perl modules need to be present:</p>
+<ul>
+<li>NetPacket</li>
+<li>Net-Pcap</li>
+<li>Net-DNS</li>
+<li>Net-RawIP</li>
+<li>DBI</li>
+</ul>
+<p>
+You will also need the <a href="http://www.metasploit.com" target="_new">Metasploit Framework 3</a> on your box to use the metasploit attack mode, and also a VNC client if you use the VNC payload.</p>
+<p>
+You also need a brain. Not strictly a Perl module, but it helps.
+</p><br/>
+			
+			</div>
+
+
+		</div>
+
+
+<div class="clearer"><span></span></div>
+
+	</div>
+
+
+<div class="footer">
+			
+<div class="bottom">
+				
+				<span class="left">
+<a href="http://sourceforge.net/">
+<img src="http://sourceforge.net/sflogo.php?group_id=17435&amp;type=1" alt="SourceForge Logo" border="0" height="31" width="88" /></a> 
+<a href="http://sourceforge.net/donate/index.php?group_id=152677">
+<img src="http://images.sourceforge.net/images/project-support.jpg" 
+alt="Support This Project" border="0" height="31" width="88" />
+</a>
+				
+			
+				
+				
+				</span>
+				<span class="right"></span>
+
+				
+<div class="clearer"><span></span></div>
+
+
+			</div>
+
+
+	</div>
+
+
+</div>
+
+
+</body>
+</html>

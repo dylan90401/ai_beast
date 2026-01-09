@@ -90,7 +90,7 @@ start_runtime() {
     colima)
       # Get resource settings
       local cpus="${RUNTIME_COLIMA_CPUS:-6}"
-      local mem="${RUNTIME_COLIMA_MEMORY:-12}"
+      local mem="${RUNTIME_COLIMA_MEMORY:-30}"
       local disk="${RUNTIME_COLIMA_DISK:-80}"
       
       if colima status 2>/dev/null | grep -q "Running"; then

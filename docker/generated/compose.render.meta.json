@@ -1,17 +1,37 @@
 {
-  "generated_at": 1767884185.061762,
+  "generated_at": 1767938550.209528,
   "registry": "/Users/wolfen/_dev/_AI_Kryptos/ai_beast/config/resources/services.json",
   "only_services": [
+    "apache-tika",
+    "dify",
+    "dify-api",
+    "dify-db",
+    "dify-redis",
+    "dify-sandbox",
+    "dify-web",
+    "dify-worker",
+    "example-echo",
     "example_hello",
+    "flowise",
     "jupyterlab",
+    "langflow",
+    "minio",
+    "n8n",
     "open-webui",
+    "otel-collector",
+    "portainer",
+    "ports",
+    "postgres",
     "qdrant",
+    "redis",
     "searxng",
+    "traefik",
+    "unstructured-api",
     "uptime-kuma"
   ],
   "sha256": {
-    "compose.core.yaml": "5e1bcf5fe6ff58d0ba9d791f1f490ae76cf93d2cc90ec16f9c12f3c8677a330a",
-    "compose.ops.yaml": "21f601bf66a819c39d31b9fe9c4d612135b0e952add9cd9ec88101f9e5c31782"
+    "compose.core.yaml": "6100740e8a47fc28ae0646518b15d9b9f7903d8bec4608b357c5851d5d313ba4",
+    "compose.ops.yaml": "ac8d5159c1e3e76ae2360e917f9540197e596b0846543f07e9a5363bd7e48e04"
   },
-  "service_count": 3
+  "service_count": 6
 }

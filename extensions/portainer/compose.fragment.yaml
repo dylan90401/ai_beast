@@ -1,0 +1,11 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: ai_beast_portainer
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "127.0.0.1:${PORT_PORTAINER:-9005}:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "${DATA_DIR:-./data}/portainer:/data"
+    restart: unless-stopped

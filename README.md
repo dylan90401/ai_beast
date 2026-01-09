@@ -64,7 +64,7 @@ pipx install pytest
 # Option 3: Manual setup with venv
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt
+pip3 install -r requirements-dev.txt
 
 # Install shellcheck for shell script linting
 brew install shellcheck
@@ -172,7 +172,7 @@ RAG ingest (Qdrant must be running):
 ```bash
 ./bin/beast up
 source "$VENV_DIR/bin/activate"
-pip install -r modules/rag/requirements.txt
+pip3 install -r modules/rag/requirements.txt
 ./bin/beast rag ingest --dir "$DATA_DIR/inbox" --collection ai_beast --apply
 ```
 

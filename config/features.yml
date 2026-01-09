@@ -24,24 +24,24 @@ docker.searxng: false
 extensions.searxng: true
 
 # Feature packs (install via ./bin/beast packs install <name> --apply)
-packs.networking: false
-packs.defsec: false
-packs.osint: false
-packs.mapping: false
-packs.media_synth: false
-packs.speech_stack: false
-packs.dataviz_ml: false
-packs.research_hegel_esoteric: false
 
 # v17 high-ROI packs (registered; disabled by default)
-packs.agent_builders: false
-packs.rag_ingest_pro: false
-packs.observability_otel: false
-packs.artifact_store_minio: false
-packs.mlx_runtime: false
 
 # Models
 models.gpt5_codex_preview: true
 
 # Agent defaults
 agent.model_default: gpt-5-codex-preview
+packs.osint: true
+packs.mapping: true
+packs.dataviz_ml: true
+packs.research_hegel_esoteric: true
+packs.rag_ingest_pro: false
+packs.observability_otel: false
+packs.artifact_store_minio: false
+packs.mlx_runtime: false
+packs.media_synth: true
+packs.agent_builders: true
+packs.speech_stack: true
+packs.defsec: true
+packs.networking: true

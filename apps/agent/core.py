@@ -25,6 +25,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from modules.tools.registry import run_tool
+
 import requests
 
 DEFAULT_OLLAMA = os.environ.get("AI_BEAST_OLLAMA", "http://127.0.0.1:11434")
@@ -138,11 +140,10 @@ def run_cmd(
     if not apply:
         if exe in RISKY_BINS or exe in {
             "git",
-            "pip",
+            "pip3",
             "brew",
             "docker",
             "colima",
-            "python",
             "python3",
         }:
             # We still allow *read-only* docker and git via allowlist below.
@@ -167,7 +168,6 @@ def run_cmd(
             "stat",
             "wc",
             "python3",
-            "python",
             "curl",
             "lsof",
             "netstat",
@@ -195,7 +195,8 @@ def run_cmd(
             r"\bdocker\s+compose\s+down\b",
             r"\bdocker\s+rm\b",
             r"\bbrew\s+install\b",
-            r"\bpip\s+install\b",
+            r"\bpip3\s+install\b",
+            r"\bpython3\s+-m\s+pip\s+install\b",
         ]
         for pat in blocked_patterns:
             if re.search(pat, joined):
@@ -305,6 +306,14 @@ def tool_help() -> str:
                 },
                 "http_get": {
                     "args": {"url": "http://127.0.0.1:3000/health", "timeout": 10}
+                },
+                "ai_tool_run": {
+                    "args": {
+                        "name": "nmap",
+                        "mode": "run or test",
+                        "entrypoint": "bin/nmap",
+                        "args": "--version",
+                    }
                 },
             }
         },
@@ -436,6 +445,26 @@ def tool_http_get(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
         return {"ok": False, "error": f"http_error: {e}"}
 
 
+def tool_ai_tool_run(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
+    name = args.get("name")
+    if not name:
+        return {"ok": False, "error": "missing name"}
+    mode = args.get("mode") or "run"
+    entrypoint = args.get("entrypoint")
+    tool_args = args.get("args")
+    ctx.touched.append(f"tool:{name}:{mode}")
+    code, obj = run_tool(
+        name=str(name),
+        mode=str(mode),
+        entrypoint=str(entrypoint) if entrypoint else None,
+        args=str(tool_args) if tool_args else None,
+        base=ctx.base,
+    )
+    if code != 200:
+        return {"ok": False, "error": obj.get("error", "tool error")}
+    return obj
+
+
 TOOLS = {
     "fs_read": tool_fs_read,
     "fs_write": tool_fs_write,
@@ -444,6 +473,7 @@ TOOLS = {
     "shell": tool_shell,
     "patch": tool_patch,
     "http_get": tool_http_get,
+    "ai_tool_run": tool_ai_tool_run,
 }
 
 

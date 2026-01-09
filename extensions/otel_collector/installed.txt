@@ -1,0 +1,1 @@
+[ext:otel_collector] prepared minimal collector config.

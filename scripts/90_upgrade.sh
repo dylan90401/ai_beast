@@ -53,12 +53,12 @@ elif [[ -d "$BASE_DIR/.venv" ]]; then
 fi
 
 if [[ -n "$VENV_PATH" ]]; then
-  run /bin/bash -lc "source \"$VENV_PATH/bin/activate\" && python -m pip install -U pip wheel setuptools"
+  run /bin/bash -lc "source \"$VENV_PATH/bin/activate\" && pip3 install -U pip wheel setuptools"
   if [[ -f "$BASE_DIR/requirements.txt" ]]; then
-    run /bin/bash -lc "source \"$VENV_PATH/bin/activate\" && python -m pip install -r \"$BASE_DIR/requirements.txt\""
+    run /bin/bash -lc "source \"$VENV_PATH/bin/activate\" && pip3 install -r \"$BASE_DIR/requirements.txt\""
   fi
   if [[ -f "$BASE_DIR/requirements-dev.txt" ]]; then
-    run /bin/bash -lc "source \"$VENV_PATH/bin/activate\" && python -m pip install -r \"$BASE_DIR/requirements-dev.txt\""
+    run /bin/bash -lc "source \"$VENV_PATH/bin/activate\" && pip3 install -r \"$BASE_DIR/requirements-dev.txt\""
   fi
 else
   log_warn "No virtualenv found; skipping pip updates."

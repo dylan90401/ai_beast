@@ -59,18 +59,18 @@ pip_install(){
       python3 -m venv "$venv"
       # shellcheck disable=SC1091
       source "$venv/bin/activate"
-      pip install -U pip wheel setuptools >/dev/null
+      pip3 install -U pip wheel setuptools >/dev/null
       deactivate || true
     fi
   fi
   if [[ "$APPLY" -ne 1 ]]; then
-    log "DRYRUN pip install (venv=$venv): ${pkgs[*]}"
+    log "DRYRUN pip3 install (venv=$venv): ${pkgs[*]}"
     return 0
   fi
   # shellcheck disable=SC1091
   source "$venv/bin/activate"
-  pip install -U pip wheel setuptools >/dev/null
-  pip install "${pkgs[@]}" || log "WARN: pip install had errors for pack '$name'"
+  pip3 install -U pip wheel setuptools >/dev/null
+  pip3 install "${pkgs[@]}" || log "WARN: pip3 install had errors for pack '$name'"
   deactivate || true
 }
 

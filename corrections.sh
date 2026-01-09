@@ -326,10 +326,10 @@ health_check() {
         echo "Git: ✗"
     fi
 
-    if command -v python3 &> /dev/null || command -v python &> /dev/null; then
-        echo "Python: ✓"
+    if command -v python3 &> /dev/null; then
+        echo "python3: ✓"
     else
-        echo "Python: ✗"
+        echo "python3: ✗"
     fi
 
     log "Health check complete"
@@ -399,7 +399,7 @@ Usage:
 
 Commands:
   all (default)  Install deps, setup env, manage scripts, write config, run health checks
-  deps           Install dependencies (Homebrew, git, python, docker tooling)
+  deps           Install dependencies (Homebrew, git, python3, docker tooling)
   setup          Setup AI Beast directories and environment
   scripts        Manage/install AI Beast scripts and launcher
   config         Write default configuration
