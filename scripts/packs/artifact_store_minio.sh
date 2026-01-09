@@ -43,12 +43,12 @@ for ext in $EXTENSIONS; do
 done
 
 # Install pip packages
-if [[ -f "$BASE_DIR/.venv/bin/pip3" ]]; then
-  log "Installing pip3 packages..."
+if [[ -f "$BASE_DIR/.venv/bin/pip" ]]; then
+  log "Installing pip packages..."
   # shellcheck disable=SC2086
-  "$BASE_DIR/.venv/bin/pip3" install --quiet $PIP_PACKAGES
+  "$BASE_DIR/.venv/bin/pip" install --quiet $PIP_PACKAGES
 elif command -v pip3 >/dev/null 2>&1; then
-  log "Installing pip3 packages (system)..."
+  log "Installing pip packages (system)..."
   # shellcheck disable=SC2086
   pip3 install --quiet --user $PIP_PACKAGES
 fi

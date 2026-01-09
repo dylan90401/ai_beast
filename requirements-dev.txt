@@ -1,5 +1,5 @@
 # Development dependencies
-# Install with: pip3 install -r requirements-dev.txt
+# Install with: pip install -r requirements-dev.txt
 
 # Linting and formatting
 ruff>=0.1.0

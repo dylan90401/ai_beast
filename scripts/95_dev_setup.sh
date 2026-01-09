@@ -73,7 +73,7 @@ log_info "[3/6] Upgrading pip..."
 
 if [[ "$INSTALL_METHOD" == "venv" ]]; then
   if [[ ${DRYRUN:-1} -eq 0 ]]; then
-    pip3 install --upgrade pip
+    python3 -m pip install --upgrade pip
     log_success "pip upgraded"
   else
     log_dryrun "Would upgrade pip"
@@ -98,7 +98,7 @@ DEV_PACKAGES=(
 
 if [[ "$INSTALL_METHOD" == "venv" ]]; then
   if [[ ${DRYRUN:-1} -eq 0 ]]; then
-    pip3 install "${DEV_PACKAGES[@]}"
+    python3 -m pip install "${DEV_PACKAGES[@]}"
     log_success "Installed packages via pip in venv"
   else
     log_dryrun "Would install: ${DEV_PACKAGES[*]}"
@@ -126,10 +126,10 @@ log_info "[5/6] Installing project in editable mode..."
 
 if [[ "$INSTALL_METHOD" == "venv" ]]; then
   if [[ ${DRYRUN:-1} -eq 0 ]]; then
-    pip3 install -e "$BASE_DIR"
+    python3 -m pip install -e "$BASE_DIR"
     log_success "Installed project in editable mode"
   else
-    log_dryrun "Would install project with: pip3 install -e ."
+    log_dryrun "Would install project with: pip install -e ."
   fi
 else
   log_info "Skipping (pipx doesn't support editable installs)"

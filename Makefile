@@ -49,7 +49,7 @@ doctor:
 	./bin/beast doctor --verbose
 
 verify:
-	python3 scripts/00_verify_stack.py --verbose
+	python scripts/00_verify_stack.py --verbose
 
 check: preflight compose-validate lint test
 
@@ -58,21 +58,21 @@ check: preflight compose-validate lint test
 # ──────────────────────────────────────────────────────────────────────────────
 
 lint:
-	python3 -m ruff check .
+	python -m ruff check .
 	shellcheck -x bin/* scripts/*.sh scripts/lib/*.sh 2>/dev/null || true
 
 fmt:
-	python3 -m ruff format .
+	python -m ruff format .
 
 test:
-	python3 -m pytest -q
+	python -m pytest -q
 
 dev:
 	./bin/beast up --profile lite
 
 install:
-	pip3 install -r requirements.txt
-	pip3 install -r requirements-dev.txt
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Docker/Compose targets

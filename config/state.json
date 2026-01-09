@@ -15,27 +15,8 @@
       "research_hegel_esoteric"
     ],
     "extensions_enabled": [
-      "apache_tika",
-      "comfyui_manager",
-      "comfyui_video",
-      "dify",
       "example_segment",
-      "example_service",
-      "flowise",
-      "jupyter",
-      "langflow",
-      "minio",
-      "n8n",
-      "open_webui",
-      "otel_collector",
-      "portainer",
-      "postgres",
-      "qdrant",
-      "redis",
-      "searxng",
-      "traefik",
-      "unstructured_api",
-      "uptime_kuma"
+      "jupyter"
     ],
     "asset_packs": [
       {

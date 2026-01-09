@@ -1,123 +1,157 @@
-version: '3.8'
+name: ai_beast_kryptos
 
 services:
-  # Main AI Beast Application
-  ai-beast:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ai-beast-app
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ai_beast_qdrant
+    profiles: ["qdrant", "prodish"]
     ports:
-      - "8000:8000"
-    environment:
-      - ENVIRONMENT=production
-      - LOG_LEVEL=INFO
-    env_file:
-      - .env
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
     volumes:
-      - ./src:/app/src
-      - ./logs:/app/logs
-      - ./data:/app/data
-    networks:
-      - ai-beast-network
+      - qdrant_data:/qdrant/storage
     restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ai_beast_open_webui
+    profiles: ["webui", "prodish"]
     depends_on:
-      - redis
-      - postgres
-
-  # Redis for caching and session management
-  redis:
-    image: redis:7-alpine
-    container_name: ai-beast-redis
+      - qdrant
     ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - ai-beast-network
-    restart: unless-stopped
-    command: redis-server --appendonly yes
+      - "127.0.0.1:3000:8080"
+    environment:
+      # Keep auth on by default; override via .env if desired
+      WEBUI_AUTH: "${WEBUI_AUTH:-true}"
 
-  # PostgreSQL for data persistence
+      # Optional: if you connect to Ollama running on host:
+      # macOS/Windows: host.docker.internal works
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+
+      # Optional: if your WebUI build supports pointing to Qdrant explicitly
+      # (leave unset unless you know your build uses it)
+      QDRANT_URL: "${QDRANT_URL:-http://qdrant:6333}"
+    volumes:
+      - open_webui_data:/app/backend/data
+    restart: unless-stopped
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: ai_beast_uptime_kuma
+    profiles: ["kuma", "prodish"]
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    restart: unless-stopped
+
   postgres:
-    image: postgres:15-alpine
-    container_name: ai-beast-postgres
-    ports:
-      - "5432:5432"
+    image: postgres:16
+    container_name: ai_beast_postgres
+    profiles: ["n8n", "prodish"]
     environment:
-      - POSTGRES_DB=ai_beast
-      - POSTGRES_USER=ai_beast_user
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      POSTGRES_DB: "${POSTGRES_DB:-n8n}"
+      POSTGRES_USER: "${POSTGRES_USER:-n8n}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change_me}"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - ai-beast-network
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  # Jaeger for distributed tracing
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: ai-beast-jaeger
-    ports:
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
-      - "16686:16686"  # UI
-      - "14268:14268"
-      - "14250:14250"
-      - "9411:9411"
-    environment:
-      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
-    networks:
-      - ai-beast-network
+  redis:
+    image: redis:7
+    container_name: ai_beast_redis
+    profiles: ["n8n", "prodish"]
+    volumes:
+      - redis_data:/data
     restart: unless-stopped
 
-  # Prometheus for metrics collection
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: ai-beast-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    networks:
-      - ai-beast-network
-    restart: unless-stopped
-
-  # Grafana for visualization
-  grafana:
-    image: grafana/grafana:latest
-    container_name: ai-beast-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
-    networks:
-      - ai-beast-network
-    restart: unless-stopped
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: ai_beast_n8n
+    profiles: ["n8n", "prodish"]
     depends_on:
-      - prometheus
+      - postgres
+      - redis
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      # Core
+      N8N_HOST: "${N8N_HOST:-localhost}"
+      N8N_PORT: "${N8N_PORT:-5678}"
+      N8N_PROTOCOL: "${N8N_PROTOCOL:-http}"
+      WEBHOOK_URL: "${WEBHOOK_URL:-http://localhost:5678/}"
+      GENERIC_TIMEZONE: "${GENERIC_TIMEZONE:-America/Los_Angeles}"
 
-networks:
-  ai-beast-network:
-    driver: bridge
+      # Security (set in .env)
+      N8N_ENCRYPTION_KEY: "${N8N_ENCRYPTION_KEY:-}"
+
+      # DB
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: "${POSTGRES_DB:-n8n}"
+      DB_POSTGRESDB_USER: "${POSTGRES_USER:-n8n}"
+      DB_POSTGRESDB_PASSWORD: "${POSTGRES_PASSWORD:-change_me}"
+
+      # Queue / Redis
+      EXECUTIONS_MODE: "${EXECUTIONS_MODE:-queue}"
+      QUEUE_BULL_REDIS_HOST: redis
+      QUEUE_BULL_REDIS_PORT: "6379"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: ai_beast_minio
+    profiles: ["prodish"]
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:-minio}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:-change_me}"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+  traefik:
+    image: traefik:v3.1
+    container_name: ai_beast_traefik
+    profiles: ["prodish"]
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      # Traefik dashboard (local-only)
+      - "127.0.0.1:8082:8080"
+      # Web entrypoint (local-only; adjust if you truly want LAN access)
+      - "127.0.0.1:8088:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
 
 volumes:
-  redis-data:
-  postgres-data:
-  prometheus-data:
-  grafana-data:
+  qdrant_data:
+  open_webui_data:
+  uptime_kuma_data:
+  postgres_data:
+  redis_data:
+  n8n_data:
+  minio_data:
 
-
-  ## add all ollama and webui tools and dockerized tools
-  
+# --- IGNORE ---
+# The following fragment is included in docker/compose.yaml via
+# a script during setup if the minio extension is enabled.
+# --- END IGNORE ---
+# --- BEGIN FRAGMENT extensions/minio/compose.fragment.yaml ---
+# services:
+#   minio:
+#     image: minio/minio:latest
+#     profiles: ["artifact_store_minio"]
+#     command: ["server", "/data", "--console-address", ":9001"]
+#     ports:
+#       - "${AI_BEAST_BIND_ADDR:-

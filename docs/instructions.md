@@ -30,8 +30,8 @@ docker compose ps
 - `./bin/beast preflight --verbose`
 - `docker compose config`
 - `shellcheck -x bin/* scripts/*.sh scripts/lib/*.sh`
-- `python3 -m ruff check .`
-- `python3 -m pytest -q`
+- `python -m ruff check .`
+- `python -m pytest -q`
 
 ## Self-healing contract
 If required pieces are missing, construct excellent versions following repo patterns:
