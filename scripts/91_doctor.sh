@@ -54,4 +54,4 @@ curl_check(){
 
 echo
 echo "Packs enabled (features.env):"
-grep -E '^FEATURE_PACKS_' "$BASE_DIR/config/features.env" 2>/dev/null || echo "  (none)"
+grep -E '^export +FEATURE_PACKS_' "$BASE_DIR/config/features.env" 2>/dev/null || echo "  (none)"

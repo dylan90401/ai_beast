@@ -14,7 +14,9 @@ def resolve_base_dir():
     if bd:
         return Path(bd)
     here = Path(__file__).resolve()
-    return here.parents[3]  # .../apps/dashboard/_template/dashboard.py -> project root
+    if here.parent.name == "_template":
+        return here.parents[3]
+    return here.parents[2]
 
 
 BASE_DIR = resolve_base_dir()

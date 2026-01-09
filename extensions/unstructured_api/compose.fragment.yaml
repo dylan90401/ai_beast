@@ -1,5 +1,6 @@
 services:
   unstructured-api:
+    platform: linux/amd64
     image: quay.io/unstructured-io/unstructured-api:latest
     profiles: ["rag_ingest_pro"]
     ports:

@@ -1,6 +1,5 @@
 services:
   searxng:
-    profiles: ["searxng"]
     image: searxng/searxng:latest
     ports:
       - "127.0.0.1:${PORT_SEARXNG:-8088}:8080"

@@ -159,7 +159,7 @@ for pkg in "${REQUIRED_PACKAGES[@]}"; do
 done
 
 if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
-  log_info "Install with: pip install ${MISSING_PACKAGES[*]}"
+  log_info "Install with: pip3 install ${MISSING_PACKAGES[*]}"
 fi
 
 log_info ""

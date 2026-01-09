@@ -54,6 +54,12 @@ docker_runtime_ensure(){
   local rt; rt="$(docker_runtime_choice)"
   log "Docker runtime: $(docker_runtime_hint) (DOCKER_RUNTIME=${DOCKER_RUNTIME:-auto})"
 
+  # If already reachable, skip any start attempts.
+  if docker_runtime_is_ready; then
+    log "Docker engine reachable."
+    return 0
+  fi
+
   case "$rt" in
     colima)
       if ! have_cmd docker; then
@@ -65,20 +71,27 @@ docker_runtime_ensure(){
         return 1
       fi
       docker_runtime_start_colima
+      # Give the engine a moment to come up
+      for i in {1..15}; do
+        if docker_runtime_is_ready; then
+          log "Docker engine reachable."
+          return 0
+        fi
+        sleep 2
+      done
       ;;
     docker_desktop)
       # We can't reliably start the GUI app here; just validate connectivity.
       require_cmd docker
+      if docker_runtime_is_ready; then
+        log "Docker engine reachable."
+        return 0
+      fi
       ;;
     *)
       warn "Unknown runtime '$rt'"; return 1
       ;;
   esac
-
-  if docker_runtime_is_ready; then
-    log "Docker engine reachable."
-    return 0
-  fi
 
   warn "Docker engine not reachable. If using Docker Desktop, open the app and wait for it to finish starting."
   return 1

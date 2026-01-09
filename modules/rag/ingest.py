@@ -80,7 +80,7 @@ def get_embedder(model: str = "sentence-transformers/all-MiniLM-L6-v2"):
             _embedder = SentenceTransformer(model)
         except ImportError as exc:
             raise ImportError(
-                "sentence-transformers required. Install: pip install sentence-transformers"
+                "sentence-transformers required. Install: pip3 install sentence-transformers"
             ) from exc
     return _embedder
 
@@ -94,7 +94,7 @@ def get_qdrant_client(url: str = "http://127.0.0.1:6333"):
             _qdrant_client = QdrantClient(url=url)
         except ImportError as exc:
             raise ImportError(
-                "qdrant-client required. Install: pip install qdrant-client"
+                "qdrant-client required. Install: pip3 install qdrant-client"
             ) from exc
     return _qdrant_client
 
@@ -313,7 +313,7 @@ def main():
         from sentence_transformers import SentenceTransformer
     except Exception:
         print(
-            "[rag] missing deps. Install: pip install -r modules/rag/requirements.txt",
+            "[rag] missing deps. Install: pip3 install -r modules/rag/requirements.txt",
             file=sys.stderr,
         )
         raise

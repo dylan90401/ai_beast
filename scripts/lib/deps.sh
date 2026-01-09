@@ -157,12 +157,12 @@ deps_python_pip_upgrade(){
   local venv_dir="$1"
   [[ -d "$venv_dir" ]] || die "Venv missing: $venv_dir"
   if [[ "${DRYRUN:-1}" -eq 1 ]]; then
-    deps_log "DRYRUN: (venv) pip install -U pip wheel setuptools"
+    deps_log "DRYRUN: (venv) pip3 install -U pip wheel setuptools"
     return 0
   fi
   # shellcheck disable=SC1091
   source "$venv_dir/bin/activate"
-  python -m pip install -U pip wheel setuptools
+  pip3 install -U pip wheel setuptools
   deactivate || true
 }
 
@@ -170,18 +170,18 @@ deps_python_pip_install_requirements(){
   local venv_dir="$1" req_file="$2"
   [[ -f "$req_file" ]] || die "requirements.txt not found: $req_file"
   if [[ "${DRYRUN:-1}" -eq 1 ]]; then
-    deps_log "DRYRUN: (venv) pip install -r $req_file"
+    deps_log "DRYRUN: (venv) pip3 install -r $req_file"
     return 0
   fi
   # shellcheck disable=SC1091
   source "$venv_dir/bin/activate"
-  python -m pip install -r "$req_file"
+  pip3 install -r "$req_file"
   deactivate || true
 }
 install_macos_deps() {
   ensure_brew_macos
   ux_info "Installing macOS deps via brew (idempotent)…"
-  brew install python@3.11 docker docker-compose colima shellcheck shfmt >/dev/null || true
+  brew install python docker docker-compose colima shellcheck shfmt >/dev/null || true
   ux_ok "brew deps installed/verified"
 }
 

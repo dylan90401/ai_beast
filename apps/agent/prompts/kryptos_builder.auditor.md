@@ -17,7 +17,7 @@ Checklist (non-exhaustive):
 5) Docker runtime: DOCKER_RUNTIME respected; colima-first auto.
 6) Health checks: ensure status/doctor verify endpoints deterministically.
 7) Supply-chain: model sandbox + manifests + checksums.
-8) VSCode: tasks should call bin/beast and use venv python.
+8) VSCode: tasks should call bin/beast and use venv python3.
 
 End with {"final": "..."} including:
 - highest priority issues

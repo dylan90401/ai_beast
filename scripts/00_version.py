@@ -69,7 +69,7 @@ def generate_changelog():
 def main():
     """Main version management function."""
     if len(sys.argv) < 2:
-        print("Usage: python version.py [version|changelog|bump]")
+        print("Usage: python3 version.py [version|changelog|bump]")
         return
 
     action = sys.argv[1]
@@ -80,7 +80,7 @@ def main():
         print(generate_changelog())
     elif action == "bump":
         if len(sys.argv) < 3:
-            print("Usage: python version.py bump [major|minor|patch]")
+            print("Usage: python3 version.py bump [major|minor|patch]")
             return
 
         current = get_version()

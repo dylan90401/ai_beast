@@ -12,3 +12,21 @@ services:
       - ai.beast.tier=ops
       - ai.beast.profiles=kuma
       - ai.beast.service_hash=7f9418406862134948072742228fbd777982b0a39dab11deb011726d8ac3f00d
+
+  n8n:
+    profiles: ["n8n"]
+    image: n8nio/n8n:latest
+    ports:
+      - "127.0.0.1:${PORT_N8N:-5678}:5678"
+    environment:
+      - N8N_HOST=127.0.0.1
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+    volumes:
+      - "${DATA_DIR:-./data}/n8n:/home/node/.n8n"
+    restart: unless-stopped
+    labels:
+      - ai.beast.managed=true
+      - ai.beast.tier=ops
+      - ai.beast.profiles=n8n
+      - ai.beast.service_hash=84509e1e66425d78141bcc4e1b56d68c0788a6768df25820c875ddb2d5de5b25

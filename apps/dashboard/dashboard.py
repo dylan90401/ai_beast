@@ -7,6 +7,17 @@ import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+from urllib.request import Request, urlopen
+
+from modules.tools.registry import (
+    extract_all_tools,
+    extract_tool,
+    install_tool,
+    list_tools,
+    run_tool,
+    save_tool_config,
+    tool_manifest,
+)
 
 
 def resolve_base_dir():
@@ -14,13 +25,16 @@ def resolve_base_dir():
     if bd:
         return Path(bd)
     here = Path(__file__).resolve()
-    return here.parents[3]  # .../apps/dashboard/_template/dashboard.py -> project root
+    if here.parent.name == "_template":
+        return here.parents[3]
+    return here.parents[2]
 
 
 BASE_DIR = resolve_base_dir()
 PATHS_ENV = BASE_DIR / "config" / "paths.env"
 PORTS_ENV = BASE_DIR / "config" / "ports.env"
 TOKEN_FILE = BASE_DIR / "config" / "secrets" / "dashboard_token.txt"
+HF_TOKEN_FILE = BASE_DIR / "config" / "secrets" / "hf_token.txt"
 BEAST = BASE_DIR / "bin" / "beast"
 STATIC_DIR = BASE_DIR / "apps" / "dashboard" / "static"
 
@@ -49,6 +63,21 @@ def read_token():
         return None
     t = TOKEN_FILE.read_text(encoding="utf-8").strip()
     return t or None
+
+
+def read_hf_token() -> str | None:
+    if not HF_TOKEN_FILE.exists():
+        return None
+    t = HF_TOKEN_FILE.read_text(encoding="utf-8", errors="replace").strip()
+    return t or None
+
+
+def write_hf_token(token: str | None) -> None:
+    HF_TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+    if token:
+        HF_TOKEN_FILE.write_text(token, encoding="utf-8")
+    elif HF_TOKEN_FILE.exists():
+        HF_TOKEN_FILE.unlink()
 
 
 def load_env_json():
@@ -157,6 +186,91 @@ def load_services() -> dict:
     if not p.exists():
         return {}
     return json.loads(p.read_text(encoding="utf-8"))
+
+
+def docker_ps() -> list[dict[str, str]]:
+    try:
+        out = subprocess.check_output(
+            ["docker", "ps", "--format", "{{.Names}}|{{.Status}}|{{.Ports}}|{{.Image}}"],
+            text=True,
+        )
+    except Exception:
+        return []
+    items = []
+    for line in out.splitlines():
+        parts = line.split("|", 3)
+        if len(parts) != 4:
+            continue
+        name, status, ports, image = parts
+        items.append(
+            {
+                "name": name.strip(),
+                "status": status.strip(),
+                "ports": ports.strip(),
+                "image": image.strip(),
+            }
+        )
+    return items
+
+
+def docker_logs(name: str, tail: int = 200) -> tuple[bool, str]:
+    if not name or any(ch in name for ch in ("/", " ", "\t")):
+        return False, "Invalid container name"
+    containers = {c["name"] for c in docker_ps()}
+    if name not in containers:
+        return False, f"Container not running: {name}"
+    try:
+        out = subprocess.check_output(
+            ["docker", "logs", "--tail", str(tail), name],
+            text=True,
+            stderr=subprocess.STDOUT,
+        )
+        return True, out[-20000:]
+    except subprocess.CalledProcessError as ex:
+        return False, (ex.output or str(ex))[-20000:]
+
+
+def validate_urls(payload: dict) -> tuple[int, dict]:
+    if not isinstance(payload, dict):
+        return 400, {"ok": False, "error": "Invalid payload"}
+    checks = payload.get("checks") or []
+    if not isinstance(checks, list):
+        return 400, {"ok": False, "error": "checks must be a list"}
+    results = []
+    for item in checks:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        url = str(item.get("url") or "").strip()
+        if not name or not url:
+            results.append({"name": name or "unknown", "url": url, "ok": False, "error": "missing name/url"})
+            continue
+        try:
+            req = Request(url, headers={"User-Agent": "ai-beast-dashboard"})
+            with urlopen(req, timeout=3) as resp:
+                status = resp.status
+                results.append({"name": name, "url": url, "ok": 200 <= status < 400, "status": status})
+        except Exception as ex:
+            results.append({"name": name, "url": url, "ok": False, "error": str(ex)})
+    return 200, {"ok": True, "results": results}
+
+
+def list_ai_tools() -> list[dict[str, str]]:
+    return list_tools(BASE_DIR)
+
+
+def reveal_path(path: Path) -> tuple[int, dict]:
+    if not path.exists():
+        return 404, {"ok": False, "error": f"Path not found: {path}"}
+    try:
+        p = subprocess.run(["/usr/bin/open", str(path)], text=True, capture_output=True)
+        return 200, {"ok": p.returncode == 0, "returncode": p.returncode, "stdout": p.stdout, "stderr": p.stderr}
+    except Exception as ex:
+        return 500, {"ok": False, "error": str(ex)}
+
+
+def extract_all_ai_tools(run_installer: bool = False) -> tuple[int, dict]:
+    return extract_all_tools(run_installer, base=BASE_DIR)
 
 
 def memory_info() -> dict[str, float]:
@@ -382,6 +496,11 @@ class Handler(SimpleHTTPRequestHandler):
         p = urlparse(self.path)
         if p.path == "/api/health":
             return self._json(200, {"ok": True, "base_dir": str(BASE_DIR)})
+        if p.path == "/api/hf_token":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            token = read_hf_token()
+            return self._json(200, {"ok": True, "set": token is not None})
         if p.path == "/api/config":
             if not self._auth():
                 return self._json(401, {"ok": False, "error": "Unauthorized"})
@@ -430,6 +549,55 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json(401, {"ok": False, "error": "Unauthorized"})
             try:
                 return self._json(200, {"ok": True, "metrics": load_metrics()})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/docker/ps":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                return self._json(200, {"ok": True, "containers": docker_ps()})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/docker/logs":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            qs = parse_qs(p.query)
+            name = (qs.get("name", [""])[0]).strip()
+            tail_raw = (qs.get("tail", ["200"])[0]).strip()
+            try:
+                tail = max(10, min(2000, int(tail_raw)))
+            except ValueError:
+                tail = 200
+            ok, data = docker_logs(name, tail)
+            code = 200 if ok else 400
+            return self._json(code, {"ok": ok, "name": name, "logs": data})
+        if p.path == "/api/tools":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                return self._json(200, {"ok": True, "tools": list_ai_tools()})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/config":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            qs = parse_qs(p.query)
+            name = (qs.get("name", [""])[0]).strip()
+            if not name:
+                return self._json(400, {"ok": False, "error": "missing name"})
+            try:
+                cfg = list_ai_tools()
+                match = next((t for t in cfg if t["name"] == name), None)
+                if not match:
+                    return self._json(404, {"ok": False, "error": "Tool not found"})
+                return self._json(200, {"ok": True, "tool": match})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/manifest":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                return self._json(200, tool_manifest(BASE_DIR))
             except Exception as ex:
                 return self._json(500, {"ok": False, "error": str(ex)})
         if p.path == "/api/run":
@@ -493,6 +661,132 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         p = urlparse(self.path)
+        if p.path == "/api/validate":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                code, obj = validate_urls(data)
+                return self._json(code, obj)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/extract":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                name = str(data.get("name") or "").strip()
+                code, obj = extract_tool(name, base=BASE_DIR)
+                return self._json(code, obj)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/install":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                name = str(data.get("name") or "").strip()
+                run_installer = bool(data.get("run_installer"))
+                code, obj = install_tool(name, run_installer, base=BASE_DIR)
+                return self._json(code, obj)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/extract_all":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                run_installer = bool(data.get("run_installer"))
+                code, obj = extract_all_ai_tools(run_installer)
+                return self._json(code, obj)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/open":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                name = str(data.get("name") or "").strip()
+                if not name or "/" in name or "\\" in name:
+                    return self._json(400, {"ok": False, "error": "Invalid tool name"})
+                target = BASE_DIR / "_ai_tools" / "extracted" / name
+                code, obj = reveal_path(target)
+                return self._json(code, obj)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/run":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                name = str(data.get("name") or "").strip()
+                entrypoint = data.get("entrypoint")
+                args = data.get("args")
+                code, obj = run_tool(name, mode="run", entrypoint=entrypoint, args=args, base=BASE_DIR)
+                return self._json(code, obj)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/test":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                name = str(data.get("name") or "").strip()
+                code, obj = run_tool(name, mode="test", base=BASE_DIR)
+                return self._json(code, obj)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/tools/config":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                name = str(data.get("name") or "").strip()
+                cfg = data.get("config")
+                if not name or not isinstance(cfg, dict):
+                    return self._json(400, {"ok": False, "error": "missing name/config"})
+                save_tool_config(name, cfg, base=BASE_DIR)
+                updated = list_ai_tools()
+                match = next((t for t in updated if t["name"] == name), None)
+                return self._json(200, {"ok": True, "tool": match})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        if p.path == "/api/hf_token":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body or "{}")
+                raw = (data.get("token") or "").strip()
+                if not raw:
+                    write_hf_token(None)
+                    return self._json(200, {"ok": True, "set": False, "message": "HF token cleared"})
+                if "\n" in raw or "\r" in raw:
+                    return self._json(400, {"ok": False, "error": "Token cannot be multiline"})
+                if raw.lower().startswith("hf_"):
+                    write_hf_token(raw)
+                    return self._json(200, {"ok": True, "set": True})
+                write_hf_token(raw)
+                return self._json(200, {"ok": True, "set": True, "warning": "Token saved, but does not look like an HF token (expected to start with hf_)"})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
         if p.path == "/api/paths":
             if not self._auth():
                 return self._json(401, {"ok": False, "error": "Unauthorized"})

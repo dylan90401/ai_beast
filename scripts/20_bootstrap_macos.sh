@@ -37,7 +37,7 @@ bootstrap_brew(){
   deps_brew_install_formulae git jq yq coreutils gnu-sed gawk curl wget rsync
 
   # Python runtime/build
-  deps_brew_install_formulae python@3.11
+  deps_brew_install_formulae python
 
   # Optional: docker client + colima (only if runtime selection wants it)
   local rt; rt="$(docker_runtime_choice)"
@@ -84,7 +84,7 @@ main(){
   log "Stage: directories"
   bootstrap_dirs
 
-  log "Stage: python venv"
+  log "Stage: python3 venv"
   bootstrap_python_venv
 
   log "Stage: docker runtime (best-effort)"

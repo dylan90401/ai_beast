@@ -26,13 +26,16 @@ mkdir -p "$agents"
 
 label_comfy="com.aibeast.comfyui"
 label_dash="com.aibeast.dashboard"
+label_stack="com.aibeast.stack"
 comfy_plist="$agents/$label_comfy.plist"
 dash_plist="$agents/$label_dash.plist"
+stack_plist="$agents/$label_stack.plist"
 
 if [[ "$UNLOAD" -eq 1 ]]; then
   log "Unloading..."
   [[ "$APPLY" -eq 1 ]] && launchctl unload "$comfy_plist" 2>/dev/null || true
   [[ "$APPLY" -eq 1 ]] && launchctl unload "$dash_plist" 2>/dev/null || true
+  [[ "$APPLY" -eq 1 ]] && launchctl unload "$stack_plist" 2>/dev/null || true
   log "Done."
   exit 0
 fi
@@ -51,7 +54,7 @@ if [[ "$APPLY" -eq 1 ]]; then
     <array>
       <string>/bin/bash</string>
       <string>-lc</string>
-      <string>source "${VENV_DIR}/bin/activate" &amp;&amp; cd "${COMFYUI_DIR}" &amp;&amp; python main.py --listen ${bind} --port ${cport}</string>
+      <string>source "${VENV_DIR}/bin/activate" &amp;&amp; cd "${COMFYUI_DIR}" &amp;&amp; python3 main.py --listen ${bind} --port ${cport}</string>
     </array>
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><true/>
@@ -81,10 +84,32 @@ EOF
 </plist>
 EOF
 
+  cat > "$stack_plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key><string>${label_stack}</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/bash</string>
+      <string>-lc</string>
+      <string>cd "${BASE_DIR}" &amp;&amp; CLEAN_CONTAINERS=1 KILL_PORT_CONFLICTS=1 ./bin/beast up --apply</string>
+    </array>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><false/>
+    <key>StandardOutPath</key><string>${BASE_DIR}/logs/${label_stack}.out.log</string>
+    <key>StandardErrorPath</key><string>${BASE_DIR}/logs/${label_stack}.err.log</string>
+  </dict>
+</plist>
+EOF
+
   launchctl unload "$comfy_plist" 2>/dev/null || true
   launchctl unload "$dash_plist" 2>/dev/null || true
+  launchctl unload "$stack_plist" 2>/dev/null || true
   launchctl load "$comfy_plist"
   launchctl load "$dash_plist"
+  launchctl load "$stack_plist"
   log "Loaded LaunchAgents. (To unload: ./bin/beast launchd --unload --apply)"
 else
   log "DRYRUN would write plists to $agents and load them."
