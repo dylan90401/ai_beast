@@ -1,0 +1,4 @@
+# file: /home/runner/work/ai_beast/ai_beast/modules/tools/registry.py
+# hypothesis_version: 6.150.0
+
+[-20000, 200, 400, 404, 500, 1024, '*.tar.gz', '.tar', '/', 'Invalid tool name', 'Tool run failed', 'Tool test failed', 'User-Agent', '\\', '_ai_tools', 'ai-beast-tool-fetch', 'args', 'available', 'bytes', 'category', 'cmd', 'config/tools.json', 'config_hint', 'cwd', 'description', 'download_url', 'entrypoint', 'env', 'error', 'extracted', 'http', 'https', 'install_command', 'installer', 'invalid tool name', 'items', 'local', 'missing download url', 'missing entrypoint', 'missing tool name', 'mode', 'name', 'not-configured', 'ok', 'path', 'r:gz', 'returncode', 'run', 'runner', 'skipped', 'status', 'stderr', 'stdout', 'test_command', 'test_url', 'tool', 'tool not found', 'tool_run', 'tool_test', 'tools', 'utf-8', 'version', 'wb', 'workflow']

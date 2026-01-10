@@ -55,9 +55,9 @@ def collect_metrics(base_dir: Path) -> dict:
     metrics = {"disk_usage": {}, "service_status": {}, "timestamp": None}
 
     try:
-        from datetime import datetime
+        from datetime import UTC, datetime
 
-        metrics["timestamp"] = datetime.utcnow().isoformat()
+        metrics["timestamp"] = datetime.now(UTC).isoformat()
 
         # Disk usage
         if base_dir.exists():

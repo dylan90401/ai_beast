@@ -15,25 +15,30 @@ def log_info(message):
     """Log info message with timestamp"""
     print(f"[INFO] {message}")
 
+
 def log_success(message):
     """Log success message"""
     print(f"[SUCCESS] {message}")
+
 
 def log_error(message):
     """Log error message"""
     print(f"[ERROR] {message}")
 
+
 def log_warn(message):
     """Log warning message"""
     print(f"[WARNING] {message}")
 
+
 def check_command_exists(cmd):
     """Check if command exists in PATH"""
     try:
-        subprocess.run(['which', cmd], check=True, capture_output=True)
+        subprocess.run(["which", cmd], check=True, capture_output=True)
         return True
     except subprocess.CalledProcessError:
         return False
+
 
 def get_command_version(cmd, version_args=None):
     """Get version of command"""
@@ -42,18 +47,20 @@ def get_command_version(cmd, version_args=None):
             base_cmd = list(cmd)
         else:
             base_cmd = [cmd]
-        args = version_args or ['--version']
-        result = subprocess.run(base_cmd + args,
-                              capture_output=True, text=True, check=True)
+        args = version_args or ["--version"]
+        result = subprocess.run(
+            base_cmd + args, capture_output=True, text=True, check=True
+        )
         output = result.stdout.strip() or result.stderr.strip()
-        return output.split('\n')[0] if output else None
+        return output.split("\n")[0] if output else None
     except subprocess.CalledProcessError:
         return None
+
 
 def check_python_version():
     """Check Python version requirement"""
     version = platform.python_version()
-    version_tuple = tuple(map(int, version.split('.')))
+    version_tuple = tuple(map(int, version.split(".")))
 
     if version_tuple >= (3, 11):
         log_success(f"Python {version} (>= 3.11)")
@@ -62,21 +69,23 @@ def check_python_version():
         log_error(f"Python {version} (< 3.11 required)")
         return False
 
+
 def check_docker():
     """Check Docker daemon status"""
     try:
-        subprocess.run(['docker', 'info'], check=True, capture_output=True)
-        version = get_command_version('docker')
+        subprocess.run(["docker", "info"], check=True, capture_output=True)
+        version = get_command_version("docker")
         log_success(f"Docker daemon running ({version})")
         return True
     except subprocess.CalledProcessError:
         log_error("Docker daemon not running")
         return False
 
+
 def check_compose():
     """Check Docker Compose availability"""
     try:
-        version = get_command_version('docker-compose')
+        version = get_command_version("docker-compose")
         if version:
             log_success(f"Docker Compose {version}")
             return True
@@ -84,7 +93,7 @@ def check_compose():
         pass
 
     try:
-        version = get_command_version(['docker', 'compose'], ['version'])
+        version = get_command_version(["docker", "compose"], ["version"])
         if version:
             log_success(f"Docker Compose {version}")
             return True
@@ -94,9 +103,10 @@ def check_compose():
     log_error("Docker Compose not available")
     return False
 
+
 def check_required_commands():
     """Check all required commands exist"""
-    required_commands = ['git', 'python3', 'docker']
+    required_commands = ["git", "python3", "docker"]
     missing_commands = []
 
     for cmd in required_commands:
@@ -109,13 +119,10 @@ def check_required_commands():
 
     return missing_commands
 
+
 def check_config_files(base_dir):
     """Check configuration files exist"""
-    config_files = [
-        "config/paths.env",
-        "config/ports.env",
-        "config/features.yml"
-    ]
+    config_files = ["config/paths.env", "config/ports.env", "config/features.yml"]
 
     missing_configs = []
 
@@ -129,13 +136,10 @@ def check_config_files(base_dir):
 
     return missing_configs
 
+
 def check_directories(base_dir):
     """Check required directories exist"""
-    required_dirs = [
-        "scripts",
-        "config",
-        "compose"
-    ]
+    required_dirs = ["scripts", "config", "compose"]
 
     for dir in required_dirs:
         dir_path = os.path.join(base_dir, dir)
@@ -147,6 +151,7 @@ def check_directories(base_dir):
 
     return True
 
+
 def check_compose_file(base_dir):
     """Validate compose file"""
     compose_file = os.path.join(base_dir, "compose", "base.yml")
@@ -157,28 +162,32 @@ def check_compose_file(base_dir):
 
     try:
         compose_cmd = None
-        if check_command_exists('docker'):
-            if get_command_version(['docker', 'compose'], ['version']):
-                compose_cmd = ['docker', 'compose']
-        if not compose_cmd and check_command_exists('docker-compose'):
-            compose_cmd = ['docker-compose']
+        if check_command_exists("docker"):
+            if get_command_version(["docker", "compose"], ["version"]):
+                compose_cmd = ["docker", "compose"]
+        if not compose_cmd and check_command_exists("docker-compose"):
+            compose_cmd = ["docker-compose"]
         if not compose_cmd:
             log_error("Docker Compose not available for config check")
             return False
-        subprocess.run(compose_cmd + ['-f', compose_file, 'config'],
-                      check=True, capture_output=True)
+        subprocess.run(
+            compose_cmd + ["-f", compose_file, "config"],
+            check=True,
+            capture_output=True,
+        )
         log_success("compose/base.yml valid")
         return True
     except subprocess.CalledProcessError:
         log_error("compose/base.yml invalid")
         return False
 
+
 def check_python_packages():
     """Check required Python packages"""
     required_packages = {
-        'pytest': 'pytest',
-        'ruff': 'ruff',
-        'pyyaml': 'yaml',
+        "pytest": "pytest",
+        "ruff": "ruff",
+        "pyyaml": "yaml",
     }
     missing_packages = []
 
@@ -191,6 +200,7 @@ def check_python_packages():
             log_warn(f"{pkg}: not installed")
 
     return missing_packages
+
 
 def main():
     """Main preflight check function"""
@@ -275,6 +285,7 @@ def main():
     print("  make check                     # Run quality gates")
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

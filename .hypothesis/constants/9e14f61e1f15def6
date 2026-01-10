@@ -1,0 +1,4 @@
+# file: /home/runner/work/ai_beast/ai_beast/modules/capabilities/registry.py
+# hypothesis_version: 6.150.0
+
+[-2000, 200, 400, '-T', '-f', '-lc', '127.0.0.1', 'AI_BEAST_BIND_ADDR', 'GET', 'PORT_OLLAMA', 'User-Agent', 'actions', 'actions_append', 'ai-beast-cap-check', 'args', 'body', 'body_env', 'body_json', 'capabilities', 'capability', 'checks', 'checks_append', 'cmd', 'compose', 'compose_http', 'docker', 'docker-compose.yml', 'error', 'exec', 'headers', 'headers_env', 'http', 'id', 'method', 'missing model', 'missing ollama base', 'missing port', 'missing service', 'missing service port', 'missing tool', 'missing url', 'model', 'model not found', 'models', 'name', 'ok', 'ollama_model', 'path', 'port', 'returncode', 'service', 'service_port', 'sh', 'status', 'stderr', 'stdout', 'tcp', 'timeout', 'title', 'tool', 'type', 'url', 'utf-8', 'version', '{}']

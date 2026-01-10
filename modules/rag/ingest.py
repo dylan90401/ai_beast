@@ -3,6 +3,7 @@
 
 Provides document chunking, embedding, and ingestion to Qdrant vector store.
 """
+
 import argparse
 import hashlib
 import sys
@@ -21,17 +22,17 @@ def sha256_bytes(b: bytes) -> str:
 
 def sha256_file(path: Path) -> str:
     """Compute SHA256 hash of file using chunk-based reading for efficiency.
-    
+
     Args:
         path: Path to file
-        
+
     Returns:
         Hexadecimal SHA256 hash string
     """
     sha256_hash = hashlib.sha256()
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         # Read file in chunks to avoid loading large files into memory
-        for chunk in iter(lambda: f.read(8192), b''):
+        for chunk in iter(lambda: f.read(8192), b""):
             sha256_hash.update(chunk)
     return sha256_hash.hexdigest()
 
@@ -94,6 +95,7 @@ def get_embedder(model: str = "sentence-transformers/all-MiniLM-L6-v2"):
     if _embedder is None:
         try:
             from sentence_transformers import SentenceTransformer
+
             _embedder = SentenceTransformer(model)
         except ImportError as exc:
             raise ImportError(
@@ -108,6 +110,7 @@ def get_qdrant_client(url: str = "http://127.0.0.1:6333"):
     if _qdrant_client is None:
         try:
             from qdrant_client import QdrantClient
+
             _qdrant_client = QdrantClient(url=url)
         except ImportError as exc:
             raise ImportError(
@@ -219,17 +222,19 @@ def ingest_file(
     points = []
     for idx, (chunk, vector) in enumerate(zip(chunks, vectors, strict=True)):
         point_id = int(hashlib.md5(f"{file_hash}:{idx}".encode()).hexdigest()[:15], 16)
-        points.append({
-            "id": point_id,
-            "vector": vector,
-            "payload": {
-                "path": str(path),
-                "filename": path.name,
-                "chunk_index": idx,
-                "text": chunk,
-                "file_hash": file_hash,
-            },
-        })
+        points.append(
+            {
+                "id": point_id,
+                "vector": vector,
+                "payload": {
+                    "path": str(path),
+                    "filename": path.name,
+                    "chunk_index": idx,
+                    "text": chunk,
+                    "file_hash": file_hash,
+                },
+            }
+        )
 
     client.upsert(collection_name=collection, points=points)
 
@@ -293,7 +298,9 @@ def ingest_directory(
         else:
             results["errors"].append({"file": str(fpath), "error": result.get("error")})
 
-    results["message"] = f"{'Ingested' if apply else 'Would ingest'} {results['chunks']} chunks from {results['files']} files"
+    results["message"] = (
+        f"{'Ingested' if apply else 'Would ingest'} {results['chunks']} chunks from {results['files']} files"
+    )
     return results
 
 

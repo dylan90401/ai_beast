@@ -50,4 +50,3 @@ __all__ = [
     "quick_search",
     "quick_add",
 ]
-

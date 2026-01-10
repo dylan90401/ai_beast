@@ -3,6 +3,7 @@
 
 Provides semantic search and retrieval from Qdrant vector store.
 """
+
 import argparse
 import sys
 
@@ -54,6 +55,7 @@ def search(
 
         if filter_payload:
             from qdrant_client.http.models import FieldCondition, Filter, MatchValue
+
             # Simple filter support - extend as needed
             conditions = []
             for key, value in filter_payload.items():
@@ -67,15 +69,17 @@ def search(
 
         hits = []
         for hit in results:
-            hits.append({
-                "id": hit.id,
-                "score": hit.score,
-                "text": hit.payload.get("text", ""),
-                "path": hit.payload.get("path", ""),
-                "filename": hit.payload.get("filename", ""),
-                "chunk_index": hit.payload.get("chunk_index", 0),
-                "payload": hit.payload,
-            })
+            hits.append(
+                {
+                    "id": hit.id,
+                    "score": hit.score,
+                    "text": hit.payload.get("text", ""),
+                    "path": hit.payload.get("path", ""),
+                    "filename": hit.payload.get("filename", ""),
+                    "chunk_index": hit.payload.get("chunk_index", 0),
+                    "payload": hit.payload,
+                }
+            )
 
         return {
             "ok": True,
@@ -136,11 +140,13 @@ def get_context(
             break
         chunks.append(text)
         total_len += len(text) + len(separator)
-        sources.append({
-            "path": hit.get("path", ""),
-            "filename": hit.get("filename", ""),
-            "score": hit.get("score", 0),
-        })
+        sources.append(
+            {
+                "path": hit.get("path", ""),
+                "filename": hit.get("filename", ""),
+                "score": hit.get("score", 0),
+            }
+        )
 
     context = separator.join(chunks)
 
@@ -168,18 +174,24 @@ def list_collections(qdrant_url: str = "http://127.0.0.1:6333") -> dict:
         for col in collections.collections:
             try:
                 info = client.get_collection(col.name)
-                items.append({
-                    "name": col.name,
-                    "vectors_count": info.vectors_count,
-                    "points_count": info.points_count,
-                    "status": str(info.status),
-                    "vector_size": info.config.params.vectors.size if hasattr(info.config.params, 'vectors') else None,
-                })
+                items.append(
+                    {
+                        "name": col.name,
+                        "vectors_count": info.vectors_count,
+                        "points_count": info.points_count,
+                        "status": str(info.status),
+                        "vector_size": info.config.params.vectors.size
+                        if hasattr(info.config.params, "vectors")
+                        else None,
+                    }
+                )
             except Exception:
-                items.append({
-                    "name": col.name,
-                    "status": "unknown",
-                })
+                items.append(
+                    {
+                        "name": col.name,
+                        "status": "unknown",
+                    }
+                )
 
         return {"ok": True, "collections": items}
 

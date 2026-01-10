@@ -15,43 +15,47 @@ from datetime import datetime
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('/tmp/update.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("/tmp/update.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 logger = logging.getLogger(__name__)
+
 
 def run_command(command, cwd=None, check=True):
     """Execute a shell command and handle errors."""
     try:
-        logger.info(f"Running: {' '.join(command) if isinstance(command, list) else command}")
-        result = subprocess.run(
-            command,
-            cwd=cwd,
-            check=check,
-            capture_output=True,
-            text=True
+        logger.info(
+            f"Running: {' '.join(command) if isinstance(command, list) else command}"
         )
-        logger.info(f"Command succeeded: {' '.join(command) if isinstance(command, list) else command}")
+        result = subprocess.run(
+            command, cwd=cwd, check=check, capture_output=True, text=True
+        )
+        logger.info(
+            f"Command succeeded: {' '.join(command) if isinstance(command, list) else command}"
+        )
         return result
     except subprocess.CalledProcessError as e:
-        logger.error(f"Command failed: {' '.join(command) if isinstance(command, list) else command}")
+        logger.error(
+            f"Command failed: {' '.join(command) if isinstance(command, list) else command}"
+        )
         logger.error(f"Error output: {e.stderr}")
         raise
+
 
 def backup_project(base_dir):
     """Create a backup of the current project."""
     logger.info("Creating project backup...")
 
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    backup_dir = os.path.join(base_dir, 'backups', f'backup_{timestamp}')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_dir = os.path.join(base_dir, "backups", f"backup_{timestamp}")
 
     os.makedirs(backup_dir, exist_ok=True)
 
     # Copy important directories
-    dirs_to_backup = ['config', 'data', 'models', 'outputs']
+    dirs_to_backup = ["config", "data", "models", "outputs"]
 
     for dir_name in dirs_to_backup:
         source_path = os.path.join(base_dir, dir_name)
@@ -62,17 +66,19 @@ def backup_project(base_dir):
 
     logger.info(f"Backup created in {backup_dir}")
 
+
 def update_git_repo(base_dir):
     """Update the git repository."""
     logger.info("Updating git repository...")
 
     try:
-        run_command(['git', 'pull', 'origin', 'main'], cwd=base_dir)
+        run_command(["git", "pull", "origin", "main"], cwd=base_dir)
         logger.info("Git repository updated successfully")
         return True
     except Exception as e:
         logger.error(f"Failed to update git repository: {str(e)}")
         return False
+
 
 def update_dependencies(base_dir):
     """Update Python dependencies."""
@@ -80,12 +86,14 @@ def update_dependencies(base_dir):
 
     try:
         # Update pip
-        run_command([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
+        run_command([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
 
         # Update requirements
-        requirements_file = os.path.join(base_dir, 'requirements.txt')
+        requirements_file = os.path.join(base_dir, "requirements.txt")
         if os.path.exists(requirements_file):
-            run_command([sys.executable, '-m', 'pip', 'install', '-r', requirements_file])
+            run_command(
+                [sys.executable, "-m", "pip", "install", "-r", requirements_file]
+            )
             logger.info("Dependencies updated successfully")
         else:
             logger.warning("requirements.txt not found, skipping dependency update")
@@ -95,15 +103,16 @@ def update_dependencies(base_dir):
         logger.error(f"Failed to update dependencies: {str(e)}")
         return False
 
+
 def update_comfyui(base_dir):
     """Update ComfyUI if present."""
     logger.info("Updating ComfyUI...")
 
-    comfyui_dir = os.path.join(base_dir, 'apps', 'comfyui', 'ComfyUI')
+    comfyui_dir = os.path.join(base_dir, "apps", "comfyui", "ComfyUI")
 
     if os.path.exists(comfyui_dir):
         try:
-            run_command(['git', 'pull', 'origin', 'main'], cwd=comfyui_dir)
+            run_command(["git", "pull", "origin", "main"], cwd=comfyui_dir)
             logger.info("ComfyUI updated successfully")
             return True
         except Exception as e:
@@ -113,6 +122,7 @@ def update_comfyui(base_dir):
         logger.info("ComfyUI not found, skipping update")
         return True
 
+
 def run_migrations(base_dir):
     """Run any necessary database migrations."""
     logger.info("Checking for database migrations...")
@@ -121,6 +131,7 @@ def run_migrations(base_dir):
     # For now, we'll just log that we're checking
     logger.info("No database migrations found or required")
     return True
+
 
 def main():
     """Main update function."""
@@ -160,6 +171,7 @@ def main():
     except Exception as e:
         logger.error(f"Update process failed: {str(e)}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

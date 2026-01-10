@@ -40,6 +40,8 @@ exclude = [
     "__pycache__",
     "build",
     "dist",
+    "_ai_tools",
+    "extensions",
 ]
 
 [tool.ruff.lint]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """00_verify_stack.py — Verify AI Beast stack completeness"""
+
 import sys
 from pathlib import Path
 
@@ -144,7 +145,9 @@ def main():
         "speech_stack",
     ]
     for pack in expected_packs:
-        if not check_file(BASE_DIR / "scripts" / "packs" / f"{pack}.sh", required=False):
+        if not check_file(
+            BASE_DIR / "scripts" / "packs" / f"{pack}.sh", required=False
+        ):
             warnings.append(f"Missing pack script: {pack}.sh")
 
     # Modules

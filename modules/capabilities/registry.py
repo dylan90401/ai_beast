@@ -84,7 +84,9 @@ def _http_check(
         if headers:
             req_headers.update(headers)
         data = body.encode("utf-8") if body is not None else None
-        req = urllib.request.Request(url, data=data, method=method.upper(), headers=req_headers)
+        req = urllib.request.Request(
+            url, data=data, method=method.upper(), headers=req_headers
+        )
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             status = resp.status
             return {"ok": 200 <= status < 400, "status": status}
@@ -142,7 +144,9 @@ def _ollama_base(config: dict[str, str]) -> str:
     return f"http://{bind}:{port}"
 
 
-def _ollama_model_check(config: dict[str, str], model: str, timeout: int = 5) -> dict[str, Any]:
+def _ollama_model_check(
+    config: dict[str, str], model: str, timeout: int = 5
+) -> dict[str, Any]:
     model = (model or "").strip()
     if not model:
         return {"ok": False, "error": "missing model"}
@@ -158,12 +162,20 @@ def _ollama_model_check(config: dict[str, str], model: str, timeout: int = 5) ->
         names = {str(item.get("name")) for item in models if isinstance(item, dict)}
         if model in names:
             return {"ok": True, "status": 200, "model": model, "url": url}
-        return {"ok": False, "status": 200, "model": model, "url": url, "error": "model not found"}
+        return {
+            "ok": False,
+            "status": 200,
+            "model": model,
+            "url": url,
+            "error": "model not found",
+        }
     except Exception as exc:
         return {"ok": False, "error": str(exc), "url": url}
 
 
-def _tool_check(command: str, args: str | None = None, timeout: int = 5) -> dict[str, Any]:
+def _tool_check(
+    command: str, args: str | None = None, timeout: int = 5
+) -> dict[str, Any]:
     cmd = command.strip()
     if not cmd:
         return {"ok": False, "error": "missing tool"}
@@ -203,7 +215,11 @@ def _compose_http_check(
     if service_port <= 0:
         return {"ok": False, "error": "missing service port"}
     compose_file = base_dir / "docker-compose.yml"
-    url = f"http://localhost:{service_port}/{path.lstrip('/')}" if path else f"http://localhost:{service_port}"
+    url = (
+        f"http://localhost:{service_port}/{path.lstrip('/')}"
+        if path
+        else f"http://localhost:{service_port}"
+    )
     cmd = [
         "docker",
         "compose",
@@ -252,7 +268,11 @@ def run_capability_checks(
         for check in checks:
             ctype = (check.get("type") or "http").lower()
             name = check.get("name") or cap.get("title") or cap.get("id")
-            detail: dict[str, Any] = {"capability": cap.get("id"), "name": name, "type": ctype}
+            detail: dict[str, Any] = {
+                "capability": cap.get("id"),
+                "name": name,
+                "type": ctype,
+            }
             if ctype == "http":
                 url = _build_url(config, check.get("port", ""), check.get("path", ""))
                 detail["url"] = url
@@ -279,12 +299,18 @@ def run_capability_checks(
                     detail.update(_tcp_check(port))
             elif ctype == "ollama_model":
                 model = str(check.get("model") or "")
-                detail.update(_ollama_model_check(config, model, timeout=int(check.get("timeout", 5))))
+                detail.update(
+                    _ollama_model_check(
+                        config, model, timeout=int(check.get("timeout", 5))
+                    )
+                )
             elif ctype == "tool":
                 detail.update(
                     _tool_check(
                         str(check.get("tool") or ""),
-                        args=str(check.get("args") or "") if check.get("args") else None,
+                        args=str(check.get("args") or "")
+                        if check.get("args")
+                        else None,
                         timeout=int(check.get("timeout", 5)),
                     )
                 )
@@ -299,6 +325,8 @@ def run_capability_checks(
                     )
                 )
             else:
-                detail.update({"ok": False, "error": f"Unsupported check type: {ctype}"})
+                detail.update(
+                    {"ok": False, "error": f"Unsupported check type: {ctype}"}
+                )
             results.append(detail)
     return results

@@ -11,7 +11,9 @@ from pathlib import Path
 
 
 class FileWatcher:
-    def __init__(self, path: Path, callback: Callable[[Path], None], interval: float = 2.0) -> None:
+    def __init__(
+        self, path: Path, callback: Callable[[Path], None], interval: float = 2.0
+    ) -> None:
         self.path = path
         self.callback = callback
         self.interval = interval

@@ -14,31 +14,35 @@ import sys
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('/tmp/bootstrap.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("/tmp/bootstrap.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 logger = logging.getLogger(__name__)
+
 
 def run_command(command, cwd=None, check=True):
     """Execute a shell command and handle errors."""
     try:
-        logger.info(f"Running: {' '.join(command) if isinstance(command, list) else command}")
-        result = subprocess.run(
-            command,
-            cwd=cwd,
-            check=check,
-            capture_output=True,
-            text=True
+        logger.info(
+            f"Running: {' '.join(command) if isinstance(command, list) else command}"
         )
-        logger.info(f"Command succeeded: {' '.join(command) if isinstance(command, list) else command}")
+        result = subprocess.run(
+            command, cwd=cwd, check=check, capture_output=True, text=True
+        )
+        logger.info(
+            f"Command succeeded: {' '.join(command) if isinstance(command, list) else command}"
+        )
         return result
     except subprocess.CalledProcessError as e:
-        logger.error(f"Command failed: {' '.join(command) if isinstance(command, list) else command}")
+        logger.error(
+            f"Command failed: {' '.join(command) if isinstance(command, list) else command}"
+        )
         logger.error(f"Error output: {e.stderr}")
         raise
+
 
 def setup_virtual_environment(venv_dir):
     """Create and setup Python virtual environment."""
@@ -61,6 +65,7 @@ def setup_virtual_environment(venv_dir):
     run_command([pip_path, "install", "--upgrade", "pip"])
     return python_path
 
+
 def install_requirements(requirements_file, python_path):
     """Install Python requirements from file."""
     logger.info(f"Installing requirements from {requirements_file}")
@@ -68,6 +73,7 @@ def install_requirements(requirements_file, python_path):
         run_command([python_path, "-m", "pip", "install", "-r", requirements_file])
     else:
         logger.warning(f"Requirements file not found: {requirements_file}")
+
 
 def setup_project_structure(base_dir):
     """Create project directory structure."""
@@ -83,7 +89,7 @@ def setup_project_structure(base_dir):
         "logs",
         "cache",
         "backups",
-        "venv"
+        "venv",
     ]
 
     for dir_name in dirs_to_create:
@@ -91,19 +97,24 @@ def setup_project_structure(base_dir):
         os.makedirs(dir_path, exist_ok=True)
         logger.info(f"Created directory: {dir_path}")
 
+
 def setup_comfyui(base_dir, comfyui_dir):
     """Setup ComfyUI if not already present."""
     logger.info("Setting up ComfyUI...")
 
     if not os.path.exists(comfyui_dir):
         logger.info("Cloning ComfyUI...")
-        run_command([
-            "git", "clone",
-            "https://github.com/comfyanonymous/ComfyUI.git",
-            comfyui_dir
-        ])
+        run_command(
+            [
+                "git",
+                "clone",
+                "https://github.com/comfyanonymous/ComfyUI.git",
+                comfyui_dir,
+            ]
+        )
     else:
         logger.info("ComfyUI already exists")
+
 
 def setup_git_hooks(base_dir):
     """Setup Git hooks for project."""
@@ -122,6 +133,7 @@ echo "Pre-commit checks passed!"
 """)
 
     os.chmod(pre_commit_hook, 0o755)
+
 
 def main():
     """Main bootstrap function."""
@@ -156,6 +168,7 @@ def main():
     except Exception as e:
         logger.error(f"Bootstrap process failed: {str(e)}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

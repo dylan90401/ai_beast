@@ -23,7 +23,7 @@ Example:
     # Run all checks
     health = await checker.check_all()
     print(f"Overall status: {health['status']}")
-    
+
     # Check individual service
     ollama_check = await OllamaHealthChecker().check()
     print(f"Ollama: {ollama_check.status.value}")
@@ -47,6 +47,7 @@ logger = get_logger(__name__)
 # Optional HTTP client
 try:
     import httpx
+
     HTTPX_AVAILABLE = True
 except ImportError:
     HTTPX_AVAILABLE = False
@@ -54,6 +55,7 @@ except ImportError:
 
 class HealthStatus(Enum):
     """Health status levels."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -74,10 +76,11 @@ class HealthStatus(Enum):
 class HealthCheck:
     """
     Result of a health check.
-    
+
     Contains status, timing, and detailed information about
     the health check performed.
     """
+
     name: str
     status: HealthStatus
     message: str = ""
@@ -115,7 +118,7 @@ class HealthCheck:
 class ServiceHealthChecker:
     """
     Base class for service health checkers.
-    
+
     Subclass this to create custom health checkers for
     specific services.
 
@@ -138,7 +141,7 @@ class ServiceHealthChecker:
     ):
         """
         Initialize the health checker.
-        
+
         Args:
             name: Service name for identification
             timeout: Timeout for health check in seconds
@@ -151,7 +154,7 @@ class ServiceHealthChecker:
     async def check(self) -> HealthCheck:
         """
         Perform health check.
-        
+
         Override this method in subclasses.
         """
         raise NotImplementedError
@@ -160,7 +163,7 @@ class ServiceHealthChecker:
 class HTTPHealthChecker(ServiceHealthChecker):
     """
     Health checker for HTTP/HTTPS endpoints.
-    
+
     Sends a GET request to the specified URL and checks
     the response status code.
     """
@@ -177,7 +180,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize HTTP health checker.
-        
+
         Args:
             name: Service name
             url: Health check URL
@@ -273,7 +276,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
 class OllamaHealthChecker(HTTPHealthChecker):
     """
     Health checker for Ollama service.
-    
+
     Extends HTTP health check with Ollama-specific
     model verification.
     """
@@ -286,7 +289,7 @@ class OllamaHealthChecker(HTTPHealthChecker):
     ):
         """
         Initialize Ollama health checker.
-        
+
         Args:
             base_url: Ollama API base URL
             required_models: List of models that must be available
@@ -325,7 +328,8 @@ class OllamaHealthChecker(HTTPHealthChecker):
                 # Check for required models
                 if self.required_models:
                     missing = [
-                        m for m in self.required_models
+                        m
+                        for m in self.required_models
                         if m not in model_names and f"{m}:latest" not in model_names
                     ]
                     if missing:
@@ -348,7 +352,7 @@ class OllamaHealthChecker(HTTPHealthChecker):
 class QdrantHealthChecker(HTTPHealthChecker):
     """
     Health checker for Qdrant vector database.
-    
+
     Checks Qdrant health endpoint and collection status.
     """
 
@@ -360,7 +364,7 @@ class QdrantHealthChecker(HTTPHealthChecker):
     ):
         """
         Initialize Qdrant health checker.
-        
+
         Args:
             base_url: Qdrant API base URL
             required_collections: Collections that must exist
@@ -401,7 +405,9 @@ class QdrantHealthChecker(HTTPHealthChecker):
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(f"{self.base_url}/collections")
                 data = response.json()
-                collections = [c["name"] for c in data.get("result", {}).get("collections", [])]
+                collections = [
+                    c["name"] for c in data.get("result", {}).get("collections", [])
+                ]
 
                 result.details["collections"] = collections
                 result.details["collection_count"] = len(collections)
@@ -422,7 +428,7 @@ class QdrantHealthChecker(HTTPHealthChecker):
 class RedisHealthChecker(ServiceHealthChecker):
     """
     Health checker for Redis.
-    
+
     Uses PING command to verify Redis is responsive.
     """
 
@@ -435,7 +441,7 @@ class RedisHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize Redis health checker.
-        
+
         Args:
             host: Redis host
             port: Redis port
@@ -526,7 +532,7 @@ class RedisHealthChecker(ServiceHealthChecker):
 class DiskSpaceHealthChecker(ServiceHealthChecker):
     """
     Health checker for disk space.
-    
+
     Monitors available disk space and reports status
     based on configurable thresholds.
     """
@@ -540,7 +546,7 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize disk space checker.
-        
+
         Args:
             name: Checker name (e.g., "disk_models")
             path: Path to check
@@ -611,7 +617,7 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
 class MemoryHealthChecker(ServiceHealthChecker):
     """
     Health checker for system memory.
-    
+
     Monitors available memory and reports status
     based on configurable thresholds.
     """
@@ -623,7 +629,7 @@ class MemoryHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize memory checker.
-        
+
         Args:
             warning_threshold: Percentage free below which is warning
             critical_threshold: Percentage free below which is critical
@@ -688,7 +694,7 @@ class MemoryHealthChecker(ServiceHealthChecker):
 class SystemHealthChecker:
     """
     Aggregates health checks from multiple services.
-    
+
     Runs all configured health checks in parallel and
     aggregates results into overall system health status.
 
@@ -700,7 +706,7 @@ class SystemHealthChecker:
 
         health = await checker.check_all()
         print(f"Overall status: {health['status']}")
-        
+
         for check in health['checks']:
             print(f"  {check['name']}: {check['status']}")
     """
@@ -708,7 +714,7 @@ class SystemHealthChecker:
     def __init__(self, name: str = "ai_beast"):
         """
         Initialize system health checker.
-        
+
         Args:
             name: System name for identification
         """
@@ -718,7 +724,7 @@ class SystemHealthChecker:
     def add_checker(self, checker: ServiceHealthChecker):
         """
         Add a health checker.
-        
+
         Args:
             checker: Service health checker to add
         """
@@ -728,10 +734,10 @@ class SystemHealthChecker:
     def remove_checker(self, name: str) -> bool:
         """
         Remove a health checker by name.
-        
+
         Args:
             name: Name of checker to remove
-            
+
         Returns:
             True if checker was found and removed
         """
@@ -747,16 +753,18 @@ class SystemHealthChecker:
     ) -> dict[str, Any]:
         """
         Run all health checks.
-        
+
         Args:
             include_non_critical: Include non-critical services in checks
-            
+
         Returns:
             Dict with overall status and individual check results
         """
-        checkers = self.checkers if include_non_critical else [
-            c for c in self.checkers if c.critical
-        ]
+        checkers = (
+            self.checkers
+            if include_non_critical
+            else [c for c in self.checkers if c.critical]
+        )
 
         if not checkers:
             return {
@@ -780,18 +788,21 @@ class SystemHealthChecker:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Health check failed with exception: {result}")
-                checks.append(HealthCheck(
-                    name=checkers[i].name,
-                    status=HealthStatus.UNKNOWN,
-                    message=f"Check failed: {result}",
-                    details={"error": str(result)},
-                ))
+                checks.append(
+                    HealthCheck(
+                        name=checkers[i].name,
+                        status=HealthStatus.UNKNOWN,
+                        message=f"Check failed: {result}",
+                        details={"error": str(result)},
+                    )
+                )
             else:
                 checks.append(result)
 
         # Determine overall status
         critical_checks = [
-            check for check, checker in zip(checks, checkers)
+            check
+            for check, checker in zip(checks, checkers, strict=True)
             if checker.critical
         ]
 
@@ -804,11 +815,15 @@ class SystemHealthChecker:
             overall = HealthStatus.HEALTHY
             message = "All services healthy"
         elif any(s == HealthStatus.UNHEALTHY for s in statuses):
-            unhealthy = [c.name for c in critical_checks if c.status == HealthStatus.UNHEALTHY]
+            unhealthy = [
+                c.name for c in critical_checks if c.status == HealthStatus.UNHEALTHY
+            ]
             overall = HealthStatus.UNHEALTHY
             message = f"Unhealthy services: {', '.join(unhealthy)}"
         elif any(s == HealthStatus.DEGRADED for s in statuses):
-            degraded = [c.name for c in critical_checks if c.status == HealthStatus.DEGRADED]
+            degraded = [
+                c.name for c in critical_checks if c.status == HealthStatus.DEGRADED
+            ]
             overall = HealthStatus.DEGRADED
             message = f"Degraded services: {', '.join(degraded)}"
         else:
@@ -827,10 +842,10 @@ class SystemHealthChecker:
     async def check_service(self, name: str) -> HealthCheck | None:
         """
         Check a specific service by name.
-        
+
         Args:
             name: Service name to check
-            
+
         Returns:
             HealthCheck result or None if not found
         """
@@ -849,14 +864,14 @@ def create_default_checker(
 ) -> SystemHealthChecker:
     """
     Create health checker with default configuration.
-    
+
     Args:
         base_dir: Base directory for disk checks
         ollama_url: Ollama API URL
         qdrant_url: Qdrant API URL
         redis_host: Redis host
         redis_port: Redis port
-        
+
     Returns:
         Configured SystemHealthChecker
     """
@@ -868,25 +883,31 @@ def create_default_checker(
     checker.add_checker(RedisHealthChecker(host=redis_host, port=redis_port))
 
     # WebUI check (optional)
-    checker.add_checker(HTTPHealthChecker(
-        name="webui",
-        url="http://localhost:3000/health",
-        critical=False,
-    ))
+    checker.add_checker(
+        HTTPHealthChecker(
+            name="webui",
+            url="http://localhost:3000/health",
+            critical=False,
+        )
+    )
 
     # System resource checks
     if base_dir:
-        checker.add_checker(DiskSpaceHealthChecker(
-            name="disk_base",
-            path=base_dir,
-        ))
+        checker.add_checker(
+            DiskSpaceHealthChecker(
+                name="disk_base",
+                path=base_dir,
+            )
+        )
 
         models_dir = base_dir / "heavy" / "llms"
         if models_dir.exists():
-            checker.add_checker(DiskSpaceHealthChecker(
-                name="disk_models",
-                path=models_dir,
-            ))
+            checker.add_checker(
+                DiskSpaceHealthChecker(
+                    name="disk_models",
+                    path=models_dir,
+                )
+            )
 
     # Memory check
     checker.add_checker(MemoryHealthChecker())
@@ -900,10 +921,10 @@ async def quick_health_check(
 ) -> dict[str, Any]:
     """
     Quick health check for common services.
-    
+
     Args:
         services: List of services to check (default: all)
-        
+
     Returns:
         Health check results
     """
@@ -911,10 +932,7 @@ async def quick_health_check(
 
     if services:
         # Filter to requested services
-        checker.checkers = [
-            c for c in checker.checkers
-            if c.name in services
-        ]
+        checker.checkers = [c for c in checker.checkers if c.name in services]
 
     return await checker.check_all()
 
@@ -922,10 +940,10 @@ async def quick_health_check(
 def health_check_sync(services: list[str] | None = None) -> dict[str, Any]:
     """
     Synchronous wrapper for health check.
-    
+
     Args:
         services: List of services to check (default: all)
-        
+
     Returns:
         Health check results
     """

@@ -13,13 +13,14 @@ import sys
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('/tmp/preflight.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("/tmp/preflight.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 logger = logging.getLogger(__name__)
+
 
 def check_python_version():
     """Check Python version requirement."""
@@ -32,19 +33,22 @@ def check_python_version():
         logger.info(f"Python version OK: {sys.version}")
         return True
     else:
-        logger.error(f"Python version too low. Required: {required_version}, Got: {current_version}")
+        logger.error(
+            f"Python version too low. Required: {required_version}, Got: {current_version}"
+        )
         return False
+
 
 def check_required_tools():
     """Check for required system tools."""
     logger.info("Checking required system tools...")
 
-    required_tools = ['git', 'pip', 'python3']
+    required_tools = ["git", "pip", "python3"]
     missing_tools = []
 
     for tool in required_tools:
         try:
-            subprocess.run(['which', tool], check=True, capture_output=True)
+            subprocess.run(["which", tool], check=True, capture_output=True)
             logger.info(f"Tool found: {tool}")
         except subprocess.CalledProcessError:
             logger.warning(f"Tool not found: {tool}")
@@ -56,11 +60,12 @@ def check_required_tools():
 
     return True
 
+
 def check_environment_variables():
     """Check for required environment variables."""
     logger.info("Checking environment variables...")
 
-    required_vars = ['PYTHONPATH', 'HOME']
+    required_vars = ["PYTHONPATH", "HOME"]
     missing_vars = []
 
     for var in required_vars:
@@ -74,20 +79,21 @@ def check_environment_variables():
 
     return True
 
+
 def check_project_structure(base_dir):
     """Check that project structure is correct."""
     logger.info("Checking project structure...")
 
     required_dirs = [
-        'apps',
-        'config',
-        'data',
-        'models',
-        'outputs',
-        'scripts',
-        'logs',
-        'cache',
-        'backups'
+        "apps",
+        "config",
+        "data",
+        "models",
+        "outputs",
+        "scripts",
+        "logs",
+        "cache",
+        "backups",
     ]
 
     missing_dirs = []
@@ -104,22 +110,26 @@ def check_project_structure(base_dir):
 
     return True
 
+
 def check_virtual_environment():
     """Check if virtual environment is active."""
     logger.info("Checking virtual environment...")
 
-    if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+    if hasattr(sys, "real_prefix") or (
+        hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+    ):
         logger.info("Virtual environment is active")
         return True
     else:
         logger.warning("Virtual environment is not active")
         return False
 
+
 def check_comfyui_setup(base_dir):
     """Check if ComfyUI is properly set up."""
     logger.info("Checking ComfyUI setup...")
 
-    comfyui_path = os.path.join(base_dir, 'apps', 'comfyui', 'ComfyUI')
+    comfyui_path = os.path.join(base_dir, "apps", "comfyui", "ComfyUI")
 
     if os.path.exists(comfyui_path):
         logger.info("ComfyUI directory found")
@@ -127,6 +137,7 @@ def check_comfyui_setup(base_dir):
     else:
         logger.warning("ComfyUI directory not found")
         return False
+
 
 def main():
     """Main preflight check function."""
@@ -167,6 +178,7 @@ def main():
     except Exception as e:
         logger.error(f"Preflight check process failed: {str(e)}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
