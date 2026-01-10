@@ -107,7 +107,11 @@ fi
 
 # Check 6: Required directories
 log_info "[6/8] Checking directories..."
+# Preserve computed BASE_DIR before loading paths.env
+COMPUTED_BASE_DIR="$BASE_DIR"
 load_env "$BASE_DIR/config/paths.env"
+# Restore computed BASE_DIR (don't let config override it)
+export BASE_DIR="$COMPUTED_BASE_DIR"
 
 REQUIRED_DIRS=(
   "$BASE_DIR/scripts"
