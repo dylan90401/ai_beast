@@ -9,6 +9,7 @@ This test validates that:
 4. API endpoints expose correct data
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +33,10 @@ EXPECTED_SECURITY_TOOLS = [
     'nmap', 'nuclei', 'rtl_433', 'gnuradio'
 ]
 
+# Expected minimum counts
+MIN_SECURITY_CAPABILITIES = 10
+MIN_SECURITY_TOOLS = 20
+
 
 def test_capabilities_loaded():
     """Test that capabilities are loaded correctly."""
@@ -48,7 +53,8 @@ def test_security_capabilities_present(capabilities):
         if any(keyword in cap.get('id', '').lower() for keyword in SECURITY_KEYWORDS)
     ]
 
-    assert len(security_caps) >= 10, f"Expected at least 10 security capabilities, found {len(security_caps)}"
+    assert len(security_caps) >= MIN_SECURITY_CAPABILITIES, \
+        f"Expected at least {MIN_SECURITY_CAPABILITIES} security capabilities, found {len(security_caps)}"
     print(f"✓ Found {len(security_caps)} security capabilities:")
     for cap in security_caps:
         print(f"  - {cap['id']}: {cap.get('title', 'N/A')}")
@@ -117,7 +123,6 @@ def test_tool_catalog():
     catalog_path = BASE_DIR / "config" / "resources" / "tool_catalog.json"
     assert catalog_path.exists(), "Tool catalog not found"
 
-    import json
     with open(catalog_path) as f:
         catalog = json.load(f)
 
@@ -132,7 +137,8 @@ def test_tool_catalog():
         if tool.get('category', '').lower() in security_categories
     ]
 
-    assert len(security_tools) >= 20, f"Expected at least 20 security tools, found {len(security_tools)}"
+    assert len(security_tools) >= MIN_SECURITY_TOOLS, \
+        f"Expected at least {MIN_SECURITY_TOOLS} security tools, found {len(security_tools)}"
     print(f"✓ Found {len(security_tools)} security tools in catalog")
 
     # Verify specific tools exist
