@@ -18,12 +18,12 @@ Example:
 
     # Get a connection pool
     pool = get_pool("data/catalog.db")
-    
+
     # Use connection with context manager
     with pool.get_connection() as conn:
         cursor = conn.execute("SELECT * FROM models")
         results = cursor.fetchall()
-        
+
     # Connection automatically returned to pool
 """
 
@@ -138,17 +138,17 @@ class PooledConnection:
 class ConnectionPool:
     """
     Thread-safe SQLite connection pool.
-    
+
     Manages a pool of database connections with automatic
     creation, reuse, and cleanup.
 
     Example:
         pool = ConnectionPool("db.sqlite", config=PoolConfig(max_size=5))
-        
+
         with pool.get_connection() as conn:
             cursor = conn.execute("SELECT * FROM table")
             rows = cursor.fetchall()
-            
+
         # For write operations, commit is automatic on success
         with pool.get_connection() as conn:
             conn.execute("INSERT INTO table (col) VALUES (?)", (val,))
@@ -162,7 +162,7 @@ class ConnectionPool:
     ):
         """
         Initialize the connection pool.
-        
+
         Args:
             db_path: Path to SQLite database
             config: Pool configuration
@@ -313,7 +313,7 @@ class ConnectionPool:
             for pooled in connections_to_keep:
                 try:
                     self._pool.put_nowait(pooled)
-                except:
+                except Exception:  # Queue.Full or other queue exceptions
                     pass
 
     def _return_connection(self, pooled: PooledConnection):
@@ -336,7 +336,7 @@ class ConnectionPool:
         # Return to pool
         try:
             self._pool.put_nowait(pooled)
-        except:
+        except Exception:  # Queue.Full or other queue exceptions
             # Pool is full, close this connection
             with self._lock:
                 pooled.close()
@@ -351,17 +351,17 @@ class ConnectionPool:
     ) -> Generator[sqlite3.Connection, None, None]:
         """
         Get a connection from the pool.
-        
+
         Args:
             autocommit: Commit on successful exit, rollback on exception
-            
+
         Yields:
             sqlite3.Connection: Database connection
 
         Raises:
             RuntimeError: If pool is closed
             TimeoutError: If no connection available within timeout
-            
+
         Example:
             with pool.get_connection() as conn:
                 cursor = conn.execute("SELECT * FROM table")
@@ -379,7 +379,7 @@ class ConnectionPool:
             # Try to get from pool
             try:
                 pooled = self._pool.get(timeout=self.config.acquire_timeout)
-            except Empty:
+            except Empty as err:
                 # Pool exhausted, try to create new connection
                 with self._lock:
                     if len(self._all_connections) < self.config.max_size:
@@ -391,7 +391,7 @@ class ConnectionPool:
                             f"{self.config.acquire_timeout}s "
                             f"(pool size: {len(self._all_connections)}/"
                             f"{self.config.max_size})"
-                        )
+                        ) from err
 
             pooled.mark_used()
 
@@ -424,13 +424,13 @@ class ConnectionPool:
     ) -> list[sqlite3.Row]:
         """
         Execute SQL and return results.
-        
+
         Convenience method for simple queries.
-        
+
         Args:
             sql: SQL query
             params: Query parameters
-            
+
         Returns:
             List of result rows
         """
@@ -445,11 +445,11 @@ class ConnectionPool:
     ) -> int:
         """
         Execute SQL for multiple parameter sets.
-        
+
         Args:
             sql: SQL statement
             params_list: List of parameter tuples
-            
+
         Returns:
             Total number of rows affected
         """
@@ -460,7 +460,7 @@ class ConnectionPool:
     def executescript(self, script: str):
         """
         Execute SQL script.
-        
+
         Args:
             script: SQL script (multiple statements)
         """
@@ -531,21 +531,21 @@ class ConnectionPool:
 class PoolManager:
     """
     Manages multiple connection pools.
-    
+
     Provides centralized management of database connection pools
     for different databases.
 
     Example:
         manager = PoolManager()
-        
+
         # Get pools for different databases
         catalog_pool = manager.get_pool("catalog.db")
         version_pool = manager.get_pool("versions.db")
-        
+
         # Use pools
         with catalog_pool.get_connection() as conn:
             ...
-            
+
         # Close all when done
         manager.close_all()
     """
@@ -553,7 +553,7 @@ class PoolManager:
     def __init__(self, default_config: PoolConfig | None = None):
         """
         Initialize the pool manager.
-        
+
         Args:
             default_config: Default configuration for new pools
         """
@@ -568,11 +568,11 @@ class PoolManager:
     ) -> ConnectionPool:
         """
         Get or create a connection pool for a database.
-        
+
         Args:
             db_path: Path to database
             config: Optional pool configuration
-            
+
         Returns:
             ConnectionPool for the database
         """
@@ -641,11 +641,11 @@ def get_pool(
 ) -> ConnectionPool:
     """
     Convenience function to get a connection pool.
-    
+
     Args:
         db_path: Path to database
         config: Optional pool configuration
-        
+
     Returns:
         ConnectionPool for the database
     """

@@ -16,18 +16,18 @@ Example:
     from modules.cache.watcher import CacheManager
 
     cache_mgr = CacheManager()
-    
+
     # Create a cache for model metadata
     model_cache = cache_mgr.create_cache("models")
     model_cache["llama3"] = {"size": "8B", "format": "gguf"}
-    
+
     # Watch model directory
     cache_mgr.watch_directory(
         Path("models/"),
         cache_key="models",
         patterns={"*.gguf", "*.bin"}
     )
-    
+
     # Start watching (cache auto-invalidates on changes)
     cache_mgr.start()
 """
@@ -45,13 +45,7 @@ from typing import Any
 
 try:
     from watchdog.events import (
-        DirCreatedEvent,
-        DirDeletedEvent,
-        DirModifiedEvent,
         DirMovedEvent,
-        FileCreatedEvent,
-        FileDeletedEvent,
-        FileModifiedEvent,
         FileMovedEvent,
         FileSystemEvent,
         FileSystemEventHandler,
@@ -110,7 +104,7 @@ class WatchConfig:
 class CacheInvalidationHandler(FileSystemEventHandler):
     """
     Handles file system events and triggers cache invalidation.
-    
+
     Implements debouncing to prevent excessive cache invalidation
     when multiple rapid file changes occur.
 
@@ -264,7 +258,7 @@ class CacheInvalidationHandler(FileSystemEventHandler):
 class FileSystemWatcher:
     """
     Watches directories for changes and triggers callbacks.
-    
+
     Thread-safe file system watcher with support for multiple
     directories and pattern-based filtering.
 
@@ -276,7 +270,7 @@ class FileSystemWatcher:
             patterns={"*.gguf"}
         )
         watcher.start()
-        
+
         # ... later ...
         watcher.stop()
     """
@@ -312,7 +306,7 @@ class FileSystemWatcher:
             ignore_patterns: File patterns to ignore
             recursive: Watch subdirectories
             debounce_seconds: Delay before firing events (prevents thrashing)
-        
+
         Raises:
             ValueError: If path doesn't exist or isn't a directory
         """
@@ -411,32 +405,32 @@ class FileSystemWatcher:
 class CacheManager:
     """
     Manages caches with automatic invalidation based on file changes.
-    
+
     Provides a high-level interface for creating caches that
     automatically invalidate when watched files change.
 
     Example:
         cache = CacheManager()
-        
+
         # Create and watch model cache
         model_cache = cache.create_cache("models")
         model_cache["llama3"] = {"size": "8B"}
-        
+
         cache.watch_directory(
             Path("models/"),
             cache_key="models",
             patterns={"*.gguf"}
         )
-        
+
         cache.on_invalidate("models", lambda: print("Cache cleared!"))
-        
+
         cache.start()
     """
 
     def __init__(self, auto_start: bool = False):
         """
         Initialize the cache manager.
-        
+
         Args:
             auto_start: Start watching immediately
         """
@@ -462,10 +456,10 @@ class CacheManager:
     def create_cache(self, key: str) -> dict[str, Any]:
         """
         Create a new cache with the given key.
-        
+
         Args:
             key: Unique identifier for this cache
-            
+
         Returns:
             Dict that can be used as a cache
         """
@@ -481,10 +475,10 @@ class CacheManager:
     def get_cache(self, key: str) -> dict[str, Any] | None:
         """
         Get a cache by key.
-        
+
         Args:
             key: Cache identifier
-            
+
         Returns:
             Cache dict or None if not found
         """
@@ -543,7 +537,7 @@ class CacheManager:
     def on_invalidate(self, key: str, callback: Callable):
         """
         Register a callback to be called when cache is invalidated.
-        
+
         Args:
             key: Cache key to watch
             callback: Function to call on invalidation
@@ -612,10 +606,10 @@ class CacheManager:
     def stats(self, cache_key: str | None = None) -> dict[str, Any]:
         """
         Get cache statistics.
-        
+
         Args:
             cache_key: Specific cache key, or None for all caches
-            
+
         Returns:
             Statistics dict
         """
@@ -662,7 +656,7 @@ def get_cache_manager() -> CacheManager:
 class ModelCacheManager:
     """
     Specialized cache manager for AI model files.
-    
+
     Pre-configured with common model file patterns and
     sensible defaults for AI Beast model management.
     """

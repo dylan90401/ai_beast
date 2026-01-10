@@ -21,14 +21,14 @@ Example:
             batch_size=10,
             qdrant_url="http://localhost:6333"
         )
-        
+
         # Ingest a directory
         results = await ingestor.ingest_directory(
             Path("documents/"),
             collection="my_docs",
             progress_callback=lambda r: print(f"Processed: {r.doc_path}")
         )
-        
+
         # Check results
         success = sum(1 for r in results if r.success)
         print(f"Ingested {success}/{len(results)} documents")
@@ -144,7 +144,7 @@ class BatchStats:
 class ParallelIngestor:
     """
     Parallel document ingestion with configurable concurrency.
-    
+
     Processes documents in parallel using async/await and thread pools,
     with automatic batching of embeddings for efficiency.
 
@@ -182,7 +182,7 @@ class ParallelIngestor:
     ):
         """
         Initialize the parallel ingestor.
-        
+
         Args:
             max_workers: Maximum concurrent workers
             batch_size: Documents to batch for embedding
@@ -429,7 +429,7 @@ class ParallelIngestor:
             from qdrant_client.http.models import PointStruct
 
             points = []
-            for i, (chunk, vector) in enumerate(zip(chunks, vectors)):
+            for i, (chunk, vector) in enumerate(zip(chunks, vectors, strict=True)):
                 point_id = f"{file_hash}_{i:04d}"
                 payload = {
                     "text": chunk,
@@ -680,13 +680,13 @@ async def parallel_ingest_directory(
 ) -> BatchStats:
     """
     Convenience function to ingest a directory in parallel.
-    
+
     Args:
         directory: Path to directory
         collection: Qdrant collection name
         max_workers: Number of parallel workers
         **kwargs: Additional arguments for ingest_directory
-        
+
     Returns:
         BatchStats with results
     """
@@ -706,13 +706,13 @@ def parallel_ingest_directory_sync(
 ) -> BatchStats:
     """
     Synchronous wrapper for parallel directory ingestion.
-    
+
     Args:
         directory: Path to directory
         collection: Qdrant collection name
         max_workers: Number of parallel workers
         **kwargs: Additional arguments
-        
+
     Returns:
         BatchStats with results
     """

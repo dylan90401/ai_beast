@@ -21,7 +21,7 @@ Example:
 
     # Or with manual control
     breaker = CircuitBreaker("external_api")
-    
+
     async with breaker:
         response = await external_api.call()
 """
@@ -52,7 +52,7 @@ T = TypeVar("T")
 class CircuitState(Enum):
     """
     Circuit breaker states.
-    
+
     - CLOSED: Normal operation, requests pass through
     - OPEN: Failing, requests are blocked
     - HALF_OPEN: Testing if service recovered
@@ -81,7 +81,7 @@ class CircuitBreakerError(Exception):
 class CircuitBreakerConfig:
     """
     Configuration for circuit breaker behavior.
-    
+
     Args:
         failure_threshold: Number of failures before opening
         success_threshold: Number of successes in half-open before closing
@@ -148,10 +148,10 @@ class CircuitBreakerStats:
 class CircuitBreaker:
     """
     Circuit breaker for fault tolerance.
-    
+
     Monitors failures and prevents cascading failures by
     temporarily blocking requests to failing services.
-    
+
     States:
     - CLOSED: Normal operation. Failures are counted.
     - OPEN: Service is failing. Requests are blocked.
@@ -159,11 +159,11 @@ class CircuitBreaker:
 
     Example:
         breaker = CircuitBreaker("external_service")
-        
+
         # Use as context manager
         async with breaker:
             result = await external_call()
-            
+
         # Or manually
         if breaker.allow_request():
             try:
@@ -182,7 +182,7 @@ class CircuitBreaker:
     ):
         """
         Initialize circuit breaker.
-        
+
         Args:
             name: Unique identifier for this breaker
             config: Circuit breaker configuration
@@ -260,7 +260,7 @@ class CircuitBreaker:
     ):
         """
         Register callback for state changes.
-        
+
         Args:
             callback: Function(old_state, new_state)
         """
@@ -269,7 +269,7 @@ class CircuitBreaker:
     def allow_request(self) -> bool:
         """
         Check if a request should be allowed.
-        
+
         Returns:
             True if request is allowed
         """
@@ -307,7 +307,7 @@ class CircuitBreaker:
     def record_failure(self, exception: Exception | None = None):
         """
         Record a failed call.
-        
+
         Args:
             exception: The exception that occurred
         """
@@ -398,15 +398,15 @@ class CircuitBreaker:
     def call(self, func: Callable[..., T], *args, **kwargs) -> T:
         """
         Execute function with circuit breaker protection.
-        
+
         Args:
             func: Function to call
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Function result or fallback result
-            
+
         Raises:
             CircuitBreakerError: If circuit is open and no fallback
         """
@@ -431,15 +431,15 @@ class CircuitBreaker:
     ) -> Any:
         """
         Execute async function with circuit breaker protection.
-        
+
         Args:
             func: Async function to call
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Function result or fallback result
-            
+
         Raises:
             CircuitBreakerError: If circuit is open and no fallback
         """
@@ -480,20 +480,20 @@ class CircuitBreaker:
 class CircuitBreakerRegistry:
     """
     Registry for managing multiple circuit breakers.
-    
+
     Provides centralized access and monitoring of all
     circuit breakers in the system.
 
     Example:
         registry = CircuitBreakerRegistry()
-        
+
         # Register breakers
         registry.register(CircuitBreaker("ollama"))
         registry.register(CircuitBreaker("qdrant"))
-        
+
         # Get breaker
         breaker = registry.get("ollama")
-        
+
         # Check all statuses
         statuses = registry.status_all()
     """
@@ -515,10 +515,10 @@ class CircuitBreakerRegistry:
     ) -> CircuitBreaker:
         """
         Register a circuit breaker.
-        
+
         Args:
             breaker: Circuit breaker to register
-            
+
         Returns:
             The registered breaker
         """
@@ -533,10 +533,10 @@ class CircuitBreakerRegistry:
     def get(self, name: str) -> CircuitBreaker | None:
         """
         Get a circuit breaker by name.
-        
+
         Args:
             name: Breaker name
-            
+
         Returns:
             CircuitBreaker or None if not found
         """
@@ -550,12 +550,12 @@ class CircuitBreakerRegistry:
     ) -> CircuitBreaker:
         """
         Get existing breaker or create new one.
-        
+
         Args:
             name: Breaker name
             config: Config for new breaker
             fallback: Fallback for new breaker
-            
+
         Returns:
             Existing or new circuit breaker
         """
@@ -568,10 +568,10 @@ class CircuitBreakerRegistry:
     def remove(self, name: str) -> bool:
         """
         Remove a circuit breaker.
-        
+
         Args:
             name: Breaker name
-            
+
         Returns:
             True if breaker was found and removed
         """
@@ -590,7 +590,7 @@ class CircuitBreakerRegistry:
     def status_all(self) -> dict[str, dict[str, Any]]:
         """
         Get status of all circuit breakers.
-        
+
         Returns:
             Dict mapping names to status dicts
         """
@@ -619,12 +619,12 @@ def get_circuit_breaker(
 ) -> CircuitBreaker:
     """
     Get or create a circuit breaker from the global registry.
-    
+
     Args:
         name: Breaker name
         config: Config for new breaker
         fallback: Fallback for new breaker
-        
+
     Returns:
         Circuit breaker instance
     """
@@ -644,7 +644,7 @@ def circuit_breaker(
 ):
     """
     Decorator to protect a function with a circuit breaker.
-    
+
     Args:
         name: Breaker name (defaults to function name)
         failure_threshold: Failures before opening
@@ -652,15 +652,15 @@ def circuit_breaker(
         timeout: Seconds before half-open
         exclude_exceptions: Exceptions that don't count as failures
         fallback: Fallback function
-        
+
     Returns:
         Decorated function
-        
+
     Example:
         @circuit_breaker(name="ollama", failure_threshold=5)
         async def call_ollama(prompt: str):
             return await client.generate(prompt)
-            
+
         @circuit_breaker(fallback=lambda x: {"cached": True})
         def get_data(key: str):
             return external_service.get(key)

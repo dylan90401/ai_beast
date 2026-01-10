@@ -61,7 +61,7 @@ T = TypeVar("T")
 class CacheEntry:
     """
     Represents a cached value with metadata.
-    
+
     Tracks creation time, access patterns, and estimated size
     for intelligent cache management.
     """
@@ -137,7 +137,7 @@ class CacheStats:
 class RequestCache:
     """
     LRU cache with TTL and size limits.
-    
+
     Thread-safe implementation with support for:
     - Entry count limits
     - Memory size limits
@@ -178,7 +178,7 @@ class RequestCache:
     ):
         """
         Initialize the cache.
-        
+
         Args:
             max_entries: Maximum number of entries
             max_size_bytes: Maximum total size in bytes
@@ -213,7 +213,7 @@ class RequestCache:
     ) -> str:
         """
         Create a cache key from function name and arguments.
-        
+
         Uses deterministic hashing to ensure consistent keys
         across calls with the same arguments.
         """
@@ -257,7 +257,7 @@ class RequestCache:
     def _evict_lru(self) -> bool:
         """
         Evict least recently used entry.
-        
+
         Returns:
             True if an entry was evicted
         """
@@ -279,11 +279,10 @@ class RequestCache:
     def _evict_expired(self) -> int:
         """
         Evict expired entries.
-        
+
         Returns:
             Number of entries evicted
         """
-        now = datetime.now()
         to_remove = []
 
         for key, entry in self._cache.items():
@@ -318,11 +317,11 @@ class RequestCache:
     def get(self, key: str, default: Any = None) -> Any:
         """
         Get a value from the cache.
-        
+
         Args:
             key: Cache key
             default: Value to return if not found
-            
+
         Returns:
             Cached value or default
         """
@@ -357,7 +356,7 @@ class RequestCache:
     ):
         """
         Set a value in the cache.
-        
+
         Args:
             key: Cache key
             value: Value to cache
@@ -395,12 +394,12 @@ class RequestCache:
     ) -> T:
         """
         Get value from cache or compute and store it.
-        
+
         Args:
             key: Cache key
             factory: Function to compute value if not cached
             ttl: Optional TTL override
-            
+
         Returns:
             Cached or computed value
         """
@@ -425,12 +424,12 @@ class RequestCache:
     ) -> Any:
         """
         Async version of get_or_set.
-        
+
         Args:
             key: Cache key
             factory: Async function to compute value if not cached
             ttl: Optional TTL override
-            
+
         Returns:
             Cached or computed value
         """
@@ -454,10 +453,10 @@ class RequestCache:
     def delete(self, key: str) -> bool:
         """
         Remove a specific key from the cache.
-        
+
         Args:
             key: Cache key to remove
-            
+
         Returns:
             True if key was found and removed
         """
@@ -476,10 +475,10 @@ class RequestCache:
     def invalidate_pattern(self, pattern: str) -> int:
         """
         Invalidate all keys matching a pattern.
-        
+
         Args:
             pattern: Glob-style pattern
-            
+
         Returns:
             Number of keys invalidated
         """
@@ -508,7 +507,7 @@ class RequestCache:
     def stats(self) -> CacheStats:
         """
         Get cache statistics.
-        
+
         Returns:
             CacheStats object with current metrics
         """
@@ -536,17 +535,17 @@ class RequestCache:
     ):
         """
         Decorator to cache function results.
-        
+
         Args:
             ttl: Optional TTL override
             key_prefix: Optional prefix for cache keys
             key_func: Optional custom key generation function
-            
+
         Example:
             @cache.cached(ttl=timedelta(minutes=30))
             def expensive_function(x, y):
                 return x + y
-                
+
             @cache.cached(key_func=lambda user_id: f"user:{user_id}")
             def get_user_data(user_id):
                 return fetch_user(user_id)
@@ -601,7 +600,7 @@ class RequestCache:
     ):
         """
         Decorator to cache async function results.
-        
+
         Similar to cached() but for async functions.
         """
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
@@ -742,7 +741,7 @@ _api_cache: RequestCache | None = None
 def get_embedding_cache() -> RequestCache:
     """
     Get the global embedding cache.
-    
+
     Pre-configured for caching embedding vectors with:
     - Large entry limit (10,000)
     - 500 MB size limit
@@ -768,10 +767,10 @@ def get_embedding_cache() -> RequestCache:
 def get_ollama_cache() -> RequestCache:
     """
     Get the global Ollama response cache.
-    
+
     Pre-configured for caching Ollama API responses with:
     - 1,000 entry limit
-    - 100 MB size limit  
+    - 100 MB size limit
     - 1 hour TTL
     - Persistent storage
     """
@@ -794,7 +793,7 @@ def get_ollama_cache() -> RequestCache:
 def get_api_cache() -> RequestCache:
     """
     Get the global API response cache.
-    
+
     Pre-configured for caching external API responses with:
     - 500 entry limit
     - 50 MB size limit

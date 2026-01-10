@@ -41,13 +41,13 @@ def benchmark_approach(func, path: Path, runs: int = 3) -> dict:
     """Benchmark a hashing function."""
     times = []
     hash_result = None
-    
+
     for _ in range(runs):
         start = time.time()
         hash_result = func(path)
         duration = time.time() - start
         times.append(duration)
-    
+
     avg_time = sum(times) / len(times)
     return {
         'avg_time': avg_time,
@@ -59,49 +59,49 @@ def benchmark_approach(func, path: Path, runs: int = 3) -> dict:
 def main():
     print("Performance Test: File Hashing Optimization")
     print("=" * 60)
-    
+
     # Test with different file sizes
     test_sizes = [1, 10, 50]  # MB
-    
+
     for size_mb in test_sizes:
         print(f"\nTesting with {size_mb}MB file...")
         test_file = create_test_file(size_mb)
-        
+
         try:
             # Benchmark old approach
             print("  Old approach (load entire file)...", end=' ', flush=True)
             old_result = benchmark_approach(hash_file_old_way, test_file)
             print(f"{old_result['avg_time']:.3f}s")
-            
+
             # Benchmark new approach
             print("  New approach (chunk-based)...", end=' ', flush=True)
             new_result = benchmark_approach(hash_file_new_way, test_file)
             print(f"{new_result['avg_time']:.3f}s")
-            
+
             # Verify hashes match
             if old_result['hash'] == new_result['hash']:
                 print("  ✓ Hashes match")
             else:
                 print("  ✗ ERROR: Hashes don't match!")
-            
+
             # Calculate improvement
-            improvement = ((old_result['avg_time'] - new_result['avg_time']) / 
+            improvement = ((old_result['avg_time'] - new_result['avg_time']) /
                           old_result['avg_time'] * 100)
-            
+
             if improvement > 0:
                 print(f"  Performance: {improvement:.1f}% faster")
             elif improvement < 0:
                 print(f"  Performance: {abs(improvement):.1f}% slower")
             else:
                 print("  Performance: about the same")
-            
+
             # Memory benefit note
             print(f"  Memory: Constant 8KB buffer vs {size_mb}MB file in memory")
-            
+
         finally:
             # Cleanup
             test_file.unlink()
-    
+
     print("\n" + "=" * 60)
     print("Key Benefits of Chunk-Based Approach:")
     print("  1. Constant memory usage (8KB) regardless of file size")

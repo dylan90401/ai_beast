@@ -22,7 +22,7 @@ Example:
 
     # Or with manual control
     limiter = RateLimiter(limit=10, window=1.0)
-    
+
     if limiter.allow("user-123"):
         process_request()
     else:
@@ -78,7 +78,7 @@ class RateLimitExceeded(Exception):
 class RateLimitConfig:
     """
     Configuration for rate limiting.
-    
+
     Args:
         requests: Maximum number of requests
         window: Time window in seconds
@@ -167,7 +167,7 @@ class StorageEntry:
 class InMemoryStorage(StorageBackend):
     """
     In-memory storage backend for rate limiting.
-    
+
     Suitable for single-process applications.
     Uses a dict with TTL support and automatic cleanup.
     """
@@ -175,7 +175,7 @@ class InMemoryStorage(StorageBackend):
     def __init__(self, cleanup_interval: float = 60.0):
         """
         Initialize in-memory storage.
-        
+
         Args:
             cleanup_interval: Seconds between cleanup runs
         """
@@ -247,7 +247,7 @@ class InMemoryStorage(StorageBackend):
 class RedisStorage(StorageBackend):
     """
     Redis storage backend for rate limiting.
-    
+
     Suitable for distributed applications with multiple
     processes or servers sharing rate limits.
     """
@@ -259,7 +259,7 @@ class RedisStorage(StorageBackend):
     ):
         """
         Initialize Redis storage.
-        
+
         Args:
             url: Redis connection URL
             db: Redis database number
@@ -277,11 +277,11 @@ class RedisStorage(StorageBackend):
                     try:
                         import redis
                         self._client = redis.from_url(self._url, db=self._db)
-                    except ImportError:
+                    except ImportError as err:
                         raise RuntimeError(
                             "redis package required for RedisStorage. "
                             "Install with: pip install redis"
-                        )
+                        ) from err
         return self._client
 
     def get(self, key: str) -> Any:
@@ -342,15 +342,15 @@ class RateLimiter(ABC):
 class TokenBucketLimiter(RateLimiter):
     """
     Token bucket rate limiter.
-    
+
     Allows smooth rate limiting with burst handling.
     Tokens are added at a fixed rate, requests consume tokens.
-    
+
     Features:
     - Smooth rate limiting
     - Allows bursts when tokens are available
     - Configurable refill rate
-    
+
     Example:
         # 10 requests per second with burst of 5
         limiter = TokenBucketLimiter(
@@ -358,7 +358,7 @@ class TokenBucketLimiter(RateLimiter):
             refill_rate=10.0,  # 10 tokens per second
             storage=InMemoryStorage(),
         )
-        
+
         if limiter.allow("user-123"):
             process_request()
     """
@@ -372,7 +372,7 @@ class TokenBucketLimiter(RateLimiter):
     ):
         """
         Initialize token bucket limiter.
-        
+
         Args:
             capacity: Maximum number of tokens
             refill_rate: Tokens added per second
@@ -396,7 +396,7 @@ class TokenBucketLimiter(RateLimiter):
     def _get_bucket_state(self, key: str) -> tuple[float, float]:
         """
         Get current bucket state.
-        
+
         Returns:
             Tuple of (tokens, last_refill_time)
         """
@@ -414,7 +414,7 @@ class TokenBucketLimiter(RateLimiter):
     def _refill_tokens(self, key: str) -> float:
         """
         Refill tokens based on elapsed time.
-        
+
         Returns:
             Current number of tokens
         """
@@ -440,11 +440,11 @@ class TokenBucketLimiter(RateLimiter):
     def allow(self, key: str, cost: int = 1) -> bool:
         """
         Check if request is allowed and consume tokens.
-        
+
         Args:
             key: Rate limit key
             cost: Number of tokens to consume
-            
+
         Returns:
             True if request is allowed
         """
@@ -496,15 +496,15 @@ class TokenBucketLimiter(RateLimiter):
 class SlidingWindowLimiter(RateLimiter):
     """
     Sliding window rate limiter.
-    
+
     Provides precise rate limiting using a sliding time window.
     More accurate than fixed windows but uses more memory.
-    
+
     Features:
     - Precise rate limiting
     - No boundary issues like fixed windows
     - Configurable window size
-    
+
     Example:
         # 100 requests per minute
         limiter = SlidingWindowLimiter(
@@ -512,7 +512,7 @@ class SlidingWindowLimiter(RateLimiter):
             window=60.0,
             storage=InMemoryStorage(),
         )
-        
+
         if limiter.allow("user-123"):
             process_request()
     """
@@ -526,7 +526,7 @@ class SlidingWindowLimiter(RateLimiter):
     ):
         """
         Initialize sliding window limiter.
-        
+
         Args:
             limit: Maximum requests per window
             window: Window size in seconds
@@ -553,7 +553,7 @@ class SlidingWindowLimiter(RateLimiter):
     def _clean_old_requests(self, key: str) -> int:
         """
         Clean old request timestamps and return current count.
-        
+
         Returns:
             Number of requests in current window
         """
@@ -571,10 +571,10 @@ class SlidingWindowLimiter(RateLimiter):
     def allow(self, key: str) -> bool:
         """
         Check if request is allowed and record it.
-        
+
         Args:
             key: Rate limit key
-            
+
         Returns:
             True if request is allowed
         """
@@ -627,15 +627,15 @@ class SlidingWindowLimiter(RateLimiter):
 class FixedWindowLimiter(RateLimiter):
     """
     Fixed window rate limiter.
-    
+
     Simple rate limiting using fixed time windows.
     Less memory than sliding window but has boundary issues.
-    
+
     Features:
     - Simple implementation
     - Low memory usage
     - Good for Redis backend
-    
+
     Example:
         # 100 requests per minute
         limiter = FixedWindowLimiter(
@@ -643,7 +643,7 @@ class FixedWindowLimiter(RateLimiter):
             window=60.0,
             storage=RedisStorage(),
         )
-        
+
         if limiter.allow("user-123"):
             process_request()
     """
@@ -657,7 +657,7 @@ class FixedWindowLimiter(RateLimiter):
     ):
         """
         Initialize fixed window limiter.
-        
+
         Args:
             limit: Maximum requests per window
             window: Window size in seconds
@@ -677,10 +677,10 @@ class FixedWindowLimiter(RateLimiter):
     def allow(self, key: str) -> bool:
         """
         Check if request is allowed and record it.
-        
+
         Args:
             key: Rate limit key
-            
+
         Returns:
             True if request is allowed
         """
@@ -737,14 +737,14 @@ def get_rate_limiter(
 ) -> RateLimiter:
     """
     Get or create a rate limiter from the global registry.
-    
+
     Args:
         name: Limiter name
         limit: Maximum requests per window
         window: Window size in seconds
         algorithm: "sliding", "fixed", or "token"
         storage: Storage backend
-        
+
     Returns:
         Rate limiter instance
     """
@@ -775,22 +775,22 @@ def rate_limit(
 ):
     """
     Decorator to apply rate limiting to a function.
-    
+
     Args:
         requests: Maximum requests per window
         window: Window size in seconds
         key_func: Function to extract rate limit key from arguments
         algorithm: "sliding", "fixed", or "token"
         on_exceeded: Callback when limit exceeded
-        
+
     Returns:
         Decorated function
-        
+
     Example:
         @rate_limit(requests=100, window=60)
         async def api_endpoint(request):
             return process_request(request)
-            
+
         # With custom key extraction
         @rate_limit(
             requests=10,

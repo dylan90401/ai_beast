@@ -21,10 +21,10 @@ def sha256_bytes(b: bytes) -> str:
 
 def sha256_file(path: Path) -> str:
     """Compute SHA256 hash of file using chunk-based reading for efficiency.
-    
+
     Args:
         path: Path to file
-        
+
     Returns:
         Hexadecimal SHA256 hash string
     """

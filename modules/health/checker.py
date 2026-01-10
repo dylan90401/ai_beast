@@ -23,7 +23,7 @@ Example:
     # Run all checks
     health = await checker.check_all()
     print(f"Overall status: {health['status']}")
-    
+
     # Check individual service
     ollama_check = await OllamaHealthChecker().check()
     print(f"Ollama: {ollama_check.status.value}")
@@ -74,7 +74,7 @@ class HealthStatus(Enum):
 class HealthCheck:
     """
     Result of a health check.
-    
+
     Contains status, timing, and detailed information about
     the health check performed.
     """
@@ -115,7 +115,7 @@ class HealthCheck:
 class ServiceHealthChecker:
     """
     Base class for service health checkers.
-    
+
     Subclass this to create custom health checkers for
     specific services.
 
@@ -138,7 +138,7 @@ class ServiceHealthChecker:
     ):
         """
         Initialize the health checker.
-        
+
         Args:
             name: Service name for identification
             timeout: Timeout for health check in seconds
@@ -151,7 +151,7 @@ class ServiceHealthChecker:
     async def check(self) -> HealthCheck:
         """
         Perform health check.
-        
+
         Override this method in subclasses.
         """
         raise NotImplementedError
@@ -160,7 +160,7 @@ class ServiceHealthChecker:
 class HTTPHealthChecker(ServiceHealthChecker):
     """
     Health checker for HTTP/HTTPS endpoints.
-    
+
     Sends a GET request to the specified URL and checks
     the response status code.
     """
@@ -177,7 +177,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize HTTP health checker.
-        
+
         Args:
             name: Service name
             url: Health check URL
@@ -273,7 +273,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
 class OllamaHealthChecker(HTTPHealthChecker):
     """
     Health checker for Ollama service.
-    
+
     Extends HTTP health check with Ollama-specific
     model verification.
     """
@@ -286,7 +286,7 @@ class OllamaHealthChecker(HTTPHealthChecker):
     ):
         """
         Initialize Ollama health checker.
-        
+
         Args:
             base_url: Ollama API base URL
             required_models: List of models that must be available
@@ -348,7 +348,7 @@ class OllamaHealthChecker(HTTPHealthChecker):
 class QdrantHealthChecker(HTTPHealthChecker):
     """
     Health checker for Qdrant vector database.
-    
+
     Checks Qdrant health endpoint and collection status.
     """
 
@@ -360,7 +360,7 @@ class QdrantHealthChecker(HTTPHealthChecker):
     ):
         """
         Initialize Qdrant health checker.
-        
+
         Args:
             base_url: Qdrant API base URL
             required_collections: Collections that must exist
@@ -422,7 +422,7 @@ class QdrantHealthChecker(HTTPHealthChecker):
 class RedisHealthChecker(ServiceHealthChecker):
     """
     Health checker for Redis.
-    
+
     Uses PING command to verify Redis is responsive.
     """
 
@@ -435,7 +435,7 @@ class RedisHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize Redis health checker.
-        
+
         Args:
             host: Redis host
             port: Redis port
@@ -526,7 +526,7 @@ class RedisHealthChecker(ServiceHealthChecker):
 class DiskSpaceHealthChecker(ServiceHealthChecker):
     """
     Health checker for disk space.
-    
+
     Monitors available disk space and reports status
     based on configurable thresholds.
     """
@@ -540,7 +540,7 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize disk space checker.
-        
+
         Args:
             name: Checker name (e.g., "disk_models")
             path: Path to check
@@ -611,7 +611,7 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
 class MemoryHealthChecker(ServiceHealthChecker):
     """
     Health checker for system memory.
-    
+
     Monitors available memory and reports status
     based on configurable thresholds.
     """
@@ -623,7 +623,7 @@ class MemoryHealthChecker(ServiceHealthChecker):
     ):
         """
         Initialize memory checker.
-        
+
         Args:
             warning_threshold: Percentage free below which is warning
             critical_threshold: Percentage free below which is critical
@@ -688,7 +688,7 @@ class MemoryHealthChecker(ServiceHealthChecker):
 class SystemHealthChecker:
     """
     Aggregates health checks from multiple services.
-    
+
     Runs all configured health checks in parallel and
     aggregates results into overall system health status.
 
@@ -700,7 +700,7 @@ class SystemHealthChecker:
 
         health = await checker.check_all()
         print(f"Overall status: {health['status']}")
-        
+
         for check in health['checks']:
             print(f"  {check['name']}: {check['status']}")
     """
@@ -708,7 +708,7 @@ class SystemHealthChecker:
     def __init__(self, name: str = "ai_beast"):
         """
         Initialize system health checker.
-        
+
         Args:
             name: System name for identification
         """
@@ -718,7 +718,7 @@ class SystemHealthChecker:
     def add_checker(self, checker: ServiceHealthChecker):
         """
         Add a health checker.
-        
+
         Args:
             checker: Service health checker to add
         """
@@ -728,10 +728,10 @@ class SystemHealthChecker:
     def remove_checker(self, name: str) -> bool:
         """
         Remove a health checker by name.
-        
+
         Args:
             name: Name of checker to remove
-            
+
         Returns:
             True if checker was found and removed
         """
@@ -747,10 +747,10 @@ class SystemHealthChecker:
     ) -> dict[str, Any]:
         """
         Run all health checks.
-        
+
         Args:
             include_non_critical: Include non-critical services in checks
-            
+
         Returns:
             Dict with overall status and individual check results
         """
@@ -791,7 +791,7 @@ class SystemHealthChecker:
 
         # Determine overall status
         critical_checks = [
-            check for check, checker in zip(checks, checkers)
+            check for check, checker in zip(checks, checkers, strict=True)
             if checker.critical
         ]
 
@@ -827,10 +827,10 @@ class SystemHealthChecker:
     async def check_service(self, name: str) -> HealthCheck | None:
         """
         Check a specific service by name.
-        
+
         Args:
             name: Service name to check
-            
+
         Returns:
             HealthCheck result or None if not found
         """
@@ -849,14 +849,14 @@ def create_default_checker(
 ) -> SystemHealthChecker:
     """
     Create health checker with default configuration.
-    
+
     Args:
         base_dir: Base directory for disk checks
         ollama_url: Ollama API URL
         qdrant_url: Qdrant API URL
         redis_host: Redis host
         redis_port: Redis port
-        
+
     Returns:
         Configured SystemHealthChecker
     """
@@ -900,10 +900,10 @@ async def quick_health_check(
 ) -> dict[str, Any]:
     """
     Quick health check for common services.
-    
+
     Args:
         services: List of services to check (default: all)
-        
+
     Returns:
         Health check results
     """
@@ -922,10 +922,10 @@ async def quick_health_check(
 def health_check_sync(services: list[str] | None = None) -> dict[str, Any]:
     """
     Synchronous wrapper for health check.
-    
+
     Args:
         services: List of services to check (default: all)
-        
+
     Returns:
         Health check results
     """
