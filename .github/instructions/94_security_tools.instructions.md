@@ -1,7 +1,7 @@
-# Security Tools Instructions (OSINT, SIGINT, OFFSEC, DEFCOM)
+# Security Tools Instructions (OSINT, SIGINT, OFFSEC, DEFCON)
 
 ### Purpose
-Security capabilities encompass offensive security (offsec), defensive operations (defcom), open-source intelligence (OSINT), signals intelligence (SIGINT), forensics, vulnerability scanning, and red/blue team operations.
+Security capabilities encompass offensive security (offsec), defensive operations (defcon), open-source intelligence (OSINT), signals intelligence (SIGINT), forensics, vulnerability scanning, and red/blue team operations.
 
 ### Architecture
 - **Tool Catalog**: `config/resources/tool_catalog.json` - 200+ security tools

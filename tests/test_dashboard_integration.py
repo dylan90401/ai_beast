@@ -20,6 +20,19 @@ from modules.capabilities.registry import list_capabilities
 from modules.tools.registry import load_tools_config
 
 
+# Security-related keywords for identifying security capabilities
+SECURITY_KEYWORDS = [
+    'osint', 'sigint', 'offsec', 'defcon', 'security',
+    'forensics', 'vuln', 'recon', 'malware', 'red_team', 'blue_team'
+]
+
+# Expected security tools that must be present in the catalog
+EXPECTED_SECURITY_TOOLS = [
+    'amass', 'subfinder', 'theharvester', 'sherlock',
+    'nmap', 'nuclei', 'rtl_433', 'gnuradio'
+]
+
+
 def test_capabilities_loaded():
     """Test that capabilities are loaded correctly."""
     capabilities = list_capabilities()
@@ -30,14 +43,9 @@ def test_capabilities_loaded():
 
 def test_security_capabilities_present(capabilities):
     """Test that security capabilities are present."""
-    security_keywords = [
-        'osint', 'sigint', 'offsec', 'defcon', 'security',
-        'forensics', 'vuln', 'recon', 'malware', 'red_team', 'blue_team'
-    ]
-
     security_caps = [
         cap for cap in capabilities
-        if any(keyword in cap.get('id', '').lower() for keyword in security_keywords)
+        if any(keyword in cap.get('id', '').lower() for keyword in SECURITY_KEYWORDS)
     ]
 
     assert len(security_caps) >= 10, f"Expected at least 10 security capabilities, found {len(security_caps)}"
@@ -128,13 +136,8 @@ def test_tool_catalog():
     print(f"✓ Found {len(security_tools)} security tools in catalog")
 
     # Verify specific tools exist
-    expected_tools = [
-        'amass', 'subfinder', 'theharvester', 'sherlock',
-        'nmap', 'nuclei', 'rtl_433', 'gnuradio'
-    ]
-
     tool_names = [tool.get('name', '') for tool in tools]
-    for expected in expected_tools:
+    for expected in EXPECTED_SECURITY_TOOLS:
         assert expected in tool_names, f"Missing expected tool: {expected}"
         print(f"✓ Found required tool: {expected}")
 
