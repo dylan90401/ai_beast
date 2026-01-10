@@ -29,3 +29,5 @@ build/
 
 # Reports and logs
 *.log
+/colima-gui
+/apps/comfyui
