@@ -86,6 +86,12 @@ Ask for **one** missing output at a time:
 7) Rollback
 
 ## App-specific notes (quick reference)
+- apps/dashboard:
+  - Dashboard is the central WebUI control panel at `apps/dashboard/` exposing all capabilities, tools, packs, extensions, and settings.
+  - All security tools (OSINT, SIGINT, OFFSEC, DEFCON) are accessible through dashboard UI with LLM integration.
+  - Tool catalog (`config/resources/tool_catalog.json`) and capabilities (`config/resources/capabilities.json`) are auto-rendered.
+  - Dashboard binds to `PORT_DASHBOARD` (default 8787) and requires token auth (`config/secrets/dashboard_token.txt`).
+  - API endpoints: `/api/tools/*`, `/api/capabilities`, `/api/llm/analyze` for LLM integration.
 - apps/comfyui:
   - ComfyUI installs often involve symlinking models into heavy storage and running `./bin/beast comfy postinstall --apply` to seed workflows. Check `apps/comfyui/ComfyUI` README and `extensions/comfyui_manager/` for manager helpers.
   - Model files and workflows live under `apps/comfyui/ComfyUI/user/` and may be large — prefer `--heavy-dir` or external volumes when testing locally.
@@ -96,6 +102,12 @@ Ask for **one** missing output at a time:
   - Model conversion scripts and README live under `apps/whispercpp/whisper.cpp/`; include model conversion commands in docs when changing model handling.
 - modules/rag:
   - RAG ingestion expects qdrant running; include `pip install -r modules/rag/requirements.txt` and `./bin/beast rag ingest --apply` in verification steps.
+- Security Tools (OSINT/SIGINT/OFFSEC/DEFCON):
+  - All security capabilities are defined in `config/resources/capabilities.json` with 200+ tools catalogued.
+  - Tool registry: `modules/tools/registry.py` manages tool lifecycle (install, test, run).
+  - Capability registry: `modules/capabilities/registry.py` validates and checks capability health.
+  - Dashboard exposes all tools with LLM-assisted execution (`/api/llm/analyze` for guidance).
+  - See `.github/instructions/94_security_tools.instructions.md` for detailed security tool integration.
 
 ## CI & verification guidance
 - There are no committed workflow files in this repo root; if your PR will introduce or expect CI workflows, include a minimal GitHub Actions YAML and ensure it runs `make check` and any relevant `./bin/beast` validations.

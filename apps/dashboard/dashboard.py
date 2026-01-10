@@ -7,6 +7,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -79,24 +80,24 @@ def read_token():
 
 def load_env_json():
     """Load environment config with caching to avoid repeated subprocess calls.
-    
+
     Cache is invalidated after TTL or if config files are modified.
     """
     global _env_cache, _env_cache_mtime
-    
+
     # Check if cache is valid
     current_time = time.time()
     cache_age = current_time - _env_cache_mtime
-    
+
     # Get mtime of config files
     paths_mtime = PATHS_ENV.stat().st_mtime if PATHS_ENV.exists() else 0
     ports_mtime = PORTS_ENV.stat().st_mtime if PORTS_ENV.exists() else 0
     max_config_mtime = max(paths_mtime, ports_mtime)
-    
+
     # Return cached value if still valid
     if _env_cache is not None and cache_age < _env_cache_ttl and max_config_mtime <= _env_cache_mtime:
         return _env_cache
-    
+
     # Load fresh config
     script = f'''
 set -euo pipefail
@@ -117,11 +118,11 @@ PY
 '''
     out = subprocess.check_output(["/bin/bash", "-lc", script], text=True)
     result = json.loads(out)
-    
+
     # Update cache
     _env_cache = result
     _env_cache_mtime = current_time
-    
+
     return result
 
 
