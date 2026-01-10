@@ -19,6 +19,23 @@ def sha256_bytes(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
+def sha256_file(path: Path) -> str:
+    """Compute SHA256 hash of file using chunk-based reading for efficiency.
+    
+    Args:
+        path: Path to file
+        
+    Returns:
+        Hexadecimal SHA256 hash string
+    """
+    sha256_hash = hashlib.sha256()
+    with open(path, 'rb') as f:
+        # Read file in chunks to avoid loading large files into memory
+        for chunk in iter(lambda: f.read(8192), b''):
+            sha256_hash.update(chunk)
+    return sha256_hash.hexdigest()
+
+
 def iter_files(root: Path, exts: list[str]) -> Iterable[Path]:
     """Iterate over files in directory, optionally filtering by extension."""
     for p in root.rglob("*"):
@@ -197,8 +214,8 @@ def ingest_file(
     dim = len(vectors[0])
     ensure_collection(client, collection, dim)
 
-    # Generate point IDs based on file hash
-    file_hash = sha256_bytes(path.read_bytes())[:12]
+    # Generate point IDs based on file hash (using efficient chunk-based hashing)
+    file_hash = sha256_file(path)[:12]
     points = []
     for idx, (chunk, vector) in enumerate(zip(chunks, vectors, strict=True)):
         point_id = int(hashlib.md5(f"{file_hash}:{idx}".encode()).hexdigest()[:15], 16)
