@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/rag/query.py
+# hypothesis_version: 6.150.0
+
+[4000, '\n\n---\n\n', '--apply', '--collection', '--context', '--delete', '--info', '--limit', '--list', '--model', '--qdrant', '?', 'Collection name', 'Delete collection', 'Embedding model', 'Empty query', 'Get RAG context', 'List all collections', 'Max results', 'Qdrant URL', 'Search query text', 'Show collection info', '__main__', 'ai_beast', 'chunk_index', 'chunks_used', 'collection', 'collection_name', 'collections', 'context', 'context_length', 'count', 'dryrun', 'error', 'filename', 'id', 'limit', 'message', 'name', 'ok', 'optimizer_status', 'path', 'payload', 'points_count', 'query', 'query_filter', 'query_vector', 'results', 'score', 'score_threshold', 'sources', 'status', 'store_true', 'text', 'unknown', 'vector_size', 'vectors', 'vectors_count']

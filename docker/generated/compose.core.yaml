@@ -1,32 +1,78 @@
 services:
-  qdrant:
-    profiles: ["qdrant"]
-    image: qdrant/qdrant:latest
-    ports:
-      - "127.0.0.1:${PORT_QDRANT:-6333}:6333"
-      - "127.0.0.1:6334:6334"
-    volumes:
-      - "${DATA_DIR:-./data}/qdrant:/qdrant/storage"
+  example_hello:
+    image: alpine:3.20
     restart: unless-stopped
     labels:
       - ai.beast.managed=true
-      - ai.beast.tier=core
-      - ai.beast.profiles=qdrant
-      - ai.beast.service_hash=7575f40d886a528962510ec52d4c1b727dadbf065edecc9ff996eaac27b48c8c
+      - ai.beast.tier=optional
+      - ai.beast.service_hash=76a2149b57012a322b25f9fcf76bf0dfa2bf6223c2bc71f3d665dac716a54d49
+
+  jupyterlab:
+    image: jupyter/minimal-notebook:latest
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_JUPYTER:-8889}:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=${AI_BEAST_JUPYTER_TOKEN:-ai-beast}
+    volumes:
+      - "${DATA_DIR:-./data}/notebooks:/home/jovyan/work"
+    restart: unless-stopped
+    labels:
+      - ai.beast.managed=true
+      - ai.beast.tier=optional
+      - ai.beast.service_hash=fd2c27fb1f7eb82f01622a2f723778a20b7ab4017832d87c459ed36038018c12
 
   open-webui:
-    profiles: ["webui"]
+    profiles: ["webui", "open_webui", "full", "prodish"]
     image: ghcr.io/open-webui/open-webui:main
     ports:
-      - "127.0.0.1:${PORT_WEBUI:-3000}:8080"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_WEBUI:-3000}:8080"
     environment:
       - OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}
+      - QDRANT_URL=http://qdrant:6333
       - WEBUI_AUTH=false
+      - ENABLE_RAG_WEB_SEARCH=true
+      - RAG_EMBEDDING_MODEL=nomic-embed-text
     volumes:
-      - "${DATA_DIR:-./data}/openwebui:/app/backend/data"
+      - "open_webui_data:/app/backend/data"
+    depends_on:
+      - qdrant
     restart: unless-stopped
     labels:
       - ai.beast.managed=true
       - ai.beast.tier=core
-      - ai.beast.profiles=webui
-      - ai.beast.service_hash=507d22184f4c8f341892f570eae90d1ac79316e82bf7310a9c77d2e411012f73
+      - ai.beast.profiles=webui,open_webui,full,prodish
+      - ai.beast.service_hash=0af1b712af0843b6f96e6a86ab0c7f688929073f8d77254393dfc05697c9d341
+
+  qdrant:
+    profiles: ["qdrant", "full", "prodish"]
+    image: qdrant/qdrant:latest
+    ports:
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_QDRANT:-6333}:6333"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_QDRANT_GRPC:-6334}:6334"
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    volumes:
+      - "qdrant_data:/qdrant/storage"
+    restart: unless-stopped
+    labels:
+      - ai.beast.managed=true
+      - ai.beast.tier=core
+      - ai.beast.profiles=qdrant,full,prodish
+      - ai.beast.service_hash=9ad38125a1d360bd78b72ac87f5c02138cee6c5dc189e878c58d0922bef527a4
+
+  searxng:
+    profiles: ["searxng"]
+    image: searxng/searxng:latest
+    ports:
+      - "127.0.0.1:${PORT_SEARXNG:-8088}:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://127.0.0.1:${PORT_SEARXNG:-8088}/
+    volumes:
+      - "${DATA_DIR:-./data}/searxng:/etc/searxng"
+    restart: unless-stopped
+    labels:
+      - ai.beast.managed=true
+      - ai.beast.tier=optional
+      - ai.beast.profiles=searxng
+      - ai.beast.service_hash=7ad92614af098bc458f8e759d6a44fdee149d08318e9bc15f8e74fd0a3e1f936

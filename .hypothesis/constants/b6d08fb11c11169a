@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/rag/ingest.py
+# hypothesis_version: 6.150.0
+
+[128, 200, 1200, 2000000, '*', '--apply', '--chunk-size', '--collection', '--dir', '--ext', '--max-bytes', '--model', '--overlap', '--qdrant', '.', 'Collection name', 'Cosine', 'Directory to ingest', 'Embedding model', 'No content to ingest', 'Qdrant URL', '[rag] done', '__main__', 'ai_beast', 'append', 'chunk_index', 'chunks', 'dryrun', 'error', 'errors', 'file', 'file_hash', 'filename', 'files', 'id', 'ignore', 'latin-1', 'message', 'ok', 'path', 'payload', 'store_true', 'text', 'utf-8', 'utf-8-sig', 'vector', 'vector_dim']

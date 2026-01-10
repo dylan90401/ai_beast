@@ -1,14 +1,14 @@
 services:
   uptime-kuma:
-    profiles: ["kuma"]
-    image: louislam/uptime-kuma:latest
+    profiles: ["kuma", "uptime_kuma", "full", "prodish"]
+    image: louislam/uptime-kuma:1
     ports:
-      - "127.0.0.1:${PORT_KUMA:-3001}:3001"
+      - "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_KUMA:-3001}:3001"
     volumes:
-      - "${DATA_DIR:-./data}/uptime-kuma:/app/data"
+      - "uptime_kuma_data:/app/data"
     restart: unless-stopped
     labels:
       - ai.beast.managed=true
       - ai.beast.tier=ops
-      - ai.beast.profiles=kuma
-      - ai.beast.service_hash=7f9418406862134948072742228fbd777982b0a39dab11deb011726d8ac3f00d
+      - ai.beast.profiles=kuma,uptime_kuma,full,prodish
+      - ai.beast.service_hash=03b35969b577b6a7907fe2c5ecc2bdbd6cbbfdadb9434121795755a9f6230daf

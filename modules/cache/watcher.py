@@ -34,36 +34,36 @@ Example:
 
 from __future__ import annotations
 
-import asyncio
-import hashlib
-import logging
 import threading
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any
 
 try:
-    from watchdog.observers import Observer
     from watchdog.events import (
-        FileSystemEventHandler,
-        FileSystemEvent,
-        FileCreatedEvent,
-        FileModifiedEvent,
-        FileDeletedEvent,
-        FileMovedEvent,
         DirCreatedEvent,
         DirDeletedEvent,
         DirModifiedEvent,
         DirMovedEvent,
+        FileCreatedEvent,
+        FileDeletedEvent,
+        FileModifiedEvent,
+        FileMovedEvent,
+        FileSystemEvent,
+        FileSystemEventHandler,
     )
+    from watchdog.observers import Observer
     WATCHDOG_AVAILABLE = True
 except ImportError:
     WATCHDOG_AVAILABLE = False
     Observer = None
     FileSystemEventHandler = object
+
+import builtins
 
 from modules.utils.logging_config import get_logger
 
@@ -85,9 +85,9 @@ class WatchEvent:
     path: Path
     is_directory: bool
     timestamp: float = field(default_factory=time.time)
-    src_path: Optional[Path] = None  # For move events
-    dest_path: Optional[Path] = None  # For move events
-    
+    src_path: Path | None = None  # For move events
+    dest_path: Path | None = None  # For move events
+
     def __str__(self) -> str:
         if self.event_type == WatchEventType.MOVED:
             return f"{self.event_type.value}: {self.src_path} -> {self.dest_path}"
@@ -97,8 +97,8 @@ class WatchEvent:
 @dataclass
 class WatchConfig:
     """Configuration for file system watching."""
-    patterns: Set[str] = field(default_factory=lambda: set())
-    ignore_patterns: Set[str] = field(default_factory=lambda: {
+    patterns: set[str] = field(default_factory=lambda: set())
+    ignore_patterns: set[str] = field(default_factory=lambda: {
         "*.tmp", "*.swp", "*.lock", ".DS_Store", "*.pyc",
         "*.pyo", "__pycache__", ".git", ".gitignore", "*.log"
     })
@@ -124,7 +124,7 @@ class CacheInvalidationHandler(FileSystemEventHandler):
     def __init__(
         self,
         on_event: Callable[[WatchEvent], None],
-        config: Optional[WatchConfig] = None,
+        config: WatchConfig | None = None,
     ):
         if not WATCHDOG_AVAILABLE:
             raise ImportError(
@@ -134,30 +134,30 @@ class CacheInvalidationHandler(FileSystemEventHandler):
         super().__init__()
         self.on_event = on_event
         self.config = config or WatchConfig()
-        
+
         # Debouncing state
-        self._pending_events: Dict[Path, WatchEvent] = {}
-        self._debounce_timers: Dict[Path, threading.Timer] = {}
+        self._pending_events: dict[Path, WatchEvent] = {}
+        self._debounce_timers: dict[Path, threading.Timer] = {}
         self._lock = threading.Lock()
 
     def _should_process(self, path: Path) -> bool:
         """Check if this path matches our patterns."""
         name = path.name
-        
+
         # Ignore patterns take precedence
         for pattern in self.config.ignore_patterns:
             if self._matches_pattern(name, pattern):
                 return False
-        
+
         # If no patterns specified, process everything
         if not self.config.patterns:
             return True
-        
+
         # Check if matches any include pattern
         for pattern in self.config.patterns:
             if self._matches_pattern(name, pattern):
                 return True
-        
+
         return False
 
     def _matches_pattern(self, name: str, pattern: str) -> bool:
@@ -171,14 +171,14 @@ class CacheInvalidationHandler(FileSystemEventHandler):
         """Schedule an event with debouncing."""
         with self._lock:
             path = event.path
-            
+
             # Cancel existing timer if any
             if path in self._debounce_timers:
                 self._debounce_timers[path].cancel()
-            
+
             # Store pending event
             self._pending_events[path] = event
-            
+
             # Schedule new timer
             timer = threading.Timer(
                 self.config.debounce_seconds,
@@ -193,7 +193,7 @@ class CacheInvalidationHandler(FileSystemEventHandler):
         with self._lock:
             event = self._pending_events.pop(path, None)
             self._debounce_timers.pop(path, None)
-        
+
         if event:
             try:
                 self.on_event(event)
@@ -204,24 +204,24 @@ class CacheInvalidationHandler(FileSystemEventHandler):
         self,
         fs_event: FileSystemEvent,
         event_type: WatchEventType,
-    ) -> Optional[WatchEvent]:
+    ) -> WatchEvent | None:
         """Create a WatchEvent from a file system event."""
         path = Path(fs_event.src_path)
-        
+
         if not self._should_process(path):
             return None
-        
+
         watch_event = WatchEvent(
             event_type=event_type,
             path=path,
             is_directory=fs_event.is_directory,
         )
-        
+
         # Handle move events specially
         if isinstance(fs_event, (FileMovedEvent, DirMovedEvent)):
             watch_event.src_path = path
             watch_event.dest_path = Path(fs_event.dest_path)
-        
+
         return watch_event
 
     def on_created(self, event: FileSystemEvent):
@@ -287,18 +287,18 @@ class FileSystemWatcher:
                 "watchdog is required for file watching. "
                 "Install with: pip install watchdog"
             )
-        
+
         self.observer = Observer()
-        self._handlers: List[tuple[Path, CacheInvalidationHandler]] = []
+        self._handlers: list[tuple[Path, CacheInvalidationHandler]] = []
         self._running = False
         self._lock = threading.Lock()
 
     def watch(
         self,
-        path: Union[Path, str],
+        path: Path | str,
         on_event: Callable[[WatchEvent], None],
-        patterns: Optional[Set[str]] = None,
-        ignore_patterns: Optional[Set[str]] = None,
+        patterns: set[str] | None = None,
+        ignore_patterns: set[str] | None = None,
         recursive: bool = True,
         debounce_seconds: float = 0.5,
     ):
@@ -317,48 +317,48 @@ class FileSystemWatcher:
             ValueError: If path doesn't exist or isn't a directory
         """
         path = Path(path)
-        
+
         if not path.exists():
             raise ValueError(f"Path does not exist: {path}")
-        
+
         if not path.is_dir():
             raise ValueError(f"Path is not a directory: {path}")
-        
+
         config = WatchConfig(
             patterns=patterns or set(),
             ignore_patterns=ignore_patterns or WatchConfig().ignore_patterns,
             recursive=recursive,
             debounce_seconds=debounce_seconds,
         )
-        
+
         handler = CacheInvalidationHandler(
             on_event=on_event,
             config=config,
         )
-        
+
         with self._lock:
             self.observer.schedule(handler, str(path), recursive=recursive)
             self._handlers.append((path, handler))
-        
+
         logger.info(
             f"Watching {path} (recursive={recursive}, "
             f"patterns={patterns or 'all'})"
         )
 
-    def unwatch(self, path: Union[Path, str]):
+    def unwatch(self, path: Path | str):
         """Stop watching a directory."""
         path = Path(path)
-        
+
         with self._lock:
             to_remove = []
             for watch_path, handler in self._handlers:
                 if watch_path == path:
                     handler.cancel_pending()
                     to_remove.append((watch_path, handler))
-            
+
             for item in to_remove:
                 self._handlers.remove(item)
-        
+
         logger.info(f"Stopped watching {path}")
 
     def start(self):
@@ -367,10 +367,10 @@ class FileSystemWatcher:
             if self._running:
                 logger.warning("Watcher already running")
                 return
-            
+
             self.observer.start()
             self._running = True
-        
+
         logger.info("File system watcher started")
 
     def stop(self, timeout: float = 5.0):
@@ -378,15 +378,15 @@ class FileSystemWatcher:
         with self._lock:
             if not self._running:
                 return
-            
+
             # Cancel pending events
             for _, handler in self._handlers:
                 handler.cancel_pending()
-            
+
             self.observer.stop()
             self.observer.join(timeout=timeout)
             self._running = False
-        
+
         logger.info("File system watcher stopped")
 
     @property
@@ -395,7 +395,7 @@ class FileSystemWatcher:
         return self._running
 
     @property
-    def watched_paths(self) -> List[Path]:
+    def watched_paths(self) -> list[Path]:
         """Get list of watched paths."""
         with self._lock:
             return [path for path, _ in self._handlers]
@@ -448,18 +448,18 @@ class CacheManager:
             self._watcher = None
         else:
             self._watcher = FileSystemWatcher()
-        
-        self._caches: Dict[str, Dict[str, Any]] = {}
-        self._invalidation_callbacks: Dict[str, List[Callable]] = defaultdict(list)
-        self._stats: Dict[str, Dict[str, int]] = defaultdict(
+
+        self._caches: dict[str, dict[str, Any]] = {}
+        self._invalidation_callbacks: dict[str, list[Callable]] = defaultdict(list)
+        self._stats: dict[str, dict[str, int]] = defaultdict(
             lambda: {"invalidations": 0, "sets": 0, "gets": 0, "hits": 0}
         )
         self._lock = threading.Lock()
-        
+
         if auto_start and self._watcher:
             self._watcher.start()
 
-    def create_cache(self, key: str) -> Dict[str, Any]:
+    def create_cache(self, key: str) -> dict[str, Any]:
         """
         Create a new cache with the given key.
         
@@ -473,12 +473,12 @@ class CacheManager:
             if key in self._caches:
                 logger.warning(f"Cache '{key}' already exists, returning existing")
                 return self._caches[key]
-            
+
             self._caches[key] = {}
             logger.info(f"Created cache: {key}")
             return self._caches[key]
 
-    def get_cache(self, key: str) -> Optional[Dict[str, Any]]:
+    def get_cache(self, key: str) -> dict[str, Any] | None:
         """
         Get a cache by key.
         
@@ -496,7 +496,7 @@ class CacheManager:
         with self._lock:
             if cache_key not in self._caches:
                 self._caches[cache_key] = {}
-            
+
             self._caches[cache_key][item_key] = value
             self._stats[cache_key]["sets"] += 1
 
@@ -504,12 +504,12 @@ class CacheManager:
         """Get a value from a cache."""
         with self._lock:
             self._stats[cache_key]["gets"] += 1
-            
+
             cache = self._caches.get(cache_key, {})
             if item_key in cache:
                 self._stats[cache_key]["hits"] += 1
                 return cache[item_key]
-            
+
             return default
 
     def invalidate(self, key: str, run_callbacks: bool = True):
@@ -524,15 +524,15 @@ class CacheManager:
             if key not in self._caches:
                 logger.warning(f"Cache '{key}' does not exist")
                 return
-            
+
             old_size = len(self._caches[key])
             self._caches[key].clear()
             self._stats[key]["invalidations"] += 1
-            
+
             callbacks = list(self._invalidation_callbacks.get(key, []))
-        
+
         logger.info(f"Invalidated cache '{key}' ({old_size} entries)")
-        
+
         if run_callbacks:
             for callback in callbacks:
                 try:
@@ -554,10 +554,10 @@ class CacheManager:
 
     def watch_directory(
         self,
-        path: Union[Path, str],
+        path: Path | str,
         cache_key: str,
-        patterns: Optional[Set[str]] = None,
-        ignore_patterns: Optional[Set[str]] = None,
+        patterns: builtins.set[str] | None = None,
+        ignore_patterns: builtins.set[str] | None = None,
         recursive: bool = True,
         debounce_seconds: float = 0.5,
     ):
@@ -575,9 +575,9 @@ class CacheManager:
         if self._watcher is None:
             logger.warning("Watcher not available, directory watching disabled")
             return
-        
+
         path = Path(path)
-        
+
         # Ensure cache exists
         with self._lock:
             if cache_key not in self._caches:
@@ -609,7 +609,7 @@ class CacheManager:
         if self._watcher:
             self._watcher.stop()
 
-    def stats(self, cache_key: Optional[str] = None) -> Dict[str, Any]:
+    def stats(self, cache_key: str | None = None) -> dict[str, Any]:
         """
         Get cache statistics.
         
@@ -630,12 +630,12 @@ class CacheManager:
                     else 0.0
                 )
                 return stats
-            
+
             # All caches
             all_stats = {}
             for key in self._caches:
                 all_stats[key] = self.stats(key)
-            
+
             return all_stats
 
     def __enter__(self):
@@ -647,7 +647,7 @@ class CacheManager:
 
 
 # Singleton cache manager
-_cache_manager: Optional[CacheManager] = None
+_cache_manager: CacheManager | None = None
 
 
 def get_cache_manager() -> CacheManager:
@@ -666,7 +666,7 @@ class ModelCacheManager:
     Pre-configured with common model file patterns and
     sensible defaults for AI Beast model management.
     """
-    
+
     MODEL_PATTERNS = {
         "*.gguf",      # GGML/GGUF models
         "*.bin",       # PyTorch/generic binary
@@ -679,21 +679,21 @@ class ModelCacheManager:
         "config.json", # Model config
         "tokenizer.json",  # Tokenizer
     }
-    
+
     def __init__(
         self,
-        models_dir: Optional[Path] = None,
-        ollama_models_dir: Optional[Path] = None,
+        models_dir: Path | None = None,
+        ollama_models_dir: Path | None = None,
     ):
         self._manager = get_cache_manager()
         self._models_dir = models_dir
         self._ollama_models_dir = ollama_models_dir
-        
+
         # Create model-specific caches
         self._model_metadata_cache = self._manager.create_cache("model_metadata")
         self._model_list_cache = self._manager.create_cache("model_list")
         self._ollama_cache = self._manager.create_cache("ollama_models")
-        
+
         # Setup watches if directories provided
         if models_dir and models_dir.exists():
             self._manager.watch_directory(
@@ -708,7 +708,7 @@ class ModelCacheManager:
                 patterns=self.MODEL_PATTERNS,
                 recursive=True,
             )
-        
+
         if ollama_models_dir and ollama_models_dir.exists():
             self._manager.watch_directory(
                 ollama_models_dir,
@@ -716,19 +716,19 @@ class ModelCacheManager:
                 recursive=True,
             )
 
-    def get_model_metadata(self, model_id: str) -> Optional[Dict[str, Any]]:
+    def get_model_metadata(self, model_id: str) -> dict[str, Any] | None:
         """Get cached model metadata."""
         return self._manager.get("model_metadata", model_id)
 
-    def set_model_metadata(self, model_id: str, metadata: Dict[str, Any]):
+    def set_model_metadata(self, model_id: str, metadata: dict[str, Any]):
         """Cache model metadata."""
         self._manager.set("model_metadata", model_id, metadata)
 
-    def get_model_list(self) -> Optional[List[Dict[str, Any]]]:
+    def get_model_list(self) -> list[dict[str, Any]] | None:
         """Get cached model list."""
         return self._manager.get("model_list", "all")
 
-    def set_model_list(self, models: List[Dict[str, Any]]):
+    def set_model_list(self, models: list[dict[str, Any]]):
         """Cache model list."""
         self._manager.set("model_list", "all", models)
 
@@ -755,7 +755,7 @@ class ModelCacheManager:
         """Stop file watching."""
         self._manager.stop()
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         return {
             "model_metadata": self._manager.stats("model_metadata"),

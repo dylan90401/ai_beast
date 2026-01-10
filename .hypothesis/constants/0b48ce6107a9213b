@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/rag/client.py
+# hypothesis_version: 6.150.0
+
+[100, 10000, '127.0.0.1', '6333', 'AI_BEAST_BIND_ADDR', 'Cosine', 'PORT_QDRANT', 'QDRANT_COLLECTION', 'QDRANT_EMBED_MODEL', 'ai_beast', 'collection_name', 'id', 'limit', 'path', 'payload', 'query_vector', 'score', 'score_threshold', 'text', 'vector']

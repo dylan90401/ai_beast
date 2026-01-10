@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/monitoring/tracer.py
+# hypothesis_version: 6.150.0
+
+[400, 1000, 'Content-Type', 'POST', 'User-Agent', 'a', 'ai-beast-tracer/1.0', 'ai_beast', 'application/json', 'attributes', 'duration_ms', 'error', 'http://', 'https://', 'operation', 'outputs/traces', 'service', 'span', 'start_time', 'status', 'success', 'trace_id', 'utf-8']

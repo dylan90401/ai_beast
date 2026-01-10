@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/capabilities/registry.py
+# hypothesis_version: 6.150.0
+
+[200, 400, '127.0.0.1', 'AI_BEAST_BIND_ADDR', 'GET', 'PORT_OLLAMA', 'User-Agent', 'actions', 'actions_append', 'ai-beast-cap-check', 'body', 'body_env', 'body_json', 'capabilities', 'capability', 'checks', 'checks_append', 'error', 'headers', 'headers_env', 'http', 'id', 'method', 'missing model', 'missing ollama base', 'missing port', 'missing url', 'model', 'model not found', 'models', 'name', 'ok', 'ollama_model', 'path', 'port', 'status', 'tcp', 'timeout', 'title', 'type', 'url', 'utf-8', 'version', '{}']

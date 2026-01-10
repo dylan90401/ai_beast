@@ -32,23 +32,16 @@ Example:
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import threading
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from dataclasses import dataclass, field
-from datetime import datetime
+from collections.abc import Callable
+from dataclasses import dataclass
 from functools import wraps
 from typing import (
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 from modules.utils.logging_config import get_logger
@@ -60,14 +53,14 @@ T = TypeVar("T")
 
 class RateLimitExceeded(Exception):
     """Raised when rate limit is exceeded."""
-    
+
     def __init__(
         self,
         key: str,
         limit: int,
         window: float,
         retry_after: float,
-        message: Optional[str] = None,
+        message: str | None = None,
     ):
         self.key = key
         self.limit = limit
@@ -96,7 +89,7 @@ class RateLimitConfig:
     window: float = 60.0  # seconds
     burst: int = 0  # Additional burst allowance
     key_prefix: str = "ratelimit"
-    
+
     def __post_init__(self):
         if self.requests < 1:
             raise ValueError("requests must be >= 1")
@@ -113,8 +106,8 @@ class RateLimitInfo:
     window: float
     reset_time: float
     retry_after: float = 0.0
-    
-    def to_headers(self) -> Dict[str, str]:
+
+    def to_headers(self) -> dict[str, str]:
         """Convert to HTTP rate limit headers."""
         return {
             "X-RateLimit-Limit": str(self.limit),
@@ -126,32 +119,32 @@ class RateLimitInfo:
 
 class StorageBackend(ABC):
     """Abstract base class for rate limit storage."""
-    
+
     @abstractmethod
     def get(self, key: str) -> Any:
         """Get value for key."""
         pass
-    
+
     @abstractmethod
-    def set(self, key: str, value: Any, ttl: Optional[float] = None):
+    def set(self, key: str, value: Any, ttl: float | None = None):
         """Set value with optional TTL."""
         pass
-    
+
     @abstractmethod
     def incr(self, key: str, amount: int = 1) -> int:
         """Increment value and return new value."""
         pass
-    
+
     @abstractmethod
     def expire(self, key: str, ttl: float):
         """Set expiration time on key."""
         pass
-    
+
     @abstractmethod
     def delete(self, key: str):
         """Delete key."""
         pass
-    
+
     @abstractmethod
     def cleanup(self):
         """Clean up expired entries."""
@@ -162,8 +155,8 @@ class StorageBackend(ABC):
 class StorageEntry:
     """Entry in in-memory storage."""
     value: Any
-    expires_at: Optional[float] = None
-    
+    expires_at: float | None = None
+
     def is_expired(self) -> bool:
         """Check if entry is expired."""
         if self.expires_at is None:
@@ -178,7 +171,7 @@ class InMemoryStorage(StorageBackend):
     Suitable for single-process applications.
     Uses a dict with TTL support and automatic cleanup.
     """
-    
+
     def __init__(self, cleanup_interval: float = 60.0):
         """
         Initialize in-memory storage.
@@ -186,7 +179,7 @@ class InMemoryStorage(StorageBackend):
         Args:
             cleanup_interval: Seconds between cleanup runs
         """
-        self._data: Dict[str, StorageEntry] = {}
+        self._data: dict[str, StorageEntry] = {}
         self._lock = threading.RLock()
         self._cleanup_interval = cleanup_interval
         self._last_cleanup = time.time()
@@ -203,7 +196,7 @@ class InMemoryStorage(StorageBackend):
                 return None
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[float] = None):
+    def set(self, key: str, value: Any, ttl: float | None = None):
         """Set value with optional TTL."""
         with self._lock:
             expires_at = time.time() + ttl if ttl else None
@@ -258,7 +251,7 @@ class RedisStorage(StorageBackend):
     Suitable for distributed applications with multiple
     processes or servers sharing rate limits.
     """
-    
+
     def __init__(
         self,
         url: str = "redis://localhost:6379",
@@ -273,7 +266,7 @@ class RedisStorage(StorageBackend):
         """
         self._url = url
         self._db = db
-        self._client: Optional[Any] = None
+        self._client: Any | None = None
         self._lock = threading.Lock()
 
     def _get_client(self):
@@ -299,7 +292,7 @@ class RedisStorage(StorageBackend):
             return int(value)
         return None
 
-    def set(self, key: str, value: Any, ttl: Optional[float] = None):
+    def set(self, key: str, value: Any, ttl: float | None = None):
         """Set value with optional TTL."""
         client = self._get_client()
         if ttl:
@@ -329,17 +322,17 @@ class RedisStorage(StorageBackend):
 
 class RateLimiter(ABC):
     """Abstract base class for rate limiters."""
-    
+
     @abstractmethod
     def allow(self, key: str) -> bool:
         """Check if request is allowed."""
         pass
-    
+
     @abstractmethod
     def check(self, key: str) -> RateLimitInfo:
         """Check rate limit status without consuming."""
         pass
-    
+
     @abstractmethod
     def reset(self, key: str):
         """Reset rate limit for key."""
@@ -374,7 +367,7 @@ class TokenBucketLimiter(RateLimiter):
         self,
         capacity: int,
         refill_rate: float,
-        storage: Optional[StorageBackend] = None,
+        storage: StorageBackend | None = None,
         key_prefix: str = "bucket",
     ):
         """
@@ -400,7 +393,7 @@ class TokenBucketLimiter(RateLimiter):
         """Get storage key for last refill timestamp."""
         return f"{self.key_prefix}:{key}:ts"
 
-    def _get_bucket_state(self, key: str) -> Tuple[float, float]:
+    def _get_bucket_state(self, key: str) -> tuple[float, float]:
         """
         Get current bucket state.
         
@@ -409,13 +402,13 @@ class TokenBucketLimiter(RateLimiter):
         """
         bucket_key = self._get_bucket_key(key)
         ts_key = self._get_timestamp_key(key)
-        
+
         tokens = self.storage.get(bucket_key)
         last_refill = self.storage.get(ts_key)
-        
+
         if tokens is None:
             return float(self.capacity), time.time()
-        
+
         return float(tokens), float(last_refill or time.time())
 
     def _refill_tokens(self, key: str) -> float:
@@ -427,21 +420,21 @@ class TokenBucketLimiter(RateLimiter):
         """
         bucket_key = self._get_bucket_key(key)
         ts_key = self._get_timestamp_key(key)
-        
+
         tokens, last_refill = self._get_bucket_state(key)
         now = time.time()
-        
+
         # Calculate tokens to add
         elapsed = now - last_refill
         new_tokens = min(
             self.capacity,
             tokens + (elapsed * self.refill_rate)
         )
-        
+
         # Update storage
         self.storage.set(bucket_key, new_tokens)
         self.storage.set(ts_key, now)
-        
+
         return new_tokens
 
     def allow(self, key: str, cost: int = 1) -> bool:
@@ -457,12 +450,12 @@ class TokenBucketLimiter(RateLimiter):
         """
         with self._lock:
             tokens = self._refill_tokens(key)
-            
+
             if tokens >= cost:
                 bucket_key = self._get_bucket_key(key)
                 self.storage.set(bucket_key, tokens - cost)
                 return True
-            
+
             return False
 
     def check(self, key: str) -> RateLimitInfo:
@@ -470,19 +463,19 @@ class TokenBucketLimiter(RateLimiter):
         with self._lock:
             tokens = self._refill_tokens(key)
             remaining = int(tokens)
-            
+
             # Calculate reset time
             if remaining >= self.capacity:
                 reset_time = time.time()
             else:
                 tokens_needed = self.capacity - remaining
                 reset_time = time.time() + (tokens_needed / self.refill_rate)
-            
+
             # Calculate retry after
             retry_after = 0.0
             if remaining < 1:
                 retry_after = 1.0 / self.refill_rate
-            
+
             return RateLimitInfo(
                 allowed=remaining >= 1,
                 remaining=remaining,
@@ -528,7 +521,7 @@ class SlidingWindowLimiter(RateLimiter):
         self,
         limit: int,
         window: float,
-        storage: Optional[StorageBackend] = None,
+        storage: StorageBackend | None = None,
         key_prefix: str = "window",
     ):
         """
@@ -545,9 +538,9 @@ class SlidingWindowLimiter(RateLimiter):
         self.storage = storage or InMemoryStorage()
         self.key_prefix = key_prefix
         self._lock = threading.RLock()
-        
+
         # For sliding window log
-        self._timestamps: Dict[str, List[float]] = defaultdict(list)
+        self._timestamps: dict[str, list[float]] = defaultdict(list)
 
     def _get_counter_key(self, key: str) -> str:
         """Get storage key for counter."""
@@ -566,13 +559,13 @@ class SlidingWindowLimiter(RateLimiter):
         """
         now = time.time()
         window_start = now - self.window
-        
+
         # Clean old timestamps
         self._timestamps[key] = [
             ts for ts in self._timestamps[key]
             if ts > window_start
         ]
-        
+
         return len(self._timestamps[key])
 
     def allow(self, key: str) -> bool:
@@ -587,11 +580,11 @@ class SlidingWindowLimiter(RateLimiter):
         """
         with self._lock:
             count = self._clean_old_requests(key)
-            
+
             if count < self.limit:
                 self._timestamps[key].append(time.time())
                 return True
-            
+
             return False
 
     def check(self, key: str) -> RateLimitInfo:
@@ -599,21 +592,21 @@ class SlidingWindowLimiter(RateLimiter):
         with self._lock:
             count = self._clean_old_requests(key)
             remaining = self.limit - count
-            
+
             # Calculate reset time
             if self._timestamps[key]:
                 oldest = min(self._timestamps[key])
                 reset_time = oldest + self.window
             else:
                 reset_time = time.time()
-            
+
             # Calculate retry after
             retry_after = 0.0
             if remaining <= 0 and self._timestamps[key]:
                 oldest = min(self._timestamps[key])
                 retry_after = (oldest + self.window) - time.time()
                 retry_after = max(0, retry_after)
-            
+
             return RateLimitInfo(
                 allowed=remaining > 0,
                 remaining=remaining,
@@ -659,7 +652,7 @@ class FixedWindowLimiter(RateLimiter):
         self,
         limit: int,
         window: float,
-        storage: Optional[StorageBackend] = None,
+        storage: StorageBackend | None = None,
         key_prefix: str = "fixed",
     ):
         """
@@ -693,11 +686,11 @@ class FixedWindowLimiter(RateLimiter):
         """
         window_key = self._get_window_key(key)
         count = self.storage.incr(window_key)
-        
+
         if count == 1:
             # New window, set TTL
             self.storage.expire(window_key, self.window)
-        
+
         return count <= self.limit
 
     def check(self, key: str) -> RateLimitInfo:
@@ -705,16 +698,16 @@ class FixedWindowLimiter(RateLimiter):
         window_key = self._get_window_key(key)
         count = self.storage.get(window_key) or 0
         remaining = self.limit - count
-        
+
         # Calculate reset time
         window_num = int(time.time() / self.window)
         reset_time = (window_num + 1) * self.window
-        
+
         # Calculate retry after
         retry_after = 0.0
         if remaining <= 0:
             retry_after = reset_time - time.time()
-        
+
         return RateLimitInfo(
             allowed=remaining > 0,
             remaining=remaining,
@@ -731,7 +724,7 @@ class FixedWindowLimiter(RateLimiter):
 
 
 # Global limiter registry
-_limiters: Dict[str, RateLimiter] = {}
+_limiters: dict[str, RateLimiter] = {}
 _limiter_lock = threading.Lock()
 
 
@@ -740,7 +733,7 @@ def get_rate_limiter(
     limit: int = 100,
     window: float = 60.0,
     algorithm: str = "sliding",
-    storage: Optional[StorageBackend] = None,
+    storage: StorageBackend | None = None,
 ) -> RateLimiter:
     """
     Get or create a rate limiter from the global registry.
@@ -758,7 +751,7 @@ def get_rate_limiter(
     with _limiter_lock:
         if name not in _limiters:
             storage = storage or InMemoryStorage()
-            
+
             if algorithm == "sliding":
                 limiter = SlidingWindowLimiter(limit, window, storage, name)
             elif algorithm == "fixed":
@@ -767,18 +760,18 @@ def get_rate_limiter(
                 limiter = TokenBucketLimiter(limit, limit / window, storage, name)
             else:
                 raise ValueError(f"Unknown algorithm: {algorithm}")
-            
+
             _limiters[name] = limiter
-        
+
         return _limiters[name]
 
 
 def rate_limit(
     requests: int = 100,
     window: float = 60.0,
-    key_func: Optional[Callable[..., str]] = None,
+    key_func: Callable[..., str] | None = None,
     algorithm: str = "sliding",
-    on_exceeded: Optional[Callable[[str, RateLimitInfo], Any]] = None,
+    on_exceeded: Callable[[str, RateLimitInfo], Any] | None = None,
 ):
     """
     Decorator to apply rate limiting to a function.
@@ -814,18 +807,18 @@ def rate_limit(
             window=window,
             algorithm=algorithm,
         )
-        
+
         def get_key(*args, **kwargs) -> str:
             if key_func:
                 return str(key_func(*args, **kwargs))
             return "default"
-        
+
         if asyncio.iscoroutinefunction(func):
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
                 key = get_key(*args, **kwargs)
                 info = limiter.check(key)
-                
+
                 if not limiter.allow(key):
                     if on_exceeded:
                         result = on_exceeded(key, info)
@@ -838,7 +831,7 @@ def rate_limit(
                         window=window,
                         retry_after=info.retry_after,
                     )
-                
+
                 return await func(*args, **kwargs)
             return async_wrapper
         else:
@@ -846,7 +839,7 @@ def rate_limit(
             def sync_wrapper(*args, **kwargs):
                 key = get_key(*args, **kwargs)
                 info = limiter.check(key)
-                
+
                 if not limiter.allow(key):
                     if on_exceeded:
                         return on_exceeded(key, info)
@@ -856,10 +849,10 @@ def rate_limit(
                         window=window,
                         retry_after=info.retry_after,
                     )
-                
+
                 return func(*args, **kwargs)
             return sync_wrapper
-    
+
     return decorator
 
 

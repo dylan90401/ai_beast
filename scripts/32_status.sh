@@ -54,6 +54,7 @@ echo
 
 # Ports (single source of truth)
 show_kv "PORT_WEBUI" "${PORT_WEBUI:-3000}"
+show_kv "PORT_DASHBOARD" "${PORT_DASHBOARD:-8787}"
 show_kv "PORT_OLLAMA" "${PORT_OLLAMA:-11434}"
 show_kv "PORT_QDRANT" "${PORT_QDRANT:-6333}"
 show_kv "PORT_COMFYUI" "${PORT_COMFYUI:-8188}"
@@ -74,6 +75,7 @@ echo
 # URLs
 echo "URLs"
 show_kv "Open WebUI" "http://${bind_addr}:${PORT_WEBUI:-3000}"
+show_kv "Dashboard" "http://${bind_addr}:${PORT_DASHBOARD:-8787}"
 show_kv "Ollama API" "http://${bind_addr}:${PORT_OLLAMA:-11434}"
 show_kv "Qdrant" "http://${bind_addr}:${PORT_QDRANT:-6333}"
 show_kv "ComfyUI" "http://${bind_addr}:${PORT_COMFYUI:-8188}"
@@ -112,6 +114,7 @@ echo "Health"
 probe "ollama" "http://${bind_addr}:${PORT_OLLAMA:-11434}/api/version"
 probe "qdrant" "http://${bind_addr}:${PORT_QDRANT:-6333}/healthz"
 probe "open-webui" "http://${bind_addr}:${PORT_WEBUI:-3000}/health"
+probe "dashboard" "http://${bind_addr}:${PORT_DASHBOARD:-8787}/api/health"
 probe "comfyui" "http://${bind_addr}:${PORT_COMFYUI:-8188}/"
 probe "otel-http" "http://${bind_addr}:${PORT_OTEL_HTTP:-4318}/"
 probe "minio" "http://${bind_addr}:${PORT_MINIO:-9001}/minio/health/ready"

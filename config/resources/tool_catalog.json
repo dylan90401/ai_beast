@@ -1,0 +1,1310 @@
+{
+  "version": 1,
+  "tools": [
+    {
+      "name": "nmap",
+      "description": "Network discovery and service enumeration.",
+      "entrypoint": "nmap",
+      "test_command": "nmap --version",
+      "category": "networking",
+      "config_hint": "Install via package manager; keep target scope and rate limits documented.",
+      "workflow": "1) Verify install with --version. 2) Run --help to review flags. 3) Save results to a project folder."
+    },
+    {
+      "name": "masscan",
+      "description": "High-speed port scanner for large address ranges.",
+      "entrypoint": "masscan",
+      "test_command": "masscan --version",
+      "category": "networking",
+      "config_hint": "Set conservative scan rates and authorized targets only.",
+      "workflow": "1) Verify install. 2) Read --help for rate settings. 3) Store outputs in project logs."
+    },
+    {
+      "name": "zmap",
+      "description": "Internet-scale network scanner.",
+      "entrypoint": "zmap",
+      "test_command": "zmap --version",
+      "category": "networking",
+      "config_hint": "Requires elevated privileges; follow local policy before use.",
+      "workflow": "1) Verify install. 2) Review config file. 3) Save outputs to a project folder."
+    },
+    {
+      "name": "naabu",
+      "description": "Fast port discovery utility.",
+      "entrypoint": "naabu",
+      "test_command": "naabu -version",
+      "category": "networking",
+      "config_hint": "Keep scope and rate limits documented.",
+      "workflow": "1) Verify install. 2) Run --help to review flags. 3) Save outputs to logs."
+    },
+    {
+      "name": "dnsx",
+      "description": "DNS resolution and probing tool.",
+      "entrypoint": "dnsx",
+      "test_command": "dnsx -version",
+      "category": "osint",
+      "config_hint": "Use trusted resolvers and track query volume.",
+      "workflow": "1) Verify install. 2) Review DNS flags. 3) Save results to a project folder."
+    },
+    {
+      "name": "subfinder",
+      "description": "Subdomain discovery tool.",
+      "entrypoint": "subfinder",
+      "test_command": "subfinder -version",
+      "category": "osint",
+      "config_hint": "Configure API keys for data sources as needed.",
+      "workflow": "1) Verify install. 2) Configure API keys. 3) Save results to a project folder."
+    },
+    {
+      "name": "amass",
+      "description": "Attack surface discovery and DNS enumeration.",
+      "entrypoint": "amass",
+      "test_command": "amass -version",
+      "category": "osint",
+      "config_hint": "Set API keys and resolver lists in the config file.",
+      "workflow": "1) Verify install. 2) Configure data sources. 3) Save outputs to a project folder."
+    },
+    {
+      "name": "assetfinder",
+      "description": "Domain asset discovery utility.",
+      "entrypoint": "assetfinder",
+      "test_command": "assetfinder --help",
+      "category": "osint",
+      "config_hint": "Use a single domain per run for clean outputs.",
+      "workflow": "1) Verify install. 2) Review --help. 3) Save results to logs."
+    },
+    {
+      "name": "waybackurls",
+      "description": "Collect historical URLs from public archives.",
+      "entrypoint": "waybackurls",
+      "test_command": "waybackurls --help",
+      "category": "osint",
+      "config_hint": "Pipe in target domains; store outputs for later review.",
+      "workflow": "1) Verify install. 2) Review usage. 3) Save outputs to a project folder."
+    },
+    {
+      "name": "gau",
+      "description": "Fetch known URLs from multiple sources.",
+      "entrypoint": "gau",
+      "test_command": "gau --version",
+      "category": "osint",
+      "config_hint": "Use filters to reduce noise in outputs.",
+      "workflow": "1) Verify install. 2) Review flags. 3) Save outputs to logs."
+    },
+    {
+      "name": "hakrawler",
+      "description": "Crawler for discovering URLs and endpoints.",
+      "entrypoint": "hakrawler",
+      "test_command": "hakrawler --help",
+      "category": "web",
+      "config_hint": "Respect robots.txt and request limits.",
+      "workflow": "1) Verify install. 2) Review crawl options. 3) Save results."
+    },
+    {
+      "name": "katana",
+      "description": "Fast web crawling and endpoint discovery.",
+      "entrypoint": "katana",
+      "test_command": "katana -version",
+      "category": "web",
+      "config_hint": "Tune depth and concurrency for target scope.",
+      "workflow": "1) Verify install. 2) Review flags. 3) Save outputs to logs."
+    },
+    {
+      "name": "httpx",
+      "description": "HTTP probing and service identification.",
+      "entrypoint": "httpx",
+      "test_command": "httpx -version",
+      "category": "web",
+      "config_hint": "Configure timeouts and retries to reduce false negatives.",
+      "workflow": "1) Verify install. 2) Review flags. 3) Save outputs to logs."
+    },
+    {
+      "name": "ffuf",
+      "description": "Fast web fuzzer.",
+      "entrypoint": "ffuf",
+      "test_command": "ffuf -h",
+      "category": "web",
+      "config_hint": "Use approved wordlists and safe request rates.",
+      "workflow": "1) Verify install. 2) Review flags. 3) Save outputs."
+    },
+    {
+      "name": "feroxbuster",
+      "description": "Content discovery and web enumeration.",
+      "entrypoint": "feroxbuster",
+      "test_command": "feroxbuster -V",
+      "category": "web",
+      "config_hint": "Tune depth and threads to match target scope.",
+      "workflow": "1) Verify install. 2) Review flags. 3) Save outputs."
+    },
+    {
+      "name": "gobuster",
+      "description": "Directory, DNS, and vhost brute-forcer.",
+      "entrypoint": "gobuster",
+      "test_command": "gobuster version",
+      "category": "web",
+      "config_hint": "Use curated wordlists to reduce noise.",
+      "workflow": "1) Verify install. 2) Review modes. 3) Save outputs."
+    },
+    {
+      "name": "dirsearch",
+      "description": "Web path discovery utility.",
+      "entrypoint": "dirsearch",
+      "test_command": "dirsearch --help",
+      "category": "web",
+      "config_hint": "Respect target scope and rate limits.",
+      "workflow": "1) Verify install. 2) Review flags. 3) Save outputs."
+    },
+    {
+      "name": "nikto",
+      "description": "Web server scanner.",
+      "entrypoint": "nikto",
+      "test_command": "nikto -Version",
+      "category": "web",
+      "config_hint": "Run only against authorized targets.",
+      "workflow": "1) Verify install. 2) Review flags. 3) Save outputs."
+    },
+    {
+      "name": "nuclei",
+      "description": "Template-driven vulnerability scanner.",
+      "entrypoint": "nuclei",
+      "test_command": "nuclei -version",
+      "category": "vuln",
+      "config_hint": "Keep templates updated and run only within scope.",
+      "workflow": "1) Verify install. 2) Update templates. 3) Save outputs."
+    },
+    {
+      "name": "sqlmap",
+      "description": "SQL injection testing tool.",
+      "entrypoint": "sqlmap",
+      "test_command": "sqlmap --version",
+      "category": "vuln",
+      "config_hint": "Use with explicit authorization and rate limits.",
+      "workflow": "1) Verify install. 2) Review options. 3) Save outputs."
+    },
+    {
+      "name": "wpscan",
+      "description": "WordPress security scanner.",
+      "entrypoint": "wpscan",
+      "test_command": "wpscan --version",
+      "category": "vuln",
+      "config_hint": "Configure API token for vulnerability data.",
+      "workflow": "1) Verify install. 2) Configure API token. 3) Save outputs."
+    },
+    {
+      "name": "hydra",
+      "description": "Login testing utility.",
+      "entrypoint": "hydra",
+      "test_command": "hydra -h",
+      "category": "defsec",
+      "config_hint": "Use approved credential lists only.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "medusa",
+      "description": "Parallel login tester.",
+      "entrypoint": "medusa",
+      "test_command": "medusa -h",
+      "category": "defsec",
+      "config_hint": "Use approved credential lists only.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "crackmapexec",
+      "description": "Post-exploitation and network testing suite.",
+      "entrypoint": "crackmapexec",
+      "test_command": "crackmapexec --version",
+      "category": "defsec",
+      "config_hint": "Run only in authorized lab environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "impacket",
+      "description": "Network protocol tooling collection.",
+      "entrypoint": "impacket-GetUserSPNs",
+      "test_command": "impacket-GetUserSPNs -h",
+      "category": "defsec",
+      "config_hint": "Use within authorized scope and document use.",
+      "workflow": "1) Verify install. 2) Review tool help. 3) Save outputs."
+    },
+    {
+      "name": "responder",
+      "description": "Network responder and analysis tool.",
+      "entrypoint": "responder",
+      "test_command": "responder -h",
+      "category": "defsec",
+      "config_hint": "Run only in authorized lab environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "mitmproxy",
+      "description": "Intercepting proxy for HTTP/HTTPS.",
+      "entrypoint": "mitmproxy",
+      "test_command": "mitmproxy --version",
+      "category": "web",
+      "config_hint": "Install trusted CA certificates for testing environments only.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save session logs."
+    },
+    {
+      "name": "burpsuite",
+      "description": "Web security testing suite.",
+      "entrypoint": "burpsuite",
+      "test_command": "burpsuite --help",
+      "category": "web",
+      "config_hint": "Configure proxy and project workspace.",
+      "workflow": "1) Verify install. 2) Create project. 3) Save findings."
+    },
+    {
+      "name": "zap",
+      "description": "OWASP ZAP proxy for web testing.",
+      "entrypoint": "zap.sh",
+      "test_command": "zap.sh -version",
+      "category": "web",
+      "config_hint": "Set proxy port and session location.",
+      "workflow": "1) Verify install. 2) Create session. 3) Save reports."
+    },
+    {
+      "name": "metasploit",
+      "description": "Exploit framework for authorized testing.",
+      "entrypoint": "msfconsole",
+      "test_command": "msfconsole -v",
+      "category": "defsec",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Review module docs. 3) Save logs."
+    },
+    {
+      "name": "john",
+      "description": "Password auditing tool.",
+      "entrypoint": "john",
+      "test_command": "john --version",
+      "category": "defsec",
+      "config_hint": "Store wordlists in a dedicated folder.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "hashcat",
+      "description": "GPU-accelerated password auditing.",
+      "entrypoint": "hashcat",
+      "test_command": "hashcat --version",
+      "category": "defsec",
+      "config_hint": "Configure GPU drivers and wordlists.",
+      "workflow": "1) Verify install. 2) Review modes. 3) Save outputs."
+    },
+    {
+      "name": "aircrack-ng",
+      "description": "Wireless security testing suite.",
+      "entrypoint": "aircrack-ng",
+      "test_command": "aircrack-ng --version",
+      "category": "wireless",
+      "config_hint": "Use only in authorized RF environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save logs."
+    },
+    {
+      "name": "kismet",
+      "description": "Wireless network detector and sniffer.",
+      "entrypoint": "kismet",
+      "test_command": "kismet --version",
+      "category": "wireless",
+      "config_hint": "Configure capture interface and storage path.",
+      "workflow": "1) Verify install. 2) Review config. 3) Save captures."
+    },
+    {
+      "name": "wifite",
+      "description": "Wireless auditing automation tool.",
+      "entrypoint": "wifite",
+      "test_command": "wifite --version",
+      "category": "wireless",
+      "config_hint": "Run only in authorized environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "reaver",
+      "description": "WPS testing tool.",
+      "entrypoint": "reaver",
+      "test_command": "reaver -h",
+      "category": "wireless",
+      "config_hint": "Run only in authorized environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "bettercap",
+      "description": "Network monitoring and MITM toolkit.",
+      "entrypoint": "bettercap",
+      "test_command": "bettercap --version",
+      "category": "networking",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save logs."
+    },
+    {
+      "name": "tcpdump",
+      "description": "Packet capture utility.",
+      "entrypoint": "tcpdump",
+      "test_command": "tcpdump --version",
+      "category": "analysis",
+      "config_hint": "Capture to a dedicated output folder.",
+      "workflow": "1) Verify install. 2) Capture traffic. 3) Save pcap files."
+    },
+    {
+      "name": "wireshark",
+      "description": "Packet analysis GUI.",
+      "entrypoint": "wireshark",
+      "test_command": "wireshark --version",
+      "category": "analysis",
+      "config_hint": "Set capture permissions for your user.",
+      "workflow": "1) Verify install. 2) Open pcap files. 3) Save analysis notes."
+    },
+    {
+      "name": "tshark",
+      "description": "Packet analysis CLI.",
+      "entrypoint": "tshark",
+      "test_command": "tshark -v",
+      "category": "analysis",
+      "config_hint": "Run with minimal privileges needed for capture.",
+      "workflow": "1) Verify install. 2) Capture or read pcap. 3) Save outputs."
+    },
+    {
+      "name": "zeek",
+      "description": "Network security monitoring platform.",
+      "entrypoint": "zeek",
+      "test_command": "zeek --version",
+      "category": "analysis",
+      "config_hint": "Configure capture interface and log directory.",
+      "workflow": "1) Verify install. 2) Run on pcap. 3) Save logs."
+    },
+    {
+      "name": "suricata",
+      "description": "IDS/IPS and network monitor.",
+      "entrypoint": "suricata",
+      "test_command": "suricata --build-info",
+      "category": "analysis",
+      "config_hint": "Configure rules and output directory.",
+      "workflow": "1) Verify install. 2) Configure rules. 3) Save logs."
+    },
+    {
+      "name": "snort",
+      "description": "Network intrusion detection system.",
+      "entrypoint": "snort",
+      "test_command": "snort -V",
+      "category": "analysis",
+      "config_hint": "Set rule paths and output directory.",
+      "workflow": "1) Verify install. 2) Configure rules. 3) Save alerts."
+    },
+    {
+      "name": "osqueryi",
+      "description": "Host instrumentation and query engine.",
+      "entrypoint": "osqueryi",
+      "test_command": "osqueryi --version",
+      "category": "defense",
+      "config_hint": "Use osquery.conf to define packs.",
+      "workflow": "1) Verify install. 2) Configure packs. 3) Save results."
+    },
+    {
+      "name": "ossec",
+      "description": "Host-based intrusion detection system.",
+      "entrypoint": "ossec-control",
+      "test_command": "ossec-control -h",
+      "category": "defense",
+      "config_hint": "Configure ossec.conf for monitoring targets.",
+      "workflow": "1) Verify install. 2) Configure rules. 3) Save logs."
+    },
+    {
+      "name": "crowdsec",
+      "description": "Collaborative security engine.",
+      "entrypoint": "cscli",
+      "test_command": "cscli version",
+      "category": "defense",
+      "config_hint": "Configure collections and log paths.",
+      "workflow": "1) Verify install. 2) Enable collections. 3) Save outputs."
+    },
+    {
+      "name": "falco",
+      "description": "Runtime security monitoring.",
+      "entrypoint": "falco",
+      "test_command": "falco --version",
+      "category": "defense",
+      "config_hint": "Configure rules and output sinks.",
+      "workflow": "1) Verify install. 2) Enable rules. 3) Save alerts."
+    },
+    {
+      "name": "clamav",
+      "description": "Antivirus engine and scanner.",
+      "entrypoint": "clamscan",
+      "test_command": "clamscan --version",
+      "category": "defense",
+      "config_hint": "Keep virus definitions updated.",
+      "workflow": "1) Verify install. 2) Update definitions. 3) Save scan logs."
+    },
+    {
+      "name": "yara",
+      "description": "Pattern matching for malware analysis.",
+      "entrypoint": "yara",
+      "test_command": "yara --version",
+      "category": "malware",
+      "config_hint": "Organize rules in a dedicated folder.",
+      "workflow": "1) Verify install. 2) Run rules. 3) Save results."
+    },
+    {
+      "name": "radare2",
+      "description": "Reverse engineering framework.",
+      "entrypoint": "r2",
+      "test_command": "r2 -v",
+      "category": "malware",
+      "config_hint": "Store binaries in a dedicated analysis folder.",
+      "workflow": "1) Verify install. 2) Open sample. 3) Save notes."
+    },
+    {
+      "name": "gdb",
+      "description": "GNU debugger.",
+      "entrypoint": "gdb",
+      "test_command": "gdb --version",
+      "category": "analysis",
+      "config_hint": "Use symbols when possible; store session logs.",
+      "workflow": "1) Verify install. 2) Open binary. 3) Save notes."
+    },
+    {
+      "name": "lldb",
+      "description": "LLVM debugger.",
+      "entrypoint": "lldb",
+      "test_command": "lldb --version",
+      "category": "analysis",
+      "config_hint": "Use symbols when possible; store session logs.",
+      "workflow": "1) Verify install. 2) Open binary. 3) Save notes."
+    },
+    {
+      "name": "binwalk",
+      "description": "Firmware analysis tool.",
+      "entrypoint": "binwalk",
+      "test_command": "binwalk --version",
+      "category": "forensics",
+      "config_hint": "Store firmware images in a dedicated folder.",
+      "workflow": "1) Verify install. 2) Run analysis. 3) Save outputs."
+    },
+    {
+      "name": "ghidra",
+      "description": "Software reverse engineering suite.",
+      "entrypoint": "ghidraRun",
+      "test_command": "ghidraRun --help",
+      "category": "malware",
+      "config_hint": "Create a project per sample.",
+      "workflow": "1) Verify install. 2) Create project. 3) Save notes."
+    },
+    {
+      "name": "volatility3",
+      "description": "Memory forensics framework.",
+      "entrypoint": "vol",
+      "test_command": "vol -h",
+      "category": "forensics",
+      "config_hint": "Store memory images in a read-only folder.",
+      "workflow": "1) Verify install. 2) Run analysis. 3) Save outputs."
+    },
+    {
+      "name": "sleuthkit",
+      "description": "File system forensics tools.",
+      "entrypoint": "tsk_recover",
+      "test_command": "tsk_recover -V",
+      "category": "forensics",
+      "config_hint": "Use read-only mounts for disk images.",
+      "workflow": "1) Verify install. 2) Run recovery. 3) Save outputs."
+    },
+    {
+      "name": "foremost",
+      "description": "File carving tool.",
+      "entrypoint": "foremost",
+      "test_command": "foremost -V",
+      "category": "forensics",
+      "config_hint": "Use dedicated output directories.",
+      "workflow": "1) Verify install. 2) Run carving. 3) Save outputs."
+    },
+    {
+      "name": "bulk_extractor",
+      "description": "Feature extraction from disk images.",
+      "entrypoint": "bulk_extractor",
+      "test_command": "bulk_extractor -h",
+      "category": "forensics",
+      "config_hint": "Use dedicated output directories.",
+      "workflow": "1) Verify install. 2) Run extraction. 3) Save outputs."
+    },
+    {
+      "name": "exiftool",
+      "description": "Metadata inspection and editing.",
+      "entrypoint": "exiftool",
+      "test_command": "exiftool -ver",
+      "category": "forensics",
+      "config_hint": "Run on copies of files to preserve originals.",
+      "workflow": "1) Verify install. 2) Inspect metadata. 3) Save outputs."
+    },
+    {
+      "name": "pdfid",
+      "description": "PDF analysis tool.",
+      "entrypoint": "pdfid",
+      "test_command": "pdfid.py -h",
+      "category": "malware",
+      "config_hint": "Use sample copies; keep notes per file.",
+      "workflow": "1) Verify install. 2) Run analysis. 3) Save outputs."
+    },
+    {
+      "name": "pdf-parser",
+      "description": "PDF parsing utility.",
+      "entrypoint": "pdf-parser.py",
+      "test_command": "pdf-parser.py -h",
+      "category": "malware",
+      "config_hint": "Use sample copies; keep notes per file.",
+      "workflow": "1) Verify install. 2) Run analysis. 3) Save outputs."
+    },
+    {
+      "name": "oletools",
+      "description": "Office document analysis tools.",
+      "entrypoint": "olevba",
+      "test_command": "olevba -h",
+      "category": "malware",
+      "config_hint": "Analyze in a sandboxed environment.",
+      "workflow": "1) Verify install. 2) Run analysis. 3) Save outputs."
+    },
+    {
+      "name": "floss",
+      "description": "Extract strings from malware binaries.",
+      "entrypoint": "floss",
+      "test_command": "floss -h",
+      "category": "malware",
+      "config_hint": "Use sample copies; store outputs in logs.",
+      "workflow": "1) Verify install. 2) Run analysis. 3) Save outputs."
+    },
+    {
+      "name": "capa",
+      "description": "Capability analyzer for binaries.",
+      "entrypoint": "capa",
+      "test_command": "capa -h",
+      "category": "malware",
+      "config_hint": "Use sample copies; store outputs in logs.",
+      "workflow": "1) Verify install. 2) Run analysis. 3) Save outputs."
+    },
+    {
+      "name": "rkhunter",
+      "description": "Rootkit detection tool.",
+      "entrypoint": "rkhunter",
+      "test_command": "rkhunter --versioncheck",
+      "category": "defense",
+      "config_hint": "Keep signatures updated.",
+      "workflow": "1) Verify install. 2) Update signatures. 3) Save logs."
+    },
+    {
+      "name": "chkrootkit",
+      "description": "Rootkit detection tool.",
+      "entrypoint": "chkrootkit",
+      "test_command": "chkrootkit -h",
+      "category": "defense",
+      "config_hint": "Run with appropriate permissions and log outputs.",
+      "workflow": "1) Verify install. 2) Run checks. 3) Save logs."
+    },
+    {
+      "name": "lynis",
+      "description": "Security auditing tool.",
+      "entrypoint": "lynis",
+      "test_command": "lynis --version",
+      "category": "defense",
+      "config_hint": "Store reports in a dedicated folder.",
+      "workflow": "1) Verify install. 2) Run audit. 3) Save reports."
+    },
+    {
+      "name": "gvm-cli",
+      "description": "Greenbone/OpenVAS CLI.",
+      "entrypoint": "gvm-cli",
+      "test_command": "gvm-cli --version",
+      "category": "vuln",
+      "config_hint": "Configure OpenVAS server credentials.",
+      "workflow": "1) Verify install. 2) Configure credentials. 3) Save reports."
+    },
+    {
+      "name": "theharvester",
+      "description": "OSINT email and subdomain harvesting.",
+      "entrypoint": "theHarvester",
+      "test_command": "theHarvester --version",
+      "category": "osint",
+      "config_hint": "Configure API keys for data sources.",
+      "workflow": "1) Verify install. 2) Configure keys. 3) Save outputs."
+    },
+    {
+      "name": "sherlock",
+      "description": "Username reconnaissance tool.",
+      "entrypoint": "sherlock",
+      "test_command": "sherlock --version",
+      "category": "osint",
+      "config_hint": "Review supported sites for scope.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "holehe",
+      "description": "Email reconnaissance tool.",
+      "entrypoint": "holehe",
+      "test_command": "holehe --help",
+      "category": "osint",
+      "config_hint": "Use only authorized targets.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "maigret",
+      "description": "Username reconnaissance tool.",
+      "entrypoint": "maigret",
+      "test_command": "maigret --version",
+      "category": "osint",
+      "config_hint": "Review supported sites for scope.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "spiderfoot",
+      "description": "OSINT automation platform.",
+      "entrypoint": "spiderfoot",
+      "test_command": "spiderfoot --help",
+      "category": "osint",
+      "config_hint": "Configure API keys for data sources.",
+      "workflow": "1) Verify install. 2) Configure keys. 3) Save results."
+    },
+    {
+      "name": "recon-ng",
+      "description": "Reconnaissance framework.",
+      "entrypoint": "recon-ng",
+      "test_command": "recon-ng -h",
+      "category": "osint",
+      "config_hint": "Configure API keys inside the framework.",
+      "workflow": "1) Verify install. 2) Configure keys. 3) Save outputs."
+    },
+    {
+      "name": "maltego",
+      "description": "Graph-based OSINT analysis tool.",
+      "entrypoint": "maltego",
+      "test_command": "maltego --help",
+      "category": "osint",
+      "config_hint": "Configure transforms and credentials.",
+      "workflow": "1) Verify install. 2) Configure transforms. 3) Save graphs."
+    },
+    {
+      "name": "metagoofil",
+      "description": "Document metadata and OSINT tool.",
+      "entrypoint": "metagoofil",
+      "test_command": "metagoofil -h",
+      "category": "osint",
+      "config_hint": "Use for metadata extraction only within scope.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "rtl_433",
+      "description": "433MHz signal decoder.",
+      "entrypoint": "rtl_433",
+      "test_command": "rtl_433 -V",
+      "category": "sigint",
+      "config_hint": "Requires RTL-SDR hardware.",
+      "workflow": "1) Verify install. 2) Connect SDR. 3) Save logs."
+    },
+    {
+      "name": "gnuradio",
+      "description": "GNU Radio signal processing toolkit.",
+      "entrypoint": "gnuradio-companion",
+      "test_command": "gnuradio-companion --version",
+      "category": "sigint",
+      "config_hint": "Install SDR drivers as needed.",
+      "workflow": "1) Verify install. 2) Create flowgraph. 3) Save outputs."
+    },
+    {
+      "name": "gqrx",
+      "description": "SDR receiver GUI.",
+      "entrypoint": "gqrx",
+      "test_command": "gqrx --version",
+      "category": "sigint",
+      "config_hint": "Requires SDR hardware.",
+      "workflow": "1) Verify install. 2) Configure device. 3) Save settings."
+    },
+    {
+      "name": "sdrangel",
+      "description": "SDR receiver/transceiver.",
+      "entrypoint": "sdrangel",
+      "test_command": "sdrangel --help",
+      "category": "sigint",
+      "config_hint": "Requires SDR hardware.",
+      "workflow": "1) Verify install. 2) Configure device. 3) Save profiles."
+    },
+    {
+      "name": "kismetdb_dump",
+      "description": "Kismet capture database tool.",
+      "entrypoint": "kismetdb_dump",
+      "test_command": "kismetdb_dump --help",
+      "category": "sigint",
+      "config_hint": "Use with Kismet captures.",
+      "workflow": "1) Verify install. 2) Load capture. 3) Save outputs."
+    },
+    {
+      "name": "motion",
+      "description": "Motion detection for camera surveillance.",
+      "entrypoint": "motion",
+      "test_command": "motion -h",
+      "category": "surveillance",
+      "config_hint": "Configure motion.conf for cameras and storage.",
+      "workflow": "1) Verify install. 2) Configure cameras. 3) Save recordings."
+    },
+    {
+      "name": "ffmpeg",
+      "description": "Media processing and capture toolkit.",
+      "entrypoint": "ffmpeg",
+      "test_command": "ffmpeg -version",
+      "category": "surveillance",
+      "config_hint": "Set output directories and rotation policies.",
+      "workflow": "1) Verify install. 2) Capture/convert. 3) Save outputs."
+    },
+    {
+      "name": "tcpflow",
+      "description": "TCP stream capture utility.",
+      "entrypoint": "tcpflow",
+      "test_command": "tcpflow -V",
+      "category": "analysis",
+      "config_hint": "Capture to a dedicated output folder.",
+      "workflow": "1) Verify install. 2) Capture streams. 3) Save outputs."
+    },
+    {
+      "name": "ngrep",
+      "description": "Network grep tool.",
+      "entrypoint": "ngrep",
+      "test_command": "ngrep -V",
+      "category": "analysis",
+      "config_hint": "Use minimal filters and log outputs.",
+      "workflow": "1) Verify install. 2) Capture traffic. 3) Save logs."
+    },
+    {
+      "name": "aria2c",
+      "description": "High-speed download utility.",
+      "entrypoint": "aria2c",
+      "test_command": "aria2c --version",
+      "category": "torrent",
+      "config_hint": "Set download directory and limits.",
+      "workflow": "1) Verify install. 2) Configure settings. 3) Save logs."
+    },
+    {
+      "name": "transmission-cli",
+      "description": "CLI BitTorrent client.",
+      "entrypoint": "transmission-cli",
+      "test_command": "transmission-cli --help",
+      "category": "torrent",
+      "config_hint": "Set download directory and limits.",
+      "workflow": "1) Verify install. 2) Configure settings. 3) Save logs."
+    },
+    {
+      "name": "qbittorrent-nox",
+      "description": "Headless qBittorrent client.",
+      "entrypoint": "qbittorrent-nox",
+      "test_command": "qbittorrent-nox --version",
+      "category": "torrent",
+      "config_hint": "Set WebUI credentials and download path.",
+      "workflow": "1) Verify install. 2) Configure settings. 3) Save logs."
+    },
+    {
+      "name": "rtorrent",
+      "description": "Console BitTorrent client.",
+      "entrypoint": "rtorrent",
+      "test_command": "rtorrent -h",
+      "category": "torrent",
+      "config_hint": "Configure download directory in .rtorrent.rc.",
+      "workflow": "1) Verify install. 2) Configure settings. 3) Save logs."
+    },
+    {
+      "name": "netcat",
+      "description": "TCP/UDP utility (nc).",
+      "entrypoint": "nc",
+      "test_command": "nc -h",
+      "category": "networking",
+      "config_hint": "Use for diagnostics only within authorized scope.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "socat",
+      "description": "Socket relay and proxy tool.",
+      "entrypoint": "socat",
+      "test_command": "socat -V",
+      "category": "networking",
+      "config_hint": "Use in controlled environments only.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save logs."
+    },
+    {
+      "name": "tor",
+      "description": "Tor daemon for privacy routing.",
+      "entrypoint": "tor",
+      "test_command": "tor --version",
+      "category": "networking",
+      "config_hint": "Configure torrc and local policy.",
+      "workflow": "1) Verify install. 2) Configure torrc. 3) Save logs."
+    },
+    {
+      "name": "openvpn",
+      "description": "VPN client/server.",
+      "entrypoint": "openvpn",
+      "test_command": "openvpn --version",
+      "category": "networking",
+      "config_hint": "Store configs in a secure folder.",
+      "workflow": "1) Verify install. 2) Load config. 3) Save logs."
+    },
+    {
+      "name": "wireguard",
+      "description": "Modern VPN tooling (wg).",
+      "entrypoint": "wg",
+      "test_command": "wg --version",
+      "category": "networking",
+      "config_hint": "Store configs in a secure folder.",
+      "workflow": "1) Verify install. 2) Load config. 3) Save logs."
+    },
+    {
+      "name": "curl",
+      "description": "HTTP client utility.",
+      "entrypoint": "curl",
+      "test_command": "curl --version",
+      "category": "networking",
+      "config_hint": "Store API tokens in env vars.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "jq",
+      "description": "JSON processing tool.",
+      "entrypoint": "jq",
+      "test_command": "jq --version",
+      "category": "analysis",
+      "config_hint": "Use for parsing structured outputs.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "whois",
+      "description": "Domain registration lookup.",
+      "entrypoint": "whois",
+      "test_command": "whois --version",
+      "category": "osint",
+      "config_hint": "Use within authorized scope.",
+      "workflow": "1) Verify install. 2) Query target. 3) Save outputs."
+    },
+    {
+      "name": "dig",
+      "description": "DNS query tool.",
+      "entrypoint": "dig",
+      "test_command": "dig -v",
+      "category": "osint",
+      "config_hint": "Use trusted resolvers.",
+      "workflow": "1) Verify install. 2) Query target. 3) Save outputs."
+    },
+    {
+      "name": "nslookup",
+      "description": "DNS query utility.",
+      "entrypoint": "nslookup",
+      "test_command": "nslookup -version",
+      "category": "osint",
+      "config_hint": "Use trusted resolvers.",
+      "workflow": "1) Verify install. 2) Query target. 3) Save outputs."
+    },
+    {
+      "name": "openssl",
+      "description": "TLS and crypto utilities.",
+      "entrypoint": "openssl",
+      "test_command": "openssl version",
+      "category": "networking",
+      "config_hint": "Use for diagnostics and key management.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "ssh",
+      "description": "Secure shell client.",
+      "entrypoint": "ssh",
+      "test_command": "ssh -V",
+      "category": "networking",
+      "config_hint": "Use config file (~/.ssh/config) for profiles.",
+      "workflow": "1) Verify install. 2) Configure profiles. 3) Save logs."
+    },
+    {
+      "name": "rsync",
+      "description": "File synchronization utility.",
+      "entrypoint": "rsync",
+      "test_command": "rsync --version",
+      "category": "ops",
+      "config_hint": "Use for safe, incremental transfers.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save logs."
+    },
+    {
+      "name": "rclone",
+      "description": "Cloud storage sync tool.",
+      "entrypoint": "rclone",
+      "test_command": "rclone version",
+      "category": "ops",
+      "config_hint": "Configure remotes securely.",
+      "workflow": "1) Verify install. 2) Configure remotes. 3) Save logs."
+    },
+    {
+      "name": "docker",
+      "description": "Container runtime CLI.",
+      "entrypoint": "docker",
+      "test_command": "docker --version",
+      "category": "ops",
+      "config_hint": "Use docker context for correct runtime.",
+      "workflow": "1) Verify install. 2) Review context. 3) Save logs."
+    },
+    {
+      "name": "kubectl",
+      "description": "Kubernetes CLI.",
+      "entrypoint": "kubectl",
+      "test_command": "kubectl version --client",
+      "category": "ops",
+      "config_hint": "Use kubeconfig profiles.",
+      "workflow": "1) Verify install. 2) Configure context. 3) Save logs."
+    },
+    {
+      "name": "helm",
+      "description": "Kubernetes package manager.",
+      "entrypoint": "helm",
+      "test_command": "helm version",
+      "category": "ops",
+      "config_hint": "Use chart repos with version pinning.",
+      "workflow": "1) Verify install. 2) Configure repos. 3) Save logs."
+    },
+    {
+      "name": "terraform",
+      "description": "Infrastructure as code tool.",
+      "entrypoint": "terraform",
+      "test_command": "terraform version",
+      "category": "ops",
+      "config_hint": "Store state files securely.",
+      "workflow": "1) Verify install. 2) Init project. 3) Save plan outputs."
+    },
+    {
+      "name": "ansible",
+      "description": "Automation and configuration management.",
+      "entrypoint": "ansible",
+      "test_command": "ansible --version",
+      "category": "ops",
+      "config_hint": "Use inventory files and vault for secrets.",
+      "workflow": "1) Verify install. 2) Configure inventory. 3) Save logs."
+    },
+    {
+      "name": "terraform-docs",
+      "description": "Generate Terraform module docs.",
+      "entrypoint": "terraform-docs",
+      "test_command": "terraform-docs --version",
+      "category": "ops",
+      "config_hint": "Use in CI for documentation.",
+      "workflow": "1) Verify install. 2) Run on module. 3) Save outputs."
+    },
+    {
+      "name": "bandit",
+      "description": "Python security linter.",
+      "entrypoint": "bandit",
+      "test_command": "bandit --version",
+      "category": "defense",
+      "config_hint": "Configure exclude paths in config.",
+      "workflow": "1) Verify install. 2) Run scans. 3) Save reports."
+    },
+    {
+      "name": "semgrep",
+      "description": "Static analysis tool.",
+      "entrypoint": "semgrep",
+      "test_command": "semgrep --version",
+      "category": "defense",
+      "config_hint": "Use rulesets appropriate to your stack.",
+      "workflow": "1) Verify install. 2) Run scans. 3) Save reports."
+    },
+    {
+      "name": "trivy",
+      "description": "Container and filesystem scanner.",
+      "entrypoint": "trivy",
+      "test_command": "trivy --version",
+      "category": "defense",
+      "config_hint": "Configure cache dir and output format.",
+      "workflow": "1) Verify install. 2) Run scans. 3) Save reports."
+    },
+    {
+      "name": "grype",
+      "description": "Vulnerability scanner for images and filesystems.",
+      "entrypoint": "grype",
+      "test_command": "grype version",
+      "category": "defense",
+      "config_hint": "Keep vulnerability database updated.",
+      "workflow": "1) Verify install. 2) Run scans. 3) Save reports."
+    },
+    {
+      "name": "syft",
+      "description": "SBOM generator.",
+      "entrypoint": "syft",
+      "test_command": "syft version",
+      "category": "defense",
+      "config_hint": "Store SBOM outputs in a dedicated folder.",
+      "workflow": "1) Verify install. 2) Generate SBOM. 3) Save outputs."
+    },
+    {
+      "name": "gitleaks",
+      "description": "Secret scanning for repos.",
+      "entrypoint": "gitleaks",
+      "test_command": "gitleaks version",
+      "category": "defense",
+      "config_hint": "Configure allowlist and redactions.",
+      "workflow": "1) Verify install. 2) Run scan. 3) Save report."
+    },
+    {
+      "name": "detect-secrets",
+      "description": "Secret detection tool.",
+      "entrypoint": "detect-secrets",
+      "test_command": "detect-secrets --version",
+      "category": "defense",
+      "config_hint": "Use baseline files for suppressions.",
+      "workflow": "1) Verify install. 2) Run scan. 3) Save report."
+    },
+    {
+      "name": "yara-python",
+      "description": "Python bindings for YARA (pip package).",
+      "entrypoint": "python3",
+      "test_command": "python3 -c \"import yara; print(yara.__version__)\"",
+      "category": "malware",
+      "config_hint": "Install via pip in a virtual environment.",
+      "workflow": "1) Verify install. 2) Run test import. 3) Save logs."
+    },
+    {
+      "name": "tcping",
+      "description": "TCP ping utility.",
+      "entrypoint": "tcping",
+      "test_command": "tcping --help",
+      "category": "networking",
+      "config_hint": "Use for latency diagnostics.",
+      "workflow": "1) Verify install. 2) Run diagnostics. 3) Save logs."
+    },
+    {
+      "name": "iperf3",
+      "description": "Network bandwidth testing.",
+      "entrypoint": "iperf3",
+      "test_command": "iperf3 --version",
+      "category": "networking",
+      "config_hint": "Coordinate client/server for tests.",
+      "workflow": "1) Verify install. 2) Run tests. 3) Save logs."
+    },
+    {
+      "name": "mtr",
+      "description": "Traceroute + ping diagnostics.",
+      "entrypoint": "mtr",
+      "test_command": "mtr --version",
+      "category": "networking",
+      "config_hint": "Use for troubleshooting routes.",
+      "workflow": "1) Verify install. 2) Run diagnostics. 3) Save logs."
+    },
+    {
+      "name": "openscap",
+      "description": "Security compliance scanning.",
+      "entrypoint": "oscap",
+      "test_command": "oscap --version",
+      "category": "defense",
+      "config_hint": "Use appropriate SCAP profiles.",
+      "workflow": "1) Verify install. 2) Run scan. 3) Save reports."
+    },
+    {
+      "name": "shodan",
+      "description": "Shodan CLI.",
+      "entrypoint": "shodan",
+      "test_command": "shodan info",
+      "category": "osint",
+      "config_hint": "Configure API key with shodan init.",
+      "workflow": "1) Verify install. 2) Initialize API key. 3) Save outputs."
+    },
+    {
+      "name": "censys",
+      "description": "Censys CLI.",
+      "entrypoint": "censys",
+      "test_command": "censys version",
+      "category": "osint",
+      "config_hint": "Configure API credentials in config file.",
+      "workflow": "1) Verify install. 2) Configure keys. 3) Save outputs."
+    },
+    {
+      "name": "xray",
+      "description": "HTTP scanner and crawler.",
+      "entrypoint": "xray",
+      "test_command": "xray version",
+      "category": "web",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Run scan. 3) Save outputs."
+    },
+    {
+      "name": "aquatone",
+      "description": "Screenshot and HTTP report generator.",
+      "entrypoint": "aquatone",
+      "test_command": "aquatone --help",
+      "category": "web",
+      "config_hint": "Set output directory for reports.",
+      "workflow": "1) Verify install. 2) Run on URL list. 3) Save reports."
+    },
+    {
+      "name": "massdns",
+      "description": "High-performance DNS resolver.",
+      "entrypoint": "massdns",
+      "test_command": "massdns --help",
+      "category": "osint",
+      "config_hint": "Use trusted resolvers list.",
+      "workflow": "1) Verify install. 2) Configure resolvers. 3) Save outputs."
+    },
+    {
+      "name": "puredns",
+      "description": "Fast DNS resolver and validator.",
+      "entrypoint": "puredns",
+      "test_command": "puredns --version",
+      "category": "osint",
+      "config_hint": "Use trusted resolvers list.",
+      "workflow": "1) Verify install. 2) Configure resolvers. 3) Save outputs."
+    },
+    {
+      "name": "dnsenum",
+      "description": "DNS enumeration tool.",
+      "entrypoint": "dnsenum",
+      "test_command": "dnsenum --version",
+      "category": "osint",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Run enum. 3) Save outputs."
+    },
+    {
+      "name": "dnsrecon",
+      "description": "DNS reconnaissance tool.",
+      "entrypoint": "dnsrecon",
+      "test_command": "dnsrecon --version",
+      "category": "osint",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Run recon. 3) Save outputs."
+    },
+    {
+      "name": "wappalyzer",
+      "description": "Web tech fingerprinting.",
+      "entrypoint": "wappalyzer",
+      "test_command": "wappalyzer --help",
+      "category": "web",
+      "config_hint": "Use within authorized scope.",
+      "workflow": "1) Verify install. 2) Run fingerprints. 3) Save outputs."
+    },
+    {
+      "name": "whatweb",
+      "description": "Web technology detection.",
+      "entrypoint": "whatweb",
+      "test_command": "whatweb --version",
+      "category": "web",
+      "config_hint": "Use within authorized scope.",
+      "workflow": "1) Verify install. 2) Run detection. 3) Save outputs."
+    },
+    {
+      "name": "resolvectl",
+      "description": "DNS resolver control (systemd-resolved).",
+      "entrypoint": "resolvectl",
+      "test_command": "resolvectl --version",
+      "category": "networking",
+      "config_hint": "Use for local DNS diagnostics.",
+      "workflow": "1) Verify install. 2) Run queries. 3) Save outputs."
+    },
+    {
+      "name": "iftop",
+      "description": "Network bandwidth monitor.",
+      "entrypoint": "iftop",
+      "test_command": "iftop -h",
+      "category": "analysis",
+      "config_hint": "Run with necessary permissions.",
+      "workflow": "1) Verify install. 2) Monitor interface. 3) Save notes."
+    },
+    {
+      "name": "nethogs",
+      "description": "Process network usage monitor.",
+      "entrypoint": "nethogs",
+      "test_command": "nethogs -h",
+      "category": "analysis",
+      "config_hint": "Run with necessary permissions.",
+      "workflow": "1) Verify install. 2) Monitor interface. 3) Save notes."
+    },
+    {
+      "name": "fping",
+      "description": "Fast ping utility.",
+      "entrypoint": "fping",
+      "test_command": "fping -v",
+      "category": "networking",
+      "config_hint": "Use for reachability checks.",
+      "workflow": "1) Verify install. 2) Run checks. 3) Save outputs."
+    },
+    {
+      "name": "arp-scan",
+      "description": "ARP scanning utility.",
+      "entrypoint": "arp-scan",
+      "test_command": "arp-scan --version",
+      "category": "networking",
+      "config_hint": "Use only on authorized networks.",
+      "workflow": "1) Verify install. 2) Run scan. 3) Save outputs."
+    },
+    {
+      "name": "netdiscover",
+      "description": "ARP reconnaissance tool.",
+      "entrypoint": "netdiscover",
+      "test_command": "netdiscover -h",
+      "category": "networking",
+      "config_hint": "Use only on authorized networks.",
+      "workflow": "1) Verify install. 2) Run scan. 3) Save outputs."
+    },
+    {
+      "name": "ipcalc",
+      "description": "IP subnet calculator.",
+      "entrypoint": "ipcalc",
+      "test_command": "ipcalc --help",
+      "category": "networking",
+      "config_hint": "Use for subnet planning.",
+      "workflow": "1) Verify install. 2) Run calculations. 3) Save outputs."
+    },
+    {
+      "name": "netcat-openbsd",
+      "description": "OpenBSD netcat variant.",
+      "entrypoint": "nc",
+      "test_command": "nc -h",
+      "category": "networking",
+      "config_hint": "Use for diagnostics only.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "sipvicious",
+      "description": "SIP auditing toolset.",
+      "entrypoint": "svmap",
+      "test_command": "svmap --help",
+      "category": "networking",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "enum4linux",
+      "description": "SMB enumeration helper.",
+      "entrypoint": "enum4linux",
+      "test_command": "enum4linux -h",
+      "category": "networking",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "nbtscan",
+      "description": "NetBIOS scanner.",
+      "entrypoint": "nbtscan",
+      "test_command": "nbtscan -h",
+      "category": "networking",
+      "config_hint": "Use only on authorized networks.",
+      "workflow": "1) Verify install. 2) Run scan. 3) Save outputs."
+    },
+    {
+      "name": "smbclient",
+      "description": "SMB client utilities.",
+      "entrypoint": "smbclient",
+      "test_command": "smbclient --version",
+      "category": "networking",
+      "config_hint": "Use for diagnostics in authorized networks.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "ldapsearch",
+      "description": "LDAP query tool.",
+      "entrypoint": "ldapsearch",
+      "test_command": "ldapsearch -V",
+      "category": "networking",
+      "config_hint": "Use only in authorized environments.",
+      "workflow": "1) Verify install. 2) Review help. 3) Save outputs."
+    },
+    {
+      "name": "ntpdate",
+      "description": "NTP query tool.",
+      "entrypoint": "ntpdate",
+      "test_command": "ntpdate -v",
+      "category": "networking",
+      "config_hint": "Use for time sync diagnostics.",
+      "workflow": "1) Verify install. 2) Query time. 3) Save outputs."
+    }
+  ]
+}

@@ -93,6 +93,9 @@ import json, os, pathlib
 desired=json.loads('''$desired_json''')
 packs_cfg=json.loads(pathlib.Path("$packs_file").read_text(encoding="utf-8")).get("packs", {})
 svcmap=json.loads(pathlib.Path("$pack_services_file").read_text(encoding="utf-8")).get("pack_services", {}) or {}
+project_path = pathlib.Path("$BASE_DIR/kryptos_project.yml")
+profile = os.environ.get("AI_BEAST_PROFILE", "full")
+profile_services = os.environ.get("AI_BEAST_PROFILE_SERVICES", "0").strip().lower() in ("1", "true", "yes", "on")
 
 wanted=list(desired.get("packs_enabled",[]) or [])
 for k, v in os.environ.items():
@@ -121,11 +124,113 @@ docker_map = {
     "FEATURE_DOCKER_UPTIME_KUMA": "uptime-kuma",
     "FEATURE_DOCKER_N8N": "n8n",
     "FEATURE_DOCKER_SEARXNG": "searxng",
+    "FEATURE_DOCKER_REDIS": "redis",
+    "FEATURE_DOCKER_POSTGRES": "postgres",
+    "FEATURE_DOCKER_MINIO": "minio",
+    "FEATURE_DOCKER_TRAEFIK": "traefik",
+    "FEATURE_DOCKER_PORTAINER": "portainer",
+    "FEATURE_DOCKER_JUPYTER": "jupyterlab",
+    "FEATURE_DOCKER_LANGFLOW": "langflow",
+    "FEATURE_DOCKER_FLOWISE": "flowise",
+    "FEATURE_DOCKER_DIFY": "dify-web",
+    "FEATURE_DOCKER_APACHE_TIKA": "apache-tika",
+    "FEATURE_DOCKER_UNSTRUCTURED_API": "unstructured-api",
+    "FEATURE_DOCKER_OTEL_COLLECTOR": "otel-collector",
 }
 for env, name in docker_map.items():
     val = str(os.environ.get(env, "0")).strip().lower()
     if val in ("1", "true", "yes", "on"):
         svc.add(name)
+
+def parse_project_services(path, profile_name):
+    if not path.exists():
+        return set()
+    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    def strip_comment(line):
+        if "#" in line:
+            return line.split("#", 1)[0]
+        return line
+    lines = [strip_comment(l.rstrip()) for l in lines]
+    in_profiles = False
+    in_components = False
+    current_profile = None
+    current_component = None
+    profile_components = []
+    components = {}
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not line.strip():
+            i += 1
+            continue
+        if line and not line.startswith(" "):
+            in_profiles = line.startswith("profiles:")
+            in_components = line.startswith("components:")
+            current_profile = None
+            current_component = None
+            i += 1
+            continue
+        if in_profiles:
+            m = __import__("re").match(r"^\\s{2}([A-Za-z0-9_]+):\\s*$", line)
+            if m:
+                current_profile = m.group(1)
+                i += 1
+                continue
+            if current_profile == profile_name:
+                m = __import__("re").match(r"^\\s{4}components:\\s*\\[(.*)\\]\\s*$", line)
+                if m:
+                    body = m.group(1)
+                    items = [p.strip().strip('\"\\'') for p in body.split(",") if p.strip()]
+                    profile_components.extend(items)
+                elif __import__("re").match(r"^\\s{4}components:\\s*$", line):
+                    i += 1
+                    while i < len(lines) and __import__("re").match(r"^\\s{6}-\\s*", lines[i]):
+                        item = __import__("re").sub(r"^\\s{6}-\\s*", "", lines[i]).strip().strip('\"\\'')
+                        if item:
+                            profile_components.append(item)
+                        i += 1
+                    continue
+        if in_components:
+            m = __import__("re").match(r"^\\s{2}([A-Za-z0-9_]+):\\s*$", line)
+            if m:
+                current_component = m.group(1)
+                components.setdefault(current_component, {})
+                i += 1
+                continue
+            if current_component:
+                m = __import__("re").match(r"^\\s{4}([A-Za-z0-9_]+):\\s*(.+)\\s*$", line)
+                if m:
+                    key = m.group(1)
+                    val = m.group(2).strip().strip('\"\\'')
+                    components[current_component][key] = val
+        i += 1
+    services = set()
+    docker_enabled = True
+    current_profile = None
+    for line in lines:
+        if line and not line.startswith(" "):
+            if line.startswith("profiles:"):
+                current_profile = None
+            continue
+        m = __import__("re").match(r"^\\s{2}([A-Za-z0-9_]+):\\s*$", line)
+        if m:
+            current_profile = m.group(1)
+            continue
+        if current_profile == profile_name:
+            m = __import__("re").match(r"^\\s{4}docker:\\s*(.+)\\s*$", line)
+            if m:
+                docker_enabled = str(m.group(1)).strip().lower() in ("1", "true", "yes", "on")
+                break
+    if not docker_enabled:
+        return services
+    for comp in profile_components:
+        cfg = components.get(comp, {})
+        if cfg.get("type") == "docker":
+            services.add(cfg.get("service") or comp)
+    return services
+
+if profile_services:
+    svc |= parse_project_services(project_path, profile)
 
 print(json.dumps(sorted(svc)))
 PY
@@ -241,7 +346,6 @@ exts=set(json.loads('''$desired_exts_json'''))
 desired=set(json.loads('''$desired_services_json'''))
 reg=json.loads(pathlib.Path("$services_registry").read_text(encoding="utf-8")).get("services", {}) or {}
 registry_services=set(reg.keys())
-desired_non_registry = desired - registry_services
 
 def list_services(text):
     out=set(); in_services=False
@@ -260,7 +364,7 @@ for f in sorted(root.glob("*/compose.fragment.yaml")) + sorted(root.glob("*/*/co
     ex=f.parent.name
     sv=list_services(f.read_text(errors="ignore"))
     by_ext = ex in exts
-    hits = sorted(list(sv & desired_non_registry))
+    hits = sorted(list(sv & desired))
     by_svc = len(hits)>0
     if by_ext or by_svc:
         selected.append(str(f))

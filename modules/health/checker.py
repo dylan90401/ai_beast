@@ -32,14 +32,13 @@ Example:
 from __future__ import annotations
 
 import asyncio
-import os
 import shutil
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from modules.utils.logging_config import get_logger
 
@@ -59,7 +58,7 @@ class HealthStatus(Enum):
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
     UNKNOWN = "unknown"
-    
+
     def __lt__(self, other):
         """Allow comparison for determining worst status."""
         order = {
@@ -82,11 +81,11 @@ class HealthCheck:
     name: str
     status: HealthStatus
     message: str = ""
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     checked_at: datetime = field(default_factory=datetime.now)
     duration_ms: float = 0.0
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "name": self.name,
@@ -96,17 +95,17 @@ class HealthCheck:
             "checked_at": self.checked_at.isoformat(),
             "duration_ms": round(self.duration_ms, 2),
         }
-    
+
     @property
     def is_healthy(self) -> bool:
         """Check if status is healthy."""
         return self.status == HealthStatus.HEALTHY
-    
+
     @property
     def is_degraded(self) -> bool:
         """Check if status is degraded but functional."""
         return self.status == HealthStatus.DEGRADED
-    
+
     @property
     def is_unhealthy(self) -> bool:
         """Check if status is unhealthy."""
@@ -173,7 +172,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
         expected_status: int = 200,
         timeout: float = 5.0,
         critical: bool = True,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         verify_ssl: bool = True,
     ):
         """
@@ -203,18 +202,18 @@ class HTTPHealthChecker(ServiceHealthChecker):
                 message="httpx not installed",
                 details={"error": "Install httpx: pip install httpx"},
             )
-        
+
         start = time.time()
-        
+
         try:
             async with httpx.AsyncClient(
                 timeout=self.timeout,
                 verify=self.verify_ssl,
             ) as client:
                 response = await client.get(self.url, headers=self.headers)
-            
+
             duration_ms = (time.time() - start) * 1000
-            
+
             if response.status_code == self.expected_status:
                 return HealthCheck(
                     name=self.name,
@@ -239,7 +238,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
                     },
                     duration_ms=duration_ms,
                 )
-                
+
         except httpx.TimeoutException:
             duration_ms = (time.time() - start) * 1000
             return HealthCheck(
@@ -249,7 +248,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
                 details={"url": self.url, "timeout": self.timeout},
                 duration_ms=duration_ms,
             )
-            
+
         except httpx.ConnectError as e:
             duration_ms = (time.time() - start) * 1000
             return HealthCheck(
@@ -259,7 +258,7 @@ class HTTPHealthChecker(ServiceHealthChecker):
                 details={"url": self.url, "error": str(e)},
                 duration_ms=duration_ms,
             )
-            
+
         except Exception as e:
             duration_ms = (time.time() - start) * 1000
             return HealthCheck(
@@ -282,7 +281,7 @@ class OllamaHealthChecker(HTTPHealthChecker):
     def __init__(
         self,
         base_url: str = "http://localhost:11434",
-        required_models: Optional[List[str]] = None,
+        required_models: list[str] | None = None,
         timeout: float = 5.0,
     ):
         """
@@ -305,24 +304,24 @@ class OllamaHealthChecker(HTTPHealthChecker):
     async def check(self) -> HealthCheck:
         """Check Ollama with model verification."""
         result = await super().check()
-        
+
         if result.status != HealthStatus.HEALTHY:
             return result
-        
+
         # Get model information
         if not HTTPX_AVAILABLE:
             return result
-            
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(self.url)
                 data = response.json()
                 models = data.get("models", [])
                 model_names = [m["name"] for m in models]
-                
+
                 result.details["model_count"] = len(models)
                 result.details["models"] = model_names
-                
+
                 # Check for required models
                 if self.required_models:
                     missing = [
@@ -333,16 +332,16 @@ class OllamaHealthChecker(HTTPHealthChecker):
                         result.status = HealthStatus.DEGRADED
                         result.message = f"Missing required models: {missing}"
                         result.details["missing_models"] = missing
-                
+
                 # Check if any models are loaded
                 if len(models) == 0:
                     result.status = HealthStatus.DEGRADED
                     result.message = "No models loaded"
-                    
+
         except Exception as e:
             logger.warning(f"Failed to get Ollama model list: {e}")
             result.details["model_check_error"] = str(e)
-        
+
         return result
 
 
@@ -356,7 +355,7 @@ class QdrantHealthChecker(HTTPHealthChecker):
     def __init__(
         self,
         base_url: str = "http://localhost:6333",
-        required_collections: Optional[List[str]] = None,
+        required_collections: list[str] | None = None,
         timeout: float = 5.0,
     ):
         """
@@ -380,7 +379,7 @@ class QdrantHealthChecker(HTTPHealthChecker):
     async def check(self) -> HealthCheck:
         """Check Qdrant with collection verification."""
         result = await super().check()
-        
+
         if result.status != HealthStatus.HEALTHY:
             # Try alternative health endpoint
             alt_checker = HTTPHealthChecker(
@@ -390,33 +389,33 @@ class QdrantHealthChecker(HTTPHealthChecker):
                 timeout=self.timeout,
             )
             result = await alt_checker.check()
-        
+
         if result.status != HealthStatus.HEALTHY:
             return result
-        
+
         # Check collections if required
         if not self.required_collections or not HTTPX_AVAILABLE:
             return result
-            
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(f"{self.base_url}/collections")
                 data = response.json()
                 collections = [c["name"] for c in data.get("result", {}).get("collections", [])]
-                
+
                 result.details["collections"] = collections
                 result.details["collection_count"] = len(collections)
-                
+
                 missing = [c for c in self.required_collections if c not in collections]
                 if missing:
                     result.status = HealthStatus.DEGRADED
                     result.message = f"Missing required collections: {missing}"
                     result.details["missing_collections"] = missing
-                    
+
         except Exception as e:
             logger.warning(f"Failed to get Qdrant collections: {e}")
             result.details["collection_check_error"] = str(e)
-        
+
         return result
 
 
@@ -431,7 +430,7 @@ class RedisHealthChecker(ServiceHealthChecker):
         self,
         host: str = "localhost",
         port: int = 6379,
-        password: Optional[str] = None,
+        password: str | None = None,
         timeout: float = 5.0,
     ):
         """
@@ -451,7 +450,7 @@ class RedisHealthChecker(ServiceHealthChecker):
     async def check(self) -> HealthCheck:
         """Check Redis health using PING."""
         start = time.time()
-        
+
         try:
             import redis
         except ImportError:
@@ -461,7 +460,7 @@ class RedisHealthChecker(ServiceHealthChecker):
                 message="redis package not installed",
                 details={"error": "Install redis: pip install redis"},
             )
-        
+
         try:
             client = redis.Redis(
                 host=self.host,
@@ -469,14 +468,14 @@ class RedisHealthChecker(ServiceHealthChecker):
                 password=self.password,
                 socket_timeout=self.timeout,
             )
-            
+
             # PING returns True if successful
             if client.ping():
                 duration_ms = (time.time() - start) * 1000
-                
+
                 # Get some info
                 info = client.info("server")
-                
+
                 return HealthCheck(
                     name=self.name,
                     status=HealthStatus.HEALTHY,
@@ -498,7 +497,7 @@ class RedisHealthChecker(ServiceHealthChecker):
                     details={"host": self.host, "port": self.port},
                     duration_ms=duration_ms,
                 )
-                
+
         except redis.ConnectionError as e:
             duration_ms = (time.time() - start) * 1000
             return HealthCheck(
@@ -512,7 +511,7 @@ class RedisHealthChecker(ServiceHealthChecker):
                 },
                 duration_ms=duration_ms,
             )
-            
+
         except Exception as e:
             duration_ms = (time.time() - start) * 1000
             return HealthCheck(
@@ -535,7 +534,7 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
     def __init__(
         self,
         name: str,
-        path: Union[Path, str],
+        path: Path | str,
         warning_threshold: float = 0.2,  # 20% free
         critical_threshold: float = 0.1,  # 10% free
     ):
@@ -556,7 +555,7 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
     async def check(self) -> HealthCheck:
         """Check available disk space."""
         start = time.time()
-        
+
         try:
             if not self.path.exists():
                 return HealthCheck(
@@ -566,10 +565,10 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
                     details={"path": str(self.path)},
                     duration_ms=(time.time() - start) * 1000,
                 )
-            
+
             total, used, free = shutil.disk_usage(self.path)
             free_pct = free / total if total > 0 else 0
-            
+
             # Determine status based on thresholds
             if free_pct >= self.warning_threshold:
                 status = HealthStatus.HEALTHY
@@ -580,9 +579,9 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
             else:
                 status = HealthStatus.UNHEALTHY
                 message = f"Critical disk space: {free_pct:.1%} free"
-            
+
             duration_ms = (time.time() - start) * 1000
-            
+
             return HealthCheck(
                 name=self.name,
                 status=status,
@@ -598,7 +597,7 @@ class DiskSpaceHealthChecker(ServiceHealthChecker):
                 },
                 duration_ms=duration_ms,
             )
-            
+
         except Exception as e:
             return HealthCheck(
                 name=self.name,
@@ -636,7 +635,7 @@ class MemoryHealthChecker(ServiceHealthChecker):
     async def check(self) -> HealthCheck:
         """Check available system memory."""
         start = time.time()
-        
+
         try:
             import psutil
         except ImportError:
@@ -647,11 +646,11 @@ class MemoryHealthChecker(ServiceHealthChecker):
                 details={"error": "Install psutil: pip install psutil"},
                 duration_ms=(time.time() - start) * 1000,
             )
-        
+
         try:
             memory = psutil.virtual_memory()
             free_pct = memory.available / memory.total if memory.total > 0 else 0
-            
+
             if free_pct >= self.warning_threshold:
                 status = HealthStatus.HEALTHY
                 message = f"{free_pct:.1%} available"
@@ -661,7 +660,7 @@ class MemoryHealthChecker(ServiceHealthChecker):
             else:
                 status = HealthStatus.UNHEALTHY
                 message = f"Critical memory: {free_pct:.1%} available"
-            
+
             return HealthCheck(
                 name=self.name,
                 status=status,
@@ -675,7 +674,7 @@ class MemoryHealthChecker(ServiceHealthChecker):
                 },
                 duration_ms=(time.time() - start) * 1000,
             )
-            
+
         except Exception as e:
             return HealthCheck(
                 name=self.name,
@@ -714,7 +713,7 @@ class SystemHealthChecker:
             name: System name for identification
         """
         self.name = name
-        self.checkers: List[ServiceHealthChecker] = []
+        self.checkers: list[ServiceHealthChecker] = []
 
     def add_checker(self, checker: ServiceHealthChecker):
         """
@@ -745,7 +744,7 @@ class SystemHealthChecker:
     async def check_all(
         self,
         include_non_critical: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Run all health checks.
         
@@ -758,7 +757,7 @@ class SystemHealthChecker:
         checkers = self.checkers if include_non_critical else [
             c for c in self.checkers if c.critical
         ]
-        
+
         if not checkers:
             return {
                 "name": self.name,
@@ -767,7 +766,7 @@ class SystemHealthChecker:
                 "timestamp": datetime.now().isoformat(),
                 "checks": [],
             }
-        
+
         # Run all checks in parallel
         start = time.time()
         results = await asyncio.gather(
@@ -775,9 +774,9 @@ class SystemHealthChecker:
             return_exceptions=True,
         )
         total_duration = (time.time() - start) * 1000
-        
+
         # Process results
-        checks: List[HealthCheck] = []
+        checks: list[HealthCheck] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Health check failed with exception: {result}")
@@ -789,18 +788,18 @@ class SystemHealthChecker:
                 ))
             else:
                 checks.append(result)
-        
+
         # Determine overall status
         critical_checks = [
             check for check, checker in zip(checks, checkers)
             if checker.critical
         ]
-        
+
         if not critical_checks:
             critical_checks = checks
-        
+
         statuses = [check.status for check in critical_checks]
-        
+
         if all(s == HealthStatus.HEALTHY for s in statuses):
             overall = HealthStatus.HEALTHY
             message = "All services healthy"
@@ -815,7 +814,7 @@ class SystemHealthChecker:
         else:
             overall = HealthStatus.UNKNOWN
             message = "Unable to determine health status"
-        
+
         return {
             "name": self.name,
             "status": overall.value,
@@ -825,7 +824,7 @@ class SystemHealthChecker:
             "checks": [check.to_dict() for check in checks],
         }
 
-    async def check_service(self, name: str) -> Optional[HealthCheck]:
+    async def check_service(self, name: str) -> HealthCheck | None:
         """
         Check a specific service by name.
         
@@ -842,7 +841,7 @@ class SystemHealthChecker:
 
 
 def create_default_checker(
-    base_dir: Optional[Path] = None,
+    base_dir: Path | None = None,
     ollama_url: str = "http://localhost:11434",
     qdrant_url: str = "http://localhost:6333",
     redis_host: str = "localhost",
@@ -862,43 +861,43 @@ def create_default_checker(
         Configured SystemHealthChecker
     """
     checker = SystemHealthChecker(name="ai_beast")
-    
+
     # Service checks
     checker.add_checker(OllamaHealthChecker(base_url=ollama_url))
     checker.add_checker(QdrantHealthChecker(base_url=qdrant_url))
     checker.add_checker(RedisHealthChecker(host=redis_host, port=redis_port))
-    
+
     # WebUI check (optional)
     checker.add_checker(HTTPHealthChecker(
         name="webui",
         url="http://localhost:3000/health",
         critical=False,
     ))
-    
+
     # System resource checks
     if base_dir:
         checker.add_checker(DiskSpaceHealthChecker(
             name="disk_base",
             path=base_dir,
         ))
-        
+
         models_dir = base_dir / "heavy" / "llms"
         if models_dir.exists():
             checker.add_checker(DiskSpaceHealthChecker(
                 name="disk_models",
                 path=models_dir,
             ))
-    
+
     # Memory check
     checker.add_checker(MemoryHealthChecker())
-    
+
     return checker
 
 
 # Convenience functions
 async def quick_health_check(
-    services: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    services: list[str] | None = None,
+) -> dict[str, Any]:
     """
     Quick health check for common services.
     
@@ -909,18 +908,18 @@ async def quick_health_check(
         Health check results
     """
     checker = create_default_checker()
-    
+
     if services:
         # Filter to requested services
         checker.checkers = [
             c for c in checker.checkers
             if c.name in services
         ]
-    
+
     return await checker.check_all()
 
 
-def health_check_sync(services: Optional[List[str]] = None) -> Dict[str, Any]:
+def health_check_sync(services: list[str] | None = None) -> dict[str, Any]:
     """
     Synchronous wrapper for health check.
     

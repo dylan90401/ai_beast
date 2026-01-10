@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/beast/cli.py
+# hypothesis_version: 6.150.0
+
+['\n- ', '\nEnabled packs:', '(none)', ',', ', ', '--category', '--follow', '--format', '--remove-orphans', '--save', '--with', '-d', '-f', '?', 'AI Beast Status', 'BEAST_ROOT', 'ENABLED', 'OK: logs done', 'OK: preflight passed', 'OK: stack down', 'OK: stack up', 'Preflight failed:\n- ', 'Save report to file', '__main__', 'base.yml', 'beast', 'bootstrap', 'cmd', 'compose', 'config', 'darwin', 'description', 'disable', 'disabled', 'docker', 'down', 'enable', 'enabled', 'eval', 'extensions', 'json', 'list', 'logs', 'name', 'pack', 'pack_cmd', 'packs', 'preflight', 'ps', 'registry.json', 'scripts', 'service', 'status', 'store_true', 'system', 'text', 'up', 'utf-8', 'with_packs']

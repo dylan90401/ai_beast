@@ -1,0 +1,46 @@
+{
+  "capabilities": {
+    "defcon_stack": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (nmap, nuclei, sqlmap) or system package manager.\n\nnmap --version\nnmap -sV -p 1-1000 <target>\n\nnuclei -version\nnuclei -u <url> -severity medium,high,critical\n\nsqlmap --version\nsqlmap -u <url> --batch --risk=1 --level=1"
+    },
+    "offsec_suite": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (metasploit, hydra).\n\nmsfconsole -v\n# inside msfconsole\n# search <module>\n# use <module>\n# show options\n# set RHOSTS <target>\n# run\n\nhydra -h\nhydra -L <userlist> -P <passlist> <target> ssh"
+    },
+    "osint_suite": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (amass, theharvester).\n\namass enum -d <domain>\n\ntheHarvester -d <domain> -b all"
+    },
+    "sigint_suite": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (rtl_433, gnuradio).\n\nrtl_433 -V\n# run with your SDR device\nrtl_433 -f <freq>\n\ngnuradio-companion --version"
+    },
+    "networking_suite": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (nmap, masscan, traceroute).\n\nnmap --version\nnmap -sV <target>\n\nmasscan --version\nmasscan <target> -p1-65535 --rate 1000\n\ntraceroute <target>"
+    },
+    "analysis_suite": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (tshark, wireshark).\n\ntshark -v\n# capture to file\n# tshark -i <iface> -w capture.pcapng\n\nwireshark --version"
+    },
+    "vuln_scanning": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (nuclei, nikto).\n\nnuclei -version\nnuclei -u <url>\n\nnikto -Version\nnikto -h <url>"
+    },
+    "web_enum": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (httpx, ffuf, feroxbuster).\n\nhttpx -version\nhttpx -l <targets.txt>\n\nffuf -h\nffuf -u https://<host>/FUZZ -w <wordlist>\n\nferoxbuster -V\nferoxbuster -u https://<host>"
+    },
+    "recon_suite": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (subfinder, amass, assetfinder).\n\nsubfinder -version\nsubfinder -d <domain>\n\namass enum -d <domain>\n\nassetfinder --help\nassetfinder <domain>"
+    },
+    "credential_audit": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (hashcat, john).\n\nhashcat --version\nhashcat -m <hash_type> -a 0 <hashes.txt> <wordlist>\n\njohn --version\njohn --wordlist=<wordlist> <hashes.txt>"
+    },
+    "packet_capture": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (tcpdump).\n\ntcpdump --version\nsudo tcpdump -i <iface> -w capture.pcap"
+    },
+    "malware_analysis": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (radare2, yara).\n\nr2 -v\nr2 <sample.bin>\n\nyara --version\nyara -r <rules.yar> <sample_dir>"
+    },
+    "forensics_suite": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (volatility3).\n\nvol -h\nvol -f <memory.img> windows.info"
+    },
+    "red_team_ops": {
+      "cli_template": "Prereq: Install tools via Dashboard > Tools (impacket, crackmapexec).\n\nimpacket-GetUserSPNs -h\nimpacket-GetUserSPNs <domain>/<user>:<pass> -dc-ip <dc_ip>\n\ncrackmapexec --version\ncrackmapexec smb <target> -u <user> -p <pass>"
+    }
+  }
+}

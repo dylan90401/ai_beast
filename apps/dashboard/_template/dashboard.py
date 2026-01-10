@@ -14,7 +14,12 @@ def resolve_base_dir():
     if bd:
         return Path(bd)
     here = Path(__file__).resolve()
-    return here.parents[3]  # .../apps/dashboard/_template/dashboard.py -> project root
+    # Walk upward until we find a project root indicator (beast dir, pyproject.toml, or .git)
+    for p in [here] + list(here.parents):
+        if (p / 'beast').exists() or (p / 'pyproject.toml').exists() or (p / '.git').exists():
+            return p
+    # Fallback for legacy layout
+    return here.parents[2]
 
 
 BASE_DIR = resolve_base_dir()

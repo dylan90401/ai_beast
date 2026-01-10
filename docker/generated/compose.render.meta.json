@@ -1,5 +1,5 @@
 {
-  "generated_at": 1767884185.061762,
+  "generated_at": 1768067872.290533,
   "registry": "/Users/wolfen/_dev/_AI_Kryptos/ai_beast/config/resources/services.json",
   "only_services": [
     "example_hello",
@@ -10,8 +10,8 @@
     "uptime-kuma"
   ],
   "sha256": {
-    "compose.core.yaml": "5e1bcf5fe6ff58d0ba9d791f1f490ae76cf93d2cc90ec16f9c12f3c8677a330a",
-    "compose.ops.yaml": "21f601bf66a819c39d31b9fe9c4d612135b0e952add9cd9ec88101f9e5c31782"
+    "compose.core.yaml": "7de4097f9c8abac244dff3106b1d5387d31d6f1f993c15a4b2ff16ac7fda20c7",
+    "compose.ops.yaml": "2305847609a7679d39f4b23b630b2717c99ddfd468a5eb23c4e369c6db8d5555"
   },
-  "service_count": 3
+  "service_count": 6
 }

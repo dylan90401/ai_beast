@@ -1,0 +1,1845 @@
+{
+  "version": 1,
+  "capabilities": {
+    "text2image": {
+      "title": "Text -> Image",
+      "description": "Generate images with ComfyUI workflows.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_manager"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Requires ComfyUI models; install separately.",
+      "webui": {
+        "category": "Media",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ]
+    },
+    "text2video": {
+      "title": "Text -> Video",
+      "description": "Video generation via ComfyUI + VideoHelperSuite nodes.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_video"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Enable ComfyUI Video extension and install video workflows.",
+      "webui": {
+        "category": "Media",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ]
+    },
+    "image2image": {
+      "title": "Image -> Image",
+      "description": "Image-to-image workflows via ComfyUI.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_manager"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Install image-to-image workflows in ComfyUI.",
+      "webui": {
+        "category": "Media",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ]
+    },
+    "photo2video": {
+      "title": "Photo -> Video",
+      "description": "Animate images into video via ComfyUI workflows.",
+      "packs": [
+        "media_synth"
+      ],
+      "extensions": [
+        "comfyui_video"
+      ],
+      "ports": [
+        "PORT_COMFYUI"
+      ],
+      "portal": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_COMFYUI",
+        "path": "object_info"
+      },
+      "health": {
+        "port": "PORT_COMFYUI",
+        "path": ""
+      },
+      "notes": "Install image-to-video workflows in ComfyUI.",
+      "webui": {
+        "category": "Media",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "ComfyUI API",
+          "port": "PORT_COMFYUI",
+          "path": "object_info"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open ComfyUI",
+          "type": "open_url",
+          "port": "PORT_COMFYUI",
+          "path": ""
+        }
+      ]
+    },
+    "text2audio": {
+      "title": "Text -> Audio",
+      "description": "Speech synthesis via the local Speech API.",
+      "packs": [
+        "speech_stack"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_SPEECH_API"
+      ],
+      "portal": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "api": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "health": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "notes": "Start the service with the Speech Up action.",
+      "webui": {
+        "category": "Audio",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Speech API",
+          "port": "PORT_SPEECH_API",
+          "path": "docs"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speech Up",
+          "type": "beast_cmd",
+          "cmd": "speech_up"
+        },
+        {
+          "label": "Speech Down",
+          "type": "beast_cmd",
+          "cmd": "speech_down"
+        }
+      ]
+    },
+    "audio2text": {
+      "title": "Audio -> Text",
+      "description": "Transcribe audio files via the Speech API (Whisper backend).",
+      "packs": [
+        "speech_stack"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_SPEECH_API"
+      ],
+      "portal": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "api": {
+        "port": "PORT_SPEECH_API",
+        "path": "transcribe"
+      },
+      "health": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "notes": "Upload audio to /transcribe (multipart).",
+      "webui": {
+        "category": "Audio",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Speech API",
+          "port": "PORT_SPEECH_API",
+          "path": "docs"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speech Up",
+          "type": "beast_cmd",
+          "cmd": "speech_up"
+        },
+        {
+          "label": "Speech Down",
+          "type": "beast_cmd",
+          "cmd": "speech_down"
+        }
+      ]
+    },
+    "text2music": {
+      "title": "Text -> Music",
+      "description": "Music prompts via audio tooling (models required).",
+      "packs": [
+        "media_synth",
+        "speech_stack"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_SPEECH_API"
+      ],
+      "portal": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "api": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "health": {
+        "port": "PORT_SPEECH_API",
+        "path": "docs"
+      },
+      "notes": "Needs a music-capable model + workflow.",
+      "webui": {
+        "category": "Audio",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Speech API",
+          "port": "PORT_SPEECH_API",
+          "path": "docs"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Speech Up",
+          "type": "beast_cmd",
+          "cmd": "speech_up"
+        },
+        {
+          "label": "Speech Down",
+          "type": "beast_cmd",
+          "cmd": "speech_down"
+        }
+      ]
+    },
+    "image2text": {
+      "title": "Image -> Text",
+      "description": "Vision-language captioning using Ollama vision models.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_OLLAMA",
+        "PORT_WEBUI"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "health": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "notes": "Requires a vision-capable model in Ollama.",
+      "ollama": {
+        "model": "llama3.2-vision:latest",
+        "purpose": "vision"
+      },
+      "webui": {
+        "category": "Vision",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Ollama API",
+          "port": "PORT_OLLAMA",
+          "path": "api/tags"
+        },
+        {
+          "type": "ollama_model",
+          "name": "Vision model",
+          "model": "llama3.2-vision:latest"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Pull Vision Model",
+          "type": "ollama_pull",
+          "model": "llama3.2-vision:latest"
+        },
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        }
+      ]
+    },
+    "text2code": {
+      "title": "Text -> Code",
+      "description": "Code generation and refactoring with a coder-tuned model.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_OLLAMA",
+        "PORT_WEBUI"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "health": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "notes": "Recommended coder model in Ollama.",
+      "ollama": {
+        "model": "qwen2.5-coder:latest",
+        "purpose": "code"
+      },
+      "webui": {
+        "category": "Code",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Ollama API",
+          "port": "PORT_OLLAMA",
+          "path": "api/tags"
+        },
+        {
+          "type": "ollama_model",
+          "name": "Coder model",
+          "model": "qwen2.5-coder:latest"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Pull Coder Model",
+          "type": "ollama_pull",
+          "model": "qwen2.5-coder:latest"
+        },
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        }
+      ]
+    },
+    "rag_search": {
+      "title": "RAG Search",
+      "description": "Web search + retrieval foundation for RAG.",
+      "packs": [
+        "osint"
+      ],
+      "extensions": [
+        "searxng"
+      ],
+      "ports": [
+        "PORT_SEARXNG"
+      ],
+      "portal": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "notes": "SearXNG provides search; combine with Qdrant for RAG.",
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "SearXNG",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "SearXNG POST Search",
+          "port": "PORT_SEARXNG",
+          "path": "search",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          "body": "q=ai+beast&format=json"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open SearXNG",
+          "type": "open_url",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        }
+      ]
+    },
+    "rag_ingest": {
+      "title": "RAG Ingest",
+      "description": "Document ingestion pipeline (Tika + Unstructured).",
+      "packs": [
+        "rag_ingest_pro"
+      ],
+      "extensions": [
+        "apache_tika",
+        "unstructured_api"
+      ],
+      "ports": [
+        "PORT_TIKA",
+        "PORT_UNSTRUCTURED"
+      ],
+      "portal": {
+        "port": "PORT_TIKA",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_UNSTRUCTURED",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_TIKA",
+        "path": ""
+      },
+      "notes": "Enable pack to pull ingestion services.",
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Apache Tika",
+          "port": "PORT_TIKA",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "Unstructured API",
+          "port": "PORT_UNSTRUCTURED",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Tika",
+          "type": "open_url",
+          "port": "PORT_TIKA",
+          "path": ""
+        },
+        {
+          "label": "Open Unstructured",
+          "type": "open_url",
+          "port": "PORT_UNSTRUCTURED",
+          "path": ""
+        }
+      ]
+    },
+    "rag_vector_db": {
+      "title": "Vector DB",
+      "description": "Qdrant vector store for embeddings + retrieval.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "qdrant"
+      ],
+      "ports": [
+        "PORT_QDRANT"
+      ],
+      "portal": {
+        "port": "PORT_QDRANT",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_QDRANT",
+        "path": "collections"
+      },
+      "health": {
+        "port": "PORT_QDRANT",
+        "path": "readyz"
+      },
+      "notes": "Ensure Qdrant is running before ingest or search.",
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Qdrant",
+          "port": "PORT_QDRANT",
+          "path": "readyz"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Qdrant",
+          "type": "open_url",
+          "port": "PORT_QDRANT",
+          "path": ""
+        }
+      ]
+    },
+    "rag_chat": {
+      "title": "RAG Chat",
+      "description": "Chat UI backed by Ollama + Qdrant with web search.",
+      "packs": [
+        "networking",
+        "osint"
+      ],
+      "extensions": [
+        "open_webui",
+        "qdrant",
+        "searxng"
+      ],
+      "ports": [
+        "PORT_WEBUI",
+        "PORT_QDRANT",
+        "PORT_SEARXNG"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "health": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "notes": "Requires Open WebUI configured with Qdrant + SearXNG.",
+      "ollama": {
+        "model": "llama3.2:latest",
+        "embedding_model": "nomic-embed-text"
+      },
+      "webui": {
+        "category": "RAG",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Open WebUI",
+          "port": "PORT_WEBUI",
+          "path": "health"
+        },
+        {
+          "type": "http",
+          "name": "Qdrant",
+          "port": "PORT_QDRANT",
+          "path": "readyz"
+        },
+        {
+          "type": "http",
+          "name": "SearXNG",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        },
+        {
+          "label": "Pull Llama3.2",
+          "type": "ollama_pull",
+          "model": "llama3.2:latest"
+        }
+      ]
+    },
+    "agent_builders": {
+      "title": "Agent Builders",
+      "description": "Low-code builders for workflows and agents.",
+      "packs": [
+        "agent_builders"
+      ],
+      "extensions": [
+        "langflow",
+        "flowise",
+        "dify"
+      ],
+      "ports": [
+        "PORT_LANGFLOW",
+        "PORT_FLOWISE",
+        "PORT_DIFY"
+      ],
+      "portal": {
+        "port": "PORT_LANGFLOW",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_FLOWISE",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_LANGFLOW",
+        "path": ""
+      },
+      "notes": "Enable the pack to bring up Langflow/Flowise/Dify.",
+      "webui": {
+        "category": "Builders",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Langflow",
+          "port": "PORT_LANGFLOW",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "Flowise",
+          "port": "PORT_FLOWISE",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "Dify",
+          "port": "PORT_DIFY",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Langflow",
+          "type": "open_url",
+          "port": "PORT_LANGFLOW",
+          "path": ""
+        },
+        {
+          "label": "Open Flowise",
+          "type": "open_url",
+          "port": "PORT_FLOWISE",
+          "path": ""
+        },
+        {
+          "label": "Open Dify",
+          "type": "open_url",
+          "port": "PORT_DIFY",
+          "path": ""
+        }
+      ]
+    },
+    "code_runner": {
+      "title": "Code Runner",
+      "description": "JupyterLab for notebooks and code execution.",
+      "packs": [
+        "dataviz_ml"
+      ],
+      "extensions": [
+        "jupyter"
+      ],
+      "ports": [
+        "PORT_JUPYTER"
+      ],
+      "portal": {
+        "port": "PORT_JUPYTER",
+        "path": "lab"
+      },
+      "api": {
+        "port": "PORT_JUPYTER",
+        "path": "api"
+      },
+      "health": {
+        "port": "PORT_JUPYTER",
+        "path": "api/status"
+      },
+      "notes": "Jupyter token is set in the container; open the portal to sign in.",
+      "webui": {
+        "category": "Code",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Jupyter",
+          "port": "PORT_JUPYTER",
+          "path": "api/status"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Jupyter",
+          "type": "open_url",
+          "port": "PORT_JUPYTER",
+          "path": "lab"
+        }
+      ]
+    },
+    "ollama_chat": {
+      "title": "Ollama Runtime",
+      "description": "Local model runtime for chat and embeddings.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [
+        "PORT_OLLAMA"
+      ],
+      "portal": {
+        "port": "PORT_OLLAMA",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "health": {
+        "port": "PORT_OLLAMA",
+        "path": "api/tags"
+      },
+      "notes": "Ollama must be running on the host.",
+      "ollama": {
+        "model": "llama3.2:latest",
+        "purpose": "chat"
+      },
+      "webui": {
+        "category": "Runtime",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Ollama API",
+          "port": "PORT_OLLAMA",
+          "path": "api/tags"
+        },
+        {
+          "type": "ollama_model",
+          "name": "Ollama model",
+          "model": "llama3.2:latest"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Pull Llama3.2",
+          "type": "ollama_pull",
+          "model": "llama3.2:latest"
+        },
+        {
+          "label": "Ollama Status",
+          "type": "beast_cmd",
+          "cmd": "status"
+        }
+      ]
+    },
+    "open_webui_chat": {
+      "title": "Open WebUI",
+      "description": "Chat UI backed by Ollama.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "open_webui"
+      ],
+      "ports": [
+        "PORT_WEBUI"
+      ],
+      "portal": {
+        "port": "PORT_WEBUI",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "health": {
+        "port": "PORT_WEBUI",
+        "path": "health"
+      },
+      "notes": "Use to chat with local models and RAG.",
+      "ollama": {
+        "model": "llama3.2:latest",
+        "embedding_model": "nomic-embed-text"
+      },
+      "webui": {
+        "category": "Chat",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Open WebUI",
+          "port": "PORT_WEBUI",
+          "path": "health"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        }
+      ]
+    },
+    "workflow_automation": {
+      "title": "Workflow Automation",
+      "description": "n8n workflows for task automation and integrations.",
+      "packs": [
+        "agent_builders"
+      ],
+      "extensions": [
+        "n8n"
+      ],
+      "ports": [
+        "PORT_N8N"
+      ],
+      "portal": {
+        "port": "PORT_N8N",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_N8N",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_N8N",
+        "path": ""
+      },
+      "notes": "Use n8n to orchestrate multi-step automations.",
+      "webui": {
+        "category": "Automation",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "n8n",
+          "port": "PORT_N8N",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open n8n",
+          "type": "open_url",
+          "port": "PORT_N8N",
+          "path": ""
+        }
+      ]
+    },
+    "uptime_monitoring": {
+      "title": "Uptime Monitoring",
+      "description": "Uptime Kuma for service monitoring and alerting.",
+      "packs": [
+        "observability_otel"
+      ],
+      "extensions": [
+        "uptime_kuma"
+      ],
+      "ports": [
+        "PORT_KUMA"
+      ],
+      "portal": {
+        "port": "PORT_KUMA",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_KUMA",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_KUMA",
+        "path": ""
+      },
+      "notes": "Create checks for internal services.",
+      "webui": {
+        "category": "Observability",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Uptime Kuma",
+          "port": "PORT_KUMA",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Kuma",
+          "type": "open_url",
+          "port": "PORT_KUMA",
+          "path": ""
+        }
+      ]
+    },
+    "container_admin": {
+      "title": "Container Admin",
+      "description": "Portainer UI for container management.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "portainer"
+      ],
+      "ports": [
+        "PORT_PORTAINER"
+      ],
+      "portal": {
+        "port": "PORT_PORTAINER",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_PORTAINER",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_PORTAINER",
+        "path": ""
+      },
+      "notes": "Manage containers and stacks through Portainer.",
+      "webui": {
+        "category": "Operations",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Portainer",
+          "port": "PORT_PORTAINER",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Portainer",
+          "type": "open_url",
+          "port": "PORT_PORTAINER",
+          "path": ""
+        }
+      ]
+    },
+    "object_storage": {
+      "title": "Object Storage",
+      "description": "MinIO S3-compatible storage for artifacts and datasets.",
+      "packs": [
+        "artifact_store_minio"
+      ],
+      "extensions": [
+        "minio"
+      ],
+      "ports": [
+        "PORT_MINIO",
+        "PORT_MINIO_CONSOLE"
+      ],
+      "portal": {
+        "port": "PORT_MINIO_CONSOLE",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_MINIO",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_MINIO",
+        "path": ""
+      },
+      "notes": "Use MinIO for model artifacts and datasets.",
+      "webui": {
+        "category": "Storage",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "MinIO API",
+          "port": "PORT_MINIO",
+          "path": ""
+        },
+        {
+          "type": "http",
+          "name": "MinIO Console",
+          "port": "PORT_MINIO_CONSOLE",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open MinIO Console",
+          "type": "open_url",
+          "port": "PORT_MINIO_CONSOLE",
+          "path": ""
+        }
+      ]
+    },
+    "reverse_proxy": {
+      "title": "Reverse Proxy",
+      "description": "Traefik edge routing and TLS termination.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "traefik"
+      ],
+      "ports": [
+        "PORT_TRAEFIK_HTTP",
+        "PORT_TRAEFIK_DASHBOARD"
+      ],
+      "portal": {
+        "port": "PORT_TRAEFIK_DASHBOARD",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_TRAEFIK_DASHBOARD",
+        "path": "api/rawdata"
+      },
+      "health": {
+        "port": "PORT_TRAEFIK_DASHBOARD",
+        "path": ""
+      },
+      "notes": "Use Traefik to route services in prodish deployments.",
+      "webui": {
+        "category": "Networking",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "Traefik",
+          "port": "PORT_TRAEFIK_DASHBOARD",
+          "path": ""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open Traefik",
+          "type": "open_url",
+          "port": "PORT_TRAEFIK_DASHBOARD",
+          "path": ""
+        }
+      ]
+    },
+    "queue_workers": {
+      "title": "Queue Workers",
+      "description": "Background job queue and workers (RQ + Redis).",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "redis"
+      ],
+      "ports": [
+        "PORT_REDIS"
+      ],
+      "portal": {
+        "port": "PORT_REDIS",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_REDIS",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_REDIS",
+        "path": ""
+      },
+      "notes": "Use ./bin/beast queue worker to run background jobs.",
+      "webui": {
+        "category": "Operations",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "tcp",
+          "name": "Redis",
+          "port": "PORT_REDIS"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Queue Status",
+          "type": "beast_cmd",
+          "cmd": "queue status"
+        }
+      ]
+    },
+    "defcon_stack": {
+      "title": "DEFCON Stack",
+      "description": "Offensive security + reconnaissance baseline.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Requires local tool installs; run tests from tool registry.",
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nmap",
+          "tool": "nmap"
+        },
+        {
+          "type": "tool",
+          "name": "nuclei",
+          "tool": "nuclei"
+        },
+        {
+          "type": "tool",
+          "name": "sqlmap",
+          "tool": "sqlmap"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nmap",
+          "type": "tool_run",
+          "tool": "nmap",
+          "entrypoint": "nmap",
+          "args": "--version"
+        }
+      ]
+    },
+    "offsec_suite": {
+      "title": "OFFSEC Suite",
+      "description": "Exploitation and testing workflow tools.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "metasploit",
+          "tool": "metasploit"
+        },
+        {
+          "type": "tool",
+          "name": "hydra",
+          "tool": "hydra"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run msfconsole",
+          "type": "tool_run",
+          "tool": "metasploit",
+          "entrypoint": "msfconsole",
+          "args": "-v"
+        }
+      ]
+    },
+    "osint_suite": {
+      "title": "OSINT Suite",
+      "description": "Open-source intelligence tooling.",
+      "packs": [
+        "osint",
+        "networking"
+      ],
+      "extensions": [
+        "searxng"
+      ],
+      "ports": [
+        "PORT_SEARXNG"
+      ],
+      "portal": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "api": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "health": {
+        "port": "PORT_SEARXNG",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "http",
+          "name": "SearXNG",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        },
+        {
+          "type": "tool",
+          "name": "amass",
+          "tool": "amass"
+        },
+        {
+          "type": "tool",
+          "name": "theHarvester",
+          "tool": "theharvester"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open SearXNG",
+          "type": "open_url",
+          "port": "PORT_SEARXNG",
+          "path": ""
+        }
+      ]
+    },
+    "sigint_suite": {
+      "title": "SIGINT Suite",
+      "description": "Signal intelligence tooling and analysis.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "rtl_433",
+          "tool": "rtl_433"
+        },
+        {
+          "type": "tool",
+          "name": "gnuradio",
+          "tool": "gnuradio"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run rtl_433",
+          "type": "tool_run",
+          "tool": "rtl_433",
+          "entrypoint": "rtl_433",
+          "args": "-V"
+        }
+      ]
+    },
+    "networking_suite": {
+      "title": "Networking Suite",
+      "description": "Discovery and network diagnostics tools.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nmap",
+          "tool": "nmap"
+        },
+        {
+          "type": "tool",
+          "name": "masscan",
+          "tool": "masscan"
+        },
+        {
+          "type": "tool",
+          "name": "traceroute",
+          "tool": "traceroute"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nmap",
+          "type": "tool_run",
+          "tool": "nmap",
+          "entrypoint": "nmap",
+          "args": "--version"
+        }
+      ]
+    },
+    "analysis_suite": {
+      "title": "Analysis Suite",
+      "description": "Binary, data, and packet analysis tools.",
+      "packs": [
+        "defsec",
+        "dataviz_ml"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "wireshark",
+          "tool": "wireshark"
+        },
+        {
+          "type": "tool",
+          "name": "tshark",
+          "tool": "tshark"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run tshark",
+          "type": "tool_run",
+          "tool": "tshark",
+          "entrypoint": "tshark",
+          "args": "-v"
+        }
+      ]
+    },
+    "vuln_scanning": {
+      "title": "Vulnerability Scanning",
+      "description": "Web and infrastructure vulnerability scanners.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nuclei",
+          "tool": "nuclei"
+        },
+        {
+          "type": "tool",
+          "name": "nikto",
+          "tool": "nikto"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nuclei",
+          "type": "tool_run",
+          "tool": "nuclei",
+          "entrypoint": "nuclei",
+          "args": "-version"
+        }
+      ]
+    },
+    "web_enum": {
+      "title": "Web Enumeration",
+      "description": "HTTP probing, fuzzing, and content discovery.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "httpx",
+          "tool": "httpx"
+        },
+        {
+          "type": "tool",
+          "name": "ffuf",
+          "tool": "ffuf"
+        },
+        {
+          "type": "tool",
+          "name": "feroxbuster",
+          "tool": "feroxbuster"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run httpx",
+          "type": "tool_run",
+          "tool": "httpx",
+          "entrypoint": "httpx",
+          "args": "-version"
+        }
+      ]
+    },
+    "recon_suite": {
+      "title": "Recon Suite",
+      "description": "Passive and active recon tooling.",
+      "packs": [
+        "osint",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "subfinder",
+          "tool": "subfinder"
+        },
+        {
+          "type": "tool",
+          "name": "amass",
+          "tool": "amass"
+        },
+        {
+          "type": "tool",
+          "name": "assetfinder",
+          "tool": "assetfinder"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run subfinder",
+          "type": "tool_run",
+          "tool": "subfinder",
+          "entrypoint": "subfinder",
+          "args": "-version"
+        }
+      ]
+    },
+    "credential_audit": {
+      "title": "Credential Audit",
+      "description": "Password auditing and breach checks.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "hashcat",
+          "tool": "hashcat"
+        },
+        {
+          "type": "tool",
+          "name": "john",
+          "tool": "john"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run hashcat",
+          "type": "tool_run",
+          "tool": "hashcat",
+          "entrypoint": "hashcat",
+          "args": "--version"
+        }
+      ]
+    },
+    "packet_capture": {
+      "title": "Packet Capture",
+      "description": "Network capture and inspection.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "tcpdump",
+          "tool": "tcpdump"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run tcpdump",
+          "type": "tool_run",
+          "tool": "tcpdump",
+          "entrypoint": "tcpdump",
+          "args": "--version"
+        }
+      ]
+    },
+    "malware_analysis": {
+      "title": "Malware Analysis",
+      "description": "Static and dynamic malware analysis utilities.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "radare2",
+          "tool": "radare2"
+        },
+        {
+          "type": "tool",
+          "name": "yara",
+          "tool": "yara"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run yara",
+          "type": "tool_run",
+          "tool": "yara",
+          "entrypoint": "yara",
+          "args": "--version"
+        }
+      ]
+    },
+    "forensics_suite": {
+      "title": "Forensics Suite",
+      "description": "Disk and file forensics tooling.",
+      "packs": [
+        "defsec"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "volatility3",
+          "tool": "volatility3"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run volatility",
+          "type": "tool_run",
+          "tool": "volatility3",
+          "entrypoint": "vol",
+          "args": "--help"
+        }
+      ]
+    },
+    "red_team_ops": {
+      "title": "Red Team Ops",
+      "description": "Operational tooling for red team workflows.",
+      "packs": [
+        "defsec",
+        "networking"
+      ],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "impacket",
+          "tool": "impacket"
+        },
+        {
+          "type": "tool",
+          "name": "crackmapexec",
+          "tool": "crackmapexec"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run impacket",
+          "type": "tool_run",
+          "tool": "impacket",
+          "entrypoint": "impacket-GetUserSPNs",
+          "args": "-h"
+        }
+      ]
+    },
+    "blue_team_ops": {
+      "title": "Blue Team Ops",
+      "description": "Monitoring and detection workflows.",
+      "packs": [
+        "defsec",
+        "observability_otel"
+      ],
+      "extensions": [
+        "otel_collector"
+      ],
+      "ports": [
+        "PORT_OTEL_HTTP"
+      ],
+      "health": {
+        "port": "PORT_OTEL_HTTP",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "tcp",
+          "name": "OTel HTTP",
+          "port": "PORT_OTEL_HTTP"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open OTel",
+          "type": "open_url",
+          "port": "PORT_OTEL_HTTP",
+          "path": ""
+        }
+      ]
+    },
+    "gpu_presence": {
+      "title": "GPU Presence",
+      "description": "Detects GPU availability for acceleration.",
+      "packs": [],
+      "extensions": [],
+      "ports": [],
+      "checks": [
+        {
+          "type": "tool",
+          "name": "nvidia-smi",
+          "tool": "nvidia-smi",
+          "args": "-L"
+        },
+        {
+          "type": "tool",
+          "name": "system_profiler",
+          "tool": "system_profiler",
+          "args": "SPDisplaysDataType"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run nvidia-smi",
+          "type": "tool_run",
+          "tool": "nvidia-smi",
+          "args": "-L"
+        },
+        {
+          "label": "Run system_profiler",
+          "type": "tool_run",
+          "tool": "system_profiler",
+          "args": "SPDisplaysDataType"
+        }
+      ]
+    },
+    "open_webui_internal": {
+      "title": "Open WebUI Internal",
+      "description": "Internal compose check using service name.",
+      "packs": [
+        "networking"
+      ],
+      "extensions": [
+        "open_webui"
+      ],
+      "ports": [
+        "PORT_WEBUI"
+      ],
+      "notes": "Runs inside compose network (requires allow).",
+      "checks": [
+        {
+          "type": "compose_http",
+          "name": "Open WebUI (internal)",
+          "service": "open-webui",
+          "port": "PORT_WEBUI",
+          "service_port": 8080,
+          "path": "health"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Open WebUI",
+          "type": "open_url",
+          "port": "PORT_WEBUI",
+          "path": ""
+        }
+      ]
+    },
+    "mapping_suite": {
+      "title": "Mapping Suite",
+      "description": "Geospatial analysis and mapping workflows.",
+      "packs": [
+        "mapping"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Enable mapping pack tools and datasets as needed.",
+      "webui": {
+        "category": "Mapping",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "tool",
+          "name": "gdalinfo",
+          "tool": "gdalinfo",
+          "args": "--version"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run gdalinfo",
+          "type": "tool_run",
+          "tool": "gdalinfo",
+          "args": "--version"
+        }
+      ]
+    },
+    "research_workspace": {
+      "title": "Research Workspace",
+      "description": "Research-focused tooling and knowledge workflows.",
+      "packs": [
+        "research_hegel_esoteric"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Enable the research pack and attach relevant data stores.",
+      "webui": {
+        "category": "Research",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "tool",
+          "name": "pandoc",
+          "tool": "pandoc",
+          "args": "--version"
+        }
+      ],
+      "actions": [
+        {
+          "label": "Run pandoc",
+          "type": "tool_run",
+          "tool": "pandoc",
+          "args": "--version"
+        }
+      ]
+    },
+    "mlx_runtime": {
+      "title": "MLX Runtime",
+      "description": "Apple MLX runtime for on-device inference (macOS).",
+      "packs": [
+        "mlx_runtime"
+      ],
+      "extensions": [],
+      "ports": [],
+      "notes": "Install MLX and models locally for accelerated runs.",
+      "webui": {
+        "category": "Runtime",
+        "path": ""
+      },
+      "checks": [
+        {
+          "type": "tool",
+          "name": "python3 import mlx",
+          "tool": "python3",
+          "args": "-c \"import mlx\""
+        }
+      ],
+      "actions": [
+        {
+          "label": "Test MLX import",
+          "type": "tool_run",
+          "tool": "python3",
+          "args": "-c \"import mlx; print(mlx.__version__)\""
+        }
+      ]
+    }
+  }
+}

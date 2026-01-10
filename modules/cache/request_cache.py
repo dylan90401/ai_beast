@@ -33,26 +33,20 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import logging
 import os
 import pickle
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 from typing import (
     Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
     ParamSpec,
     TypeVar,
-    Union,
 )
 
 from modules.utils.logging_config import get_logger
@@ -77,7 +71,7 @@ class CacheEntry:
     last_accessed: datetime = field(default_factory=datetime.now)
     access_count: int = 0
     size_bytes: int = 0
-    ttl_override: Optional[timedelta] = None
+    ttl_override: timedelta | None = None
 
     @property
     def age(self) -> timedelta:
@@ -109,8 +103,8 @@ class CacheStats:
     expirations: int = 0
     size_bytes: int = 0
     entry_count: int = 0
-    oldest_entry_age: Optional[timedelta] = None
-    
+    oldest_entry_age: timedelta | None = None
+
     @property
     def hit_rate(self) -> float:
         """Cache hit rate (0.0 to 1.0)."""
@@ -122,7 +116,7 @@ class CacheStats:
         """Total cache requests."""
         return self.hits + self.misses
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "hits": self.hits,
@@ -179,7 +173,7 @@ class RequestCache:
         max_entries: int = 1000,
         max_size_bytes: int = 100 * 1024 * 1024,  # 100 MB
         ttl: timedelta = timedelta(hours=1),
-        persist_path: Optional[Path] = None,
+        persist_path: Path | None = None,
         namespace: str = "default",
     ):
         """
@@ -201,7 +195,7 @@ class RequestCache:
         self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self._lock = threading.RLock()
         self._stats = CacheStats()
-        
+
         # Cleanup settings
         self._cleanup_interval = min(ttl.total_seconds() / 2, 300)  # Max 5 min
         self._last_cleanup = time.time()
@@ -215,7 +209,7 @@ class RequestCache:
         func_name: str,
         args: tuple,
         kwargs: dict,
-        key_prefix: Optional[str] = None,
+        key_prefix: str | None = None,
     ) -> str:
         """
         Create a cache key from function name and arguments.
@@ -229,10 +223,10 @@ class RequestCache:
             "args": self._serialize_for_key(args),
             "kwargs": self._serialize_for_key(sorted(kwargs.items())),
         }
-        
+
         if key_prefix:
             key_parts["prefix"] = key_prefix
-        
+
         serialized = json.dumps(key_parts, sort_keys=True, default=str)
         return hashlib.sha256(serialized.encode()).hexdigest()
 
@@ -359,7 +353,7 @@ class RequestCache:
         self,
         key: str,
         value: Any,
-        ttl: Optional[timedelta] = None,
+        ttl: timedelta | None = None,
     ):
         """
         Set a value in the cache.
@@ -397,7 +391,7 @@ class RequestCache:
         self,
         key: str,
         factory: Callable[[], T],
-        ttl: Optional[timedelta] = None,
+        ttl: timedelta | None = None,
     ) -> T:
         """
         Get value from cache or compute and store it.
@@ -427,7 +421,7 @@ class RequestCache:
         self,
         key: str,
         factory: Callable[[], Any],
-        ttl: Optional[timedelta] = None,
+        ttl: timedelta | None = None,
     ) -> Any:
         """
         Async version of get_or_set.
@@ -490,18 +484,18 @@ class RequestCache:
             Number of keys invalidated
         """
         import fnmatch
-        
+
         with self._lock:
             to_remove = [
                 key for key in self._cache.keys()
                 if fnmatch.fnmatch(key, pattern)
             ]
-            
+
             for key in to_remove:
                 entry = self._cache.pop(key)
                 self._stats.size_bytes -= entry.size_bytes
                 self._stats.entry_count -= 1
-            
+
             return len(to_remove)
 
     def clear(self):
@@ -527,18 +521,18 @@ class RequestCache:
                 size_bytes=self._stats.size_bytes,
                 entry_count=len(self._cache),
             )
-            
+
             if self._cache:
                 oldest = next(iter(self._cache.values()))
                 stats.oldest_entry_age = oldest.age
-            
+
             return stats
 
     def cached(
         self,
-        ttl: Optional[timedelta] = None,
-        key_prefix: Optional[str] = None,
-        key_func: Optional[Callable[..., str]] = None,
+        ttl: timedelta | None = None,
+        key_prefix: str | None = None,
+        key_func: Callable[..., str] | None = None,
     ):
         """
         Decorator to cache function results.
@@ -601,9 +595,9 @@ class RequestCache:
 
     def cached_async(
         self,
-        ttl: Optional[timedelta] = None,
-        key_prefix: Optional[str] = None,
-        key_func: Optional[Callable[..., str]] = None,
+        ttl: timedelta | None = None,
+        key_prefix: str | None = None,
+        key_func: Callable[..., str] | None = None,
     ):
         """
         Decorator to cache async function results.
@@ -658,7 +652,7 @@ class RequestCache:
                     "created": datetime.now().isoformat(),
                     "entries": {},
                 }
-                
+
                 for key, entry in self._cache.items():
                     try:
                         data["entries"][key] = {
@@ -693,11 +687,11 @@ class RequestCache:
                 # Restore entries
                 for key, entry_data in data.get("entries", {}).items():
                     created_at = datetime.fromisoformat(entry_data["created_at"])
-                    
+
                     # Skip expired entries
                     if datetime.now() - created_at > self.ttl:
                         continue
-                    
+
                     entry = CacheEntry(
                         key=key,
                         value=entry_data["value"],
@@ -705,7 +699,7 @@ class RequestCache:
                         last_accessed=created_at,
                         size_bytes=entry_data.get("size_bytes", 0),
                     )
-                    
+
                     self._cache[key] = entry
                     self._stats.size_bytes += entry.size_bytes
 
@@ -740,9 +734,9 @@ class RequestCache:
 
 
 # Global cache instances for different use cases
-_embedding_cache: Optional[RequestCache] = None
-_ollama_cache: Optional[RequestCache] = None
-_api_cache: Optional[RequestCache] = None
+_embedding_cache: RequestCache | None = None
+_ollama_cache: RequestCache | None = None
+_api_cache: RequestCache | None = None
 
 
 def get_embedding_cache() -> RequestCache:
@@ -826,39 +820,39 @@ def get_api_cache() -> RequestCache:
 def clear_all_caches():
     """Clear all global caches."""
     global _embedding_cache, _ollama_cache, _api_cache
-    
+
     for cache in [_embedding_cache, _ollama_cache, _api_cache]:
         if cache:
             cache.clear()
-    
+
     logger.info("Cleared all global caches")
 
 
 def save_all_caches():
     """Persist all global caches to disk."""
     global _embedding_cache, _ollama_cache, _api_cache
-    
+
     for cache in [_embedding_cache, _ollama_cache, _api_cache]:
         if cache:
             cache.save()
-    
+
     logger.info("Saved all global caches")
 
 
-def get_all_cache_stats() -> Dict[str, Dict[str, Any]]:
+def get_all_cache_stats() -> dict[str, dict[str, Any]]:
     """Get statistics for all global caches."""
     global _embedding_cache, _ollama_cache, _api_cache
-    
+
     stats = {}
-    
+
     caches = [
         ("embeddings", _embedding_cache),
         ("ollama", _ollama_cache),
         ("api", _api_cache),
     ]
-    
+
     for name, cache in caches:
         if cache:
             stats[name] = cache.stats().to_dict()
-    
+
     return stats

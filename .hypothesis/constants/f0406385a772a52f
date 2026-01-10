@@ -1,0 +1,4 @@
+# file: /Users/wolfen/_dev/_AI_Kryptos/ai_beast/modules/tools/registry.py
+# hypothesis_version: 6.150.0
+
+[-20000, 200, 400, 404, 500, '*.tar.gz', '.tar', '/', 'Invalid tool name', 'Tool run failed', '\\', '_ai_tools', 'args', 'cmd', 'config/tools.json', 'cwd', 'description', 'entrypoint', 'env', 'error', 'extracted', 'installer', 'items', 'local', 'missing entrypoint', 'mode', 'name', 'not-implemented', 'ok', 'path', 'r:gz', 'returncode', 'run', 'runner', 'skipped', 'status', 'stderr', 'stdout', 'test_command', 'test_url', 'tool not found', 'tool_run', 'tools', 'utf-8', 'version']

@@ -38,14 +38,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import os
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any
 
 from modules.utils.logging_config import get_logger
 
@@ -65,10 +64,10 @@ class IngestionStatus(Enum):
 class IngestionTask:
     """Represents a document ingestion task."""
     doc_path: Path
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     priority: int = 0
     max_retries: int = 3
-    
+
     def __post_init__(self):
         self.doc_path = Path(self.doc_path)
 
@@ -82,14 +81,14 @@ class IngestionResult:
     vectors_stored: int = 0
     file_size_bytes: int = 0
     duration_seconds: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
     retries: int = 0
-    
+
     @property
     def success(self) -> bool:
         return self.status == IngestionStatus.SUCCESS
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "doc_path": str(self.doc_path),
             "status": self.status.value,
@@ -114,20 +113,20 @@ class BatchStats:
     total_vectors: int = 0
     total_bytes: int = 0
     total_duration: float = 0.0
-    
+
     @property
     def success_rate(self) -> float:
         if self.total_files == 0:
             return 0.0
         return self.successful / self.total_files
-    
+
     @property
     def throughput_files_per_second(self) -> float:
         if self.total_duration == 0:
             return 0.0
         return self.successful / self.total_duration
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total_files": self.total_files,
             "successful": self.successful,
@@ -160,7 +159,7 @@ class ParallelIngestor:
         ".py", ".js", ".ts", ".java", ".c", ".cpp", ".h",
         ".html", ".css", ".xml", ".csv", ".log",
     }
-    
+
     # Extensions to skip
     SKIP_EXTENSIONS = {
         ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".ico",
@@ -201,13 +200,13 @@ class ParallelIngestor:
         self.max_file_bytes = max_file_bytes
         self.qdrant_url = qdrant_url
         self.embedding_model = embedding_model
-        
+
         # Thread pool for CPU-bound operations
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
-        
+
         # Semaphore for limiting concurrent operations
         self._semaphore = asyncio.Semaphore(semaphore_limit)
-        
+
         # Lazy-loaded dependencies
         self._embedder = None
         self._qdrant_client = None
@@ -240,20 +239,20 @@ class ParallelIngestor:
                 ) from exc
         return self._qdrant_client
 
-    def _chunk_text(self, text: str) -> List[str]:
+    def _chunk_text(self, text: str) -> list[str]:
         """Split text into overlapping chunks."""
         text = text.replace("\r\n", "\n")
         if self.chunk_size <= 0:
             return [text] if text.strip() else []
-        
+
         chunks = []
         i = 0
         n = len(text)
-        
+
         while i < n:
             # Find chunk end
             j = min(i + self.chunk_size, n)
-            
+
             # Try to break at sentence boundary if possible
             if j < n:
                 # Look back for sentence boundary
@@ -262,45 +261,45 @@ class ParallelIngestor:
                     if pos > i:
                         j = pos + len(sep)
                         break
-            
+
             chunk = text[i:j].strip()
             if chunk:
                 chunks.append(chunk)
-            
+
             if j >= n:
                 break
-            
+
             # Move forward with overlap
             i = max(i + 1, j - self.chunk_overlap)
-        
+
         return chunks
 
     def _read_file(self, path: Path) -> str:
         """Read file with best-effort encoding detection."""
         data = path.read_bytes()
-        
+
         if len(data) > self.max_file_bytes:
             logger.warning(
                 f"File {path} exceeds max size, truncating "
                 f"({len(data)} > {self.max_file_bytes})"
             )
             data = data[:self.max_file_bytes]
-        
+
         # Try encodings in order
         for enc in ("utf-8", "utf-8-sig", "latin-1", "cp1252"):
             try:
                 return data.decode(enc)
             except (UnicodeDecodeError, LookupError):
                 continue
-        
+
         # Last resort: ignore errors
         return data.decode("utf-8", errors="ignore")
 
-    def _compute_embeddings(self, chunks: List[str]) -> List[List[float]]:
+    def _compute_embeddings(self, chunks: list[str]) -> list[list[float]]:
         """Compute embeddings for text chunks."""
         if not chunks:
             return []
-        
+
         embedder = self._get_embedder()
         vectors = embedder.encode(
             chunks,
@@ -313,9 +312,9 @@ class ParallelIngestor:
     def _ensure_collection(self, collection: str, vector_dim: int):
         """Ensure Qdrant collection exists."""
         from qdrant_client.http.models import Distance, VectorParams
-        
+
         client = self._get_qdrant_client()
-        
+
         try:
             info = client.get_collection(collection)
             # Verify dimension matches
@@ -343,7 +342,7 @@ class ParallelIngestor:
         """Ingest a single document."""
         start_time = time.time()
         path = task.doc_path
-        
+
         # Validate file
         if not path.exists():
             return IngestionResult(
@@ -352,7 +351,7 @@ class ParallelIngestor:
                 error="File not found",
                 duration_seconds=time.time() - start_time,
             )
-        
+
         if not path.is_file():
             return IngestionResult(
                 doc_path=path,
@@ -360,7 +359,7 @@ class ParallelIngestor:
                 error="Not a file",
                 duration_seconds=time.time() - start_time,
             )
-        
+
         # Check extension
         if path.suffix.lower() in self.SKIP_EXTENSIONS:
             return IngestionResult(
@@ -369,7 +368,7 @@ class ParallelIngestor:
                 error="Unsupported file type",
                 duration_seconds=time.time() - start_time,
             )
-        
+
         try:
             # Read file in executor
             loop = asyncio.get_event_loop()
@@ -378,7 +377,7 @@ class ParallelIngestor:
                 self._read_file,
                 path,
             )
-            
+
             if not text.strip():
                 return IngestionResult(
                     doc_path=path,
@@ -386,14 +385,14 @@ class ParallelIngestor:
                     error="Empty file",
                     duration_seconds=time.time() - start_time,
                 )
-            
+
             # Chunk text
             chunks = await loop.run_in_executor(
                 self._executor,
                 self._chunk_text,
                 text,
             )
-            
+
             if not chunks:
                 return IngestionResult(
                     doc_path=path,
@@ -401,7 +400,7 @@ class ParallelIngestor:
                     error="No content after chunking",
                     duration_seconds=time.time() - start_time,
                 )
-            
+
             # Compute embeddings
             async with self._semaphore:
                 vectors = await loop.run_in_executor(
@@ -409,7 +408,7 @@ class ParallelIngestor:
                     self._compute_embeddings,
                     chunks,
                 )
-            
+
             if not vectors:
                 return IngestionResult(
                     doc_path=path,
@@ -417,18 +416,18 @@ class ParallelIngestor:
                     error="Embedding failed",
                     duration_seconds=time.time() - start_time,
                 )
-            
+
             # Ensure collection exists
             self._ensure_collection(collection, len(vectors[0]))
-            
+
             # Store in Qdrant
             client = self._get_qdrant_client()
-            
+
             # Generate point IDs based on content hash
             file_hash = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
-            
+
             from qdrant_client.http.models import PointStruct
-            
+
             points = []
             for i, (chunk, vector) in enumerate(zip(chunks, vectors)):
                 point_id = f"{file_hash}_{i:04d}"
@@ -445,21 +444,21 @@ class ParallelIngestor:
                     vector=vector,
                     payload=payload,
                 ))
-            
+
             # Upsert points
             client.upsert(
                 collection_name=collection,
                 points=points,
                 wait=True,
             )
-            
+
             duration = time.time() - start_time
-            
+
             logger.debug(
                 f"Ingested {path.name}: "
                 f"{len(chunks)} chunks, {duration:.2f}s"
             )
-            
+
             return IngestionResult(
                 doc_path=path,
                 status=IngestionStatus.SUCCESS,
@@ -468,7 +467,7 @@ class ParallelIngestor:
                 file_size_bytes=path.stat().st_size,
                 duration_seconds=duration,
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to ingest {path}: {e}")
             return IngestionResult(
@@ -480,10 +479,10 @@ class ParallelIngestor:
 
     async def ingest_batch(
         self,
-        tasks: List[IngestionTask],
+        tasks: list[IngestionTask],
         collection: str = "ai_beast",
-        progress_callback: Optional[Callable[[IngestionResult], None]] = None,
-    ) -> List[IngestionResult]:
+        progress_callback: Callable[[IngestionResult], None] | None = None,
+    ) -> list[IngestionResult]:
         """
         Ingest multiple documents in parallel.
 
@@ -497,53 +496,53 @@ class ParallelIngestor:
         """
         if not tasks:
             return []
-        
+
         # Sort by priority (higher first)
         tasks = sorted(tasks, key=lambda t: t.priority, reverse=True)
-        
+
         logger.info(f"Starting batch ingestion: {len(tasks)} documents")
         start_time = time.time()
-        
+
         # Create coroutines
         coroutines = [
             self._ingest_single(task, collection)
             for task in tasks
         ]
-        
+
         # Process with progress tracking
-        results: List[IngestionResult] = []
-        
+        results: list[IngestionResult] = []
+
         for coro in asyncio.as_completed(coroutines):
             result = await coro
             results.append(result)
-            
+
             if progress_callback:
                 try:
                     progress_callback(result)
                 except Exception as e:
                     logger.error(f"Progress callback error: {e}")
-        
+
         total_time = time.time() - start_time
         success_count = sum(1 for r in results if r.success)
-        
+
         logger.info(
             f"Batch ingestion complete: "
             f"{success_count}/{len(results)} successful, "
             f"{total_time:.2f}s total"
         )
-        
+
         return results
 
     async def ingest_directory(
         self,
-        directory: Union[Path, str],
+        directory: Path | str,
         collection: str = "ai_beast",
-        extensions: Optional[Set[str]] = None,
+        extensions: set[str] | None = None,
         recursive: bool = True,
         skip_hidden: bool = True,
-        skip_patterns: Optional[Set[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        progress_callback: Optional[Callable[[IngestionResult], None]] = None,
+        skip_patterns: set[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        progress_callback: Callable[[IngestionResult], None] | None = None,
     ) -> BatchStats:
         """
         Ingest all documents in a directory.
@@ -562,68 +561,68 @@ class ParallelIngestor:
             BatchStats with aggregated statistics
         """
         directory = Path(directory)
-        
+
         if not directory.exists():
             raise ValueError(f"Directory not found: {directory}")
-        
+
         if not directory.is_dir():
             raise ValueError(f"Not a directory: {directory}")
-        
+
         # Find files
         if recursive:
             files = list(directory.rglob("*"))
         else:
             files = list(directory.glob("*"))
-        
+
         # Filter files
         tasks = []
         skip_patterns = skip_patterns or set()
         extensions = extensions or self.DEFAULT_EXTENSIONS
-        
+
         for path in files:
             # Skip directories
             if not path.is_file():
                 continue
-            
+
             # Skip hidden files
             if skip_hidden and (
                 path.name.startswith(".") or
                 any(p.startswith(".") for p in path.parts)
             ):
                 continue
-            
+
             # Check extension
             if extensions and path.suffix.lower() not in extensions:
                 continue
-            
+
             # Check skip patterns
             skip = False
             for pattern in skip_patterns:
                 if path.match(pattern):
                     skip = True
                     break
-            
+
             if skip:
                 continue
-            
+
             # Create task
             task_metadata = {
                 "source_dir": str(directory),
                 "relative_path": str(path.relative_to(directory)),
                 **(metadata or {}),
             }
-            
+
             tasks.append(IngestionTask(
                 doc_path=path,
                 metadata=task_metadata,
             ))
-        
+
         if not tasks:
             logger.warning(f"No files found to ingest in {directory}")
             return BatchStats()
-        
+
         logger.info(f"Found {len(tasks)} files to ingest in {directory}")
-        
+
         # Run batch ingestion
         start_time = time.time()
         results = await self.ingest_batch(
@@ -631,10 +630,10 @@ class ParallelIngestor:
             collection=collection,
             progress_callback=progress_callback,
         )
-        
+
         # Compile stats
         stats = BatchStats(total_files=len(results))
-        
+
         for result in results:
             if result.status == IngestionStatus.SUCCESS:
                 stats.successful += 1
@@ -645,15 +644,15 @@ class ParallelIngestor:
                 stats.failed += 1
             else:
                 stats.skipped += 1
-        
+
         stats.total_duration = time.time() - start_time
-        
+
         logger.info(
             f"Directory ingestion complete: "
             f"{stats.successful} success, {stats.failed} failed, "
             f"{stats.skipped} skipped ({stats.total_duration:.2f}s)"
         )
-        
+
         return stats
 
     def close(self):
@@ -661,7 +660,7 @@ class ParallelIngestor:
         if self._executor:
             self._executor.shutdown(wait=False)
             self._executor = None
-        
+
         self._embedder = None
         self._qdrant_client = None
 
@@ -674,7 +673,7 @@ class ParallelIngestor:
 
 # Convenience functions
 async def parallel_ingest_directory(
-    directory: Union[Path, str],
+    directory: Path | str,
     collection: str = "ai_beast",
     max_workers: int = 4,
     **kwargs,
@@ -700,7 +699,7 @@ async def parallel_ingest_directory(
 
 
 def parallel_ingest_directory_sync(
-    directory: Union[Path, str],
+    directory: Path | str,
     collection: str = "ai_beast",
     max_workers: int = 4,
     **kwargs,

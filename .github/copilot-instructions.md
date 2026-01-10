@@ -40,6 +40,21 @@ If a check is not applicable (e.g., docker not installed), you must:
 4) **Prove**: provide commands + expected results.
 5) **Rollback**: explain how to revert.
 
+## Project-specific patterns & quick checks
+- Centralize subprocess/process execution in `beast/runtime.py` (prefer this over ad-hoc subprocess calls).
+- Shell scripts: use helpers in `scripts/lib/` (`ux.sh`, `deps.sh`, `compose_utils.sh`) and implement DRYRUN vs APPLY.
+- Compose generation merges `docker/compose.yaml`, `docker/compose.ops.yaml`, and `extensions/**/compose.fragment.yaml` → validate with `docker compose -f docker/compose.generated.yaml config`.
+- Asset/trust: `assets install` is governed by `config/resources/trust_policy.json` and `config/resources/allowlists.json` (may fail-closed by default).
+- Useful verification commands to include in PRs:
+  - `make check` (format + lint + tests + shellcheck)
+  - `./bin/beast preflight --verbose`
+  - `docker compose -f docker/compose.generated.yaml config`
+  - `./bin/beast smoke` (if applicable)
+  - `./bin/beast eval --format json --save .cache/eval.json`
+- Tests: add pytest unit tests under `tests/`; add small integration / smoke tests for CLI changes.
+- Files to consult: `README.md`, `CONTRIBUTING.md`, `.github/instructions/*.md`, `beast/cli.py`, `beast/runtime.py`.
+
+
 ## Construct-if-missing (you may create missing pieces)
 If required artifacts are missing/broken, you may create minimal correct versions:
 - Makefile targets (`check`, `lint`, `fmt`, `test`, `compose-validate`)
@@ -69,3 +84,41 @@ Ask for **one** missing output at a time:
 5) Expected results
 6) Risks / edge cases
 7) Rollback
+
+## App-specific notes (quick reference)
+- apps/comfyui:
+  - ComfyUI installs often involve symlinking models into heavy storage and running `./bin/beast comfy postinstall --apply` to seed workflows. Check `apps/comfyui/ComfyUI` README and `extensions/comfyui_manager/` for manager helpers.
+  - Model files and workflows live under `apps/comfyui/ComfyUI/user/` and may be large — prefer `--heavy-dir` or external volumes when testing locally.
+- apps/agent:
+  - Agent playbooks and prompts are in `apps/agent/playbooks/` and `apps/agent/prompts/` — preserve the `DRYRUN` pattern when changing automated flows.
+  - Observability hooks: `modules/monitoring/tracer.py` and `modules/agent/agent_runner.py` set up tracing; include trace file or logs when proving agent behavior.
+- apps/whispercpp (and other model tooling):
+  - Model conversion scripts and README live under `apps/whispercpp/whisper.cpp/`; include model conversion commands in docs when changing model handling.
+- modules/rag:
+  - RAG ingestion expects qdrant running; include `pip install -r modules/rag/requirements.txt` and `./bin/beast rag ingest --apply` in verification steps.
+
+## CI & verification guidance
+- There are no committed workflow files in this repo root; if your PR will introduce or expect CI workflows, include a minimal GitHub Actions YAML and ensure it runs `make check` and any relevant `./bin/beast` validations.
+- Recommended CI steps for PRs affecting infra/runtime:
+  - Checkout + setup Python (`python -m venv .venv && source .venv/bin/activate`) and install dev deps
+  - make check
+  - ./bin/beast preflight --verbose
+  - docker compose -f docker/compose.generated.yaml config (or equivalent validate step)
+  - Run smoke/integration tests (e.g., `./bin/beast smoke` or `pytest -q tests/<target>`)
+- Attach failing logs or a short snippet (last ~80 lines) when reporting CI or runtime failures.
+
+## PR checklist for agents (copy into PR description)
+- Brief summary & rationale
+- Plan (≤ 6 bullets) and list of files changed
+- Verification commands to reproduce locally
+  - `make check`
+  - `./bin/beast preflight --verbose`
+  - `docker compose -f docker/compose.generated.yaml config`
+- Tests added (unit + any small integration/smoke tests)
+- Evidence: CI green or local `make check` + `preflight` outputs attached
+- Risk assessment & rollback steps
+- Ensure no secrets or hardcoded ports/paths are committed
+- If modifying runtime/compose: include `docker compose config` output in PR
+
+---
+Please tell me any app-specific behaviors or CI steps you'd like emphasized and I'll incorporate them.

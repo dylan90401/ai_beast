@@ -9,14 +9,18 @@
     ],
     "observability": [
       "uptime-kuma",
-      "grafana",
-      "prometheus"
+      "otel-collector"
     ],
 
     "agent_builders": [
       "langflow",
       "flowise",
-      "dify"
+      "dify-api",
+      "dify-web",
+      "dify-worker",
+      "dify-db",
+      "dify-redis",
+      "dify-sandbox"
     ],
     "rag_ingest_pro": [
       "apache-tika",

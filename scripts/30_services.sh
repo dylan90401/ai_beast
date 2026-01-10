@@ -55,14 +55,29 @@ start_native(){
       fi
     fi
   fi
+
+  # Dashboard (best-effort)
+  local dash_port="${PORT_DASHBOARD:-8787}"
+  if ! pgrep -f "apps/dashboard/dashboard.py" >/dev/null 2>&1; then
+    if [[ "${DRYRUN:-1}" -eq 0 ]]; then
+      log "Starting dashboard on ${AI_BEAST_BIND_ADDR:-127.0.0.1}:${dash_port}"
+      mkdir -p "$BASE_DIR/logs"
+      nohup /bin/bash -lc "cd \"$BASE_DIR\" && python3 \"$BASE_DIR/apps/dashboard/dashboard.py\"" \
+        >> "$BASE_DIR/logs/dashboard.out.log" 2>> "$BASE_DIR/logs/dashboard.err.log" &
+    else
+      log "DRYRUN: would start dashboard (apps/dashboard/dashboard.py)"
+    fi
+  fi
 }
 
 stop_native(){
   local port="${PORT_COMFYUI:-8188}"
   if [[ "${DRYRUN:-1}" -eq 0 ]]; then
     pkill -f "python .*main.py.*--port ${port}" >/dev/null 2>&1 || true
+    pkill -f "apps/dashboard/dashboard.py" >/dev/null 2>&1 || true
   else
     log "DRYRUN: would pkill ComfyUI process (port=${port})"
+    log "DRYRUN: would pkill dashboard process"
   fi
   # Leave ollama running by default.
 }
@@ -70,6 +85,16 @@ stop_native(){
 ensure_compose_file(){
   # Prefer fully-generated compose (core + ops + enabled fragments)
   local out="$BASE_DIR/docker-compose.yml"
+  local project="$BASE_DIR/kryptos_project.yml"
+  local auto_gen="${AI_BEAST_COMPOSE_AUTO_GEN:-1}"
+  if [[ "$auto_gen" == "1" && -f "$project" ]]; then
+    if [[ "${DRYRUN:-1}" -eq 0 ]]; then
+      "$BASE_DIR/scripts/25_compose_generate.sh" gen --apply --out="$out" >/dev/null
+      echo "$out"; return 0
+    fi
+    log "DRYRUN: would generate $out from kryptos_project.yml"
+    echo "$out"; return 0
+  fi
   if [[ -f "$out" ]]; then
     echo "$out"; return 0
   fi

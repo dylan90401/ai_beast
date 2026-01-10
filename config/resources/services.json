@@ -1,82 +1,529 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "services": {
-    "qdrant": {
-      "tier": "core",
-      "profiles": [
-        "qdrant"
-      ],
-      "image": "qdrant/qdrant:latest",
-      "ports": [
-        "127.0.0.1:${PORT_QDRANT:-6333}:6333",
-        "127.0.0.1:6334:6334"
-      ],
-      "volumes": [
-        "${DATA_DIR:-./data}/qdrant:/qdrant/storage"
-      ],
-      "restart": "unless-stopped"
-    },
-    "open-webui": {
-      "tier": "core",
-      "profiles": [
-        "webui"
-      ],
-      "image": "ghcr.io/open-webui/open-webui:main",
-      "ports": [
-        "127.0.0.1:${PORT_WEBUI:-3000}:8080"
-      ],
-      "environment": [
-        "OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}",
-        "WEBUI_AUTH=false"
-      ],
-      "volumes": [
-        "${DATA_DIR:-./data}/openwebui:/app/backend/data"
-      ],
-      "restart": "unless-stopped"
-    },
-    "uptime-kuma": {
-      "tier": "ops",
-      "profiles": [
-        "kuma"
-      ],
-      "image": "louislam/uptime-kuma:latest",
-      "ports": [
-        "127.0.0.1:${PORT_KUMA:-3001}:3001"
-      ],
-      "volumes": [
-        "${DATA_DIR:-./data}/uptime-kuma:/app/data"
-      ],
-      "restart": "unless-stopped"
-    },
-    "n8n": {
-      "tier": "ops",
-      "profiles": [
-        "n8n"
-      ],
-      "image": "n8nio/n8n:latest",
-      "ports": [
-        "127.0.0.1:${PORT_N8N:-5678}:5678"
-      ],
-      "environment": [
-        "N8N_HOST=127.0.0.1",
-        "N8N_PORT=5678",
-        "N8N_PROTOCOL=http"
-      ],
-      "volumes": [
-        "${DATA_DIR:-./data}/n8n:/home/node/.n8n"
-      ],
-      "restart": "unless-stopped"
-    },
     "apache-tika": {
       "tier": "optional",
       "profiles": [
         "rag_ingest_pro"
       ],
       "image": "apache/tika:latest",
+      "build": null,
       "ports": [
-        "127.0.0.1:${PORT_TIKA:-9998}:9998"
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TIKA:-9998}:9998"
       ],
-      "restart": "unless-stopped"
+      "environment": [],
+      "volumes": [],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/apache_tika/compose.fragment.yaml"
+    },
+    "dify-api": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "langgenius/dify-api:latest",
+      "build": null,
+      "ports": [],
+      "environment": [
+        "MODE=api",
+        "LOG_LEVEL=INFO",
+        "SECRET_KEY=${DIFY_SECRET_KEY:-change-me}",
+        "DB_HOST=dify-db",
+        "DB_PORT=5432",
+        "DB_USERNAME=${DIFY_DB_USER:-dify}",
+        "DB_PASSWORD=${DIFY_DB_PASSWORD:-dify}",
+        "DB_DATABASE=${DIFY_DB_NAME:-dify}",
+        "REDIS_HOST=dify-redis",
+        "REDIS_PORT=6379",
+        "REDIS_PASSWORD=",
+        "CELERY_BROKER_URL=redis://dify-redis:6379/0",
+        "CELERY_RESULT_BACKEND=redis://dify-redis:6379/1",
+        "STORAGE_TYPE=local",
+        "STORAGE_LOCAL_PATH=/app/api/storage",
+        "SANDBOX_HOST=dify-sandbox",
+        "SANDBOX_PORT=8194",
+        "SANDBOX_API_KEY=${DIFY_SANDBOX_API_KEY:-dify-sandbox}",
+        "VECTOR_STORE=qdrant",
+        "QDRANT_URL=http://qdrant:6333",
+        "CONSOLE_WEB_URL=http://127.0.0.1:${PORT_DIFY:-3004}",
+        "CONSOLE_API_URL=http://dify-api:5001",
+        "SERVICE_API_URL=http://dify-api:5001"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/dify/storage:/app/api/storage"
+      ],
+      "depends_on": [
+        "dify-db",
+        "dify-redis",
+        "dify-sandbox"
+      ],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/dify/compose.fragment.yaml"
+    },
+    "dify-db": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "postgres:15",
+      "build": null,
+      "ports": [],
+      "environment": [
+        "POSTGRES_USER=${DIFY_DB_USER:-dify}",
+        "POSTGRES_PASSWORD=${DIFY_DB_PASSWORD:-dify}",
+        "POSTGRES_DB=${DIFY_DB_NAME:-dify}"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/dify/postgres:/var/lib/postgresql/data"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/dify/compose.fragment.yaml"
+    },
+    "dify-redis": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "redis:7-alpine",
+      "build": null,
+      "ports": [],
+      "environment": [],
+      "volumes": [
+        "${DATA_DIR:-./data}/dify/redis:/data"
+      ],
+      "depends_on": [],
+      "command": [
+        "redis-server",
+        "--save",
+        "20",
+        "1",
+        "--loglevel",
+        "warning"
+      ],
+      "restart": "unless-stopped",
+      "source": "extensions/dify/compose.fragment.yaml"
+    },
+    "dify-sandbox": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "langgenius/dify-sandbox:latest",
+      "build": null,
+      "ports": [],
+      "environment": [
+        "API_KEY=${DIFY_SANDBOX_API_KEY:-dify-sandbox}"
+      ],
+      "volumes": [],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/dify/compose.fragment.yaml"
+    },
+    "dify-web": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "langgenius/dify-web:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_DIFY:-3004}:3000"
+      ],
+      "environment": [
+        "CONSOLE_API_URL=http://dify-api:5001",
+        "APP_API_URL=http://dify-api:5001",
+        "NEXT_TELEMETRY_DISABLED=1"
+      ],
+      "volumes": [],
+      "depends_on": [
+        "dify-api"
+      ],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/dify/compose.fragment.yaml"
+    },
+    "dify-worker": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "langgenius/dify-api:latest",
+      "build": null,
+      "ports": [],
+      "environment": [
+        "MODE=worker",
+        "LOG_LEVEL=INFO",
+        "SECRET_KEY=${DIFY_SECRET_KEY:-change-me}",
+        "DB_HOST=dify-db",
+        "DB_PORT=5432",
+        "DB_USERNAME=${DIFY_DB_USER:-dify}",
+        "DB_PASSWORD=${DIFY_DB_PASSWORD:-dify}",
+        "DB_DATABASE=${DIFY_DB_NAME:-dify}",
+        "REDIS_HOST=dify-redis",
+        "REDIS_PORT=6379",
+        "REDIS_PASSWORD=",
+        "CELERY_BROKER_URL=redis://dify-redis:6379/0",
+        "CELERY_RESULT_BACKEND=redis://dify-redis:6379/1",
+        "STORAGE_TYPE=local",
+        "STORAGE_LOCAL_PATH=/app/api/storage",
+        "SANDBOX_HOST=dify-sandbox",
+        "SANDBOX_PORT=8194",
+        "SANDBOX_API_KEY=${DIFY_SANDBOX_API_KEY:-dify-sandbox}",
+        "VECTOR_STORE=qdrant",
+        "QDRANT_URL=http://qdrant:6333"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/dify/storage:/app/api/storage"
+      ],
+      "depends_on": [
+        "dify-db",
+        "dify-redis",
+        "dify-sandbox"
+      ],
+      "command": [
+        "bash",
+        "-lc",
+        "celery -A app.celery worker -l INFO"
+      ],
+      "restart": "unless-stopped",
+      "source": "extensions/dify/compose.fragment.yaml"
+    },
+    "example-echo": {
+      "tier": "optional",
+      "profiles": [],
+      "image": "alpine:latest",
+      "build": null,
+      "ports": [],
+      "environment": [],
+      "volumes": [],
+      "depends_on": [],
+      "command": [
+        "sh",
+        "-lc",
+        "while true; do echo example_extension_alive; sleep 30; done"
+      ],
+      "restart": "unless-stopped",
+      "source": "extensions/example_service/compose.fragment.yaml"
+    },
+    "example_hello": {
+      "tier": "optional",
+      "profiles": [],
+      "image": "alpine:3.20",
+      "build": null,
+      "ports": [],
+      "environment": [],
+      "volumes": [],
+      "depends_on": [],
+      "command": [
+        "sh",
+        "-lc",
+        "while true; do echo '[example_segment] hello from extension'; sleep 60; done"
+      ],
+      "restart": "unless-stopped",
+      "source": "extensions/example_segment/compose.fragment.yaml"
+    },
+    "flowise": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "flowiseai/flowise:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_FLOWISE:-3003}:3000"
+      ],
+      "environment": [
+        "PORT=3000",
+        "FLOWISE_USERNAME=${FLOWISE_USERNAME:-}",
+        "FLOWISE_PASSWORD=${FLOWISE_PASSWORD:-}"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/flowise:/root/.flowise"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/flowise/compose.fragment.yaml"
+    },
+    "jupyterlab": {
+      "tier": "optional",
+      "profiles": [],
+      "image": "jupyter/minimal-notebook:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_JUPYTER:-8889}:8888"
+      ],
+      "environment": [
+        "JUPYTER_ENABLE_LAB=yes",
+        "JUPYTER_TOKEN=${AI_BEAST_JUPYTER_TOKEN:-ai-beast}"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/notebooks:/home/jovyan/work"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/jupyter/compose.fragment.yaml"
+    },
+    "langflow": {
+      "tier": "optional",
+      "profiles": [
+        "agent_builders"
+      ],
+      "image": "langflowai/langflow:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_LANGFLOW:-7860}:7860"
+      ],
+      "environment": [
+        "LANGFLOW_HOST=0.0.0.0",
+        "LANGFLOW_PORT=7860"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/langflow:/data"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/langflow/compose.fragment.yaml"
+    },
+    "minio": {
+      "tier": "ops",
+      "profiles": [
+        "artifact_store_minio"
+      ],
+      "image": "minio/minio:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_MINIO:-9001}:9000",
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_MINIO_CONSOLE:-9002}:9001"
+      ],
+      "environment": [
+        "MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}",
+        "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/minio:/data"
+      ],
+      "depends_on": [],
+      "command": [
+        "server",
+        "/data",
+        "--console-address",
+        ":9001"
+      ],
+      "restart": "unless-stopped",
+      "source": "extensions/minio/compose.fragment.yaml"
+    },
+    "n8n": {
+      "tier": "ops",
+      "profiles": [
+        "n8n",
+        "full",
+        "prodish"
+      ],
+      "image": "n8nio/n8n:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_N8N:-5678}:5678"
+      ],
+      "environment": [
+        "N8N_HOST=0.0.0.0",
+        "N8N_PORT=5678",
+        "N8N_PROTOCOL=http",
+        "WEBHOOK_URL=http://localhost:${PORT_N8N:-5678}/",
+        "GENERIC_TIMEZONE=${TZ:-America/Los_Angeles}"
+      ],
+      "volumes": [
+        "n8n_data:/home/node/.n8n"
+      ],
+      "depends_on": [
+        "postgres",
+        "redis"
+      ],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/n8n/compose.fragment.yaml"
+    },
+    "open-webui": {
+      "tier": "core",
+      "profiles": [
+        "webui",
+        "open_webui",
+        "full",
+        "prodish"
+      ],
+      "image": "ghcr.io/open-webui/open-webui:main",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_WEBUI:-3000}:8080"
+      ],
+      "environment": [
+        "OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}",
+        "QDRANT_URL=http://qdrant:6333",
+        "WEBUI_AUTH=false",
+        "ENABLE_RAG_WEB_SEARCH=true",
+        "RAG_EMBEDDING_MODEL=nomic-embed-text"
+      ],
+      "volumes": [
+        "open_webui_data:/app/backend/data"
+      ],
+      "depends_on": [
+        "qdrant"
+      ],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/open_webui/compose.fragment.yaml"
+    },
+    "otel-collector": {
+      "tier": "ops",
+      "profiles": [
+        "observability_otel"
+      ],
+      "image": "otel/opentelemetry-collector-contrib:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_OTEL_GRPC:-4317}:4317",
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_OTEL_HTTP:-4318}:4318"
+      ],
+      "environment": [],
+      "volumes": [
+        "./extensions/otel_collector/otel-collector.config.yaml:/etc/otelcol/config.yaml:ro"
+      ],
+      "depends_on": [],
+      "command": [
+        "--config=/etc/otelcol/config.yaml"
+      ],
+      "restart": "unless-stopped",
+      "source": "extensions/otel_collector/compose.fragment.yaml"
+    },
+    "postgres": {
+      "tier": "core",
+      "profiles": [
+        "postgres",
+        "full",
+        "prodish"
+      ],
+      "image": "postgres:16-alpine",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_POSTGRES:-5432}:5432"
+      ],
+      "environment": [
+        "POSTGRES_USER=${POSTGRES_USER:-aibeast}",
+        "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aibeast_dev}",
+        "POSTGRES_DB=${POSTGRES_DB:-aibeast}"
+      ],
+      "volumes": [
+        "postgres_data:/var/lib/postgresql/data"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/postgres/compose.fragment.yaml"
+    },
+    "qdrant": {
+      "tier": "core",
+      "profiles": [
+        "qdrant",
+        "full",
+        "prodish"
+      ],
+      "image": "qdrant/qdrant:latest",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_QDRANT:-6333}:6333",
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_QDRANT_GRPC:-6334}:6334"
+      ],
+      "environment": [
+        "QDRANT__SERVICE__GRPC_PORT=6334"
+      ],
+      "volumes": [
+        "qdrant_data:/qdrant/storage"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/qdrant/compose.fragment.yaml"
+    },
+    "redis": {
+      "tier": "core",
+      "profiles": [
+        "redis",
+        "full",
+        "prodish"
+      ],
+      "image": "redis:7-alpine",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_REDIS:-6379}:6379"
+      ],
+      "environment": [],
+      "volumes": [
+        "redis_data:/data"
+      ],
+      "depends_on": [],
+      "command": "redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru",
+      "restart": "unless-stopped",
+      "source": "extensions/redis/compose.fragment.yaml"
+    },
+    "searxng": {
+      "tier": "optional",
+      "profiles": [
+        "searxng"
+      ],
+      "image": "searxng/searxng:latest",
+      "build": null,
+      "ports": [
+        "127.0.0.1:${PORT_SEARXNG:-8088}:8080"
+      ],
+      "environment": [
+        "SEARXNG_BASE_URL=http://127.0.0.1:${PORT_SEARXNG:-8088}/"
+      ],
+      "volumes": [
+        "${DATA_DIR:-./data}/searxng:/etc/searxng"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/searxng/compose.fragment.yaml"
+    },
+    "traefik": {
+      "tier": "ops",
+      "profiles": [
+        "traefik",
+        "prodish"
+      ],
+      "image": "traefik:v3.0",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_HTTP:-80}:80",
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_HTTPS:-443}:443",
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_TRAEFIK_DASHBOARD:-8080}:8080"
+      ],
+      "environment": [],
+      "volumes": [
+        "/var/run/docker.sock:/var/run/docker.sock:ro",
+        "traefik_data:/etc/traefik"
+      ],
+      "depends_on": [],
+      "command": [
+        "--api.insecure=true",
+        "--api.dashboard=true",
+        "--providers.docker=true",
+        "--providers.docker.exposedbydefault=false",
+        "--entrypoints.web.address=:80",
+        "--entrypoints.websecure.address=:443",
+        "--log.level=INFO"
+      ],
+      "restart": "unless-stopped",
+      "source": "extensions/traefik/compose.fragment.yaml"
     },
     "unstructured-api": {
       "tier": "optional",
@@ -84,10 +531,38 @@
         "rag_ingest_pro"
       ],
       "image": "quay.io/unstructured-io/unstructured-api:latest",
+      "build": null,
       "ports": [
-        "127.0.0.1:${PORT_UNSTRUCTURED:-8000}:8000"
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_UNSTRUCTURED:-8000}:8000"
       ],
-      "restart": "unless-stopped"
+      "environment": [],
+      "volumes": [],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/unstructured_api/compose.fragment.yaml"
+    },
+    "uptime-kuma": {
+      "tier": "ops",
+      "profiles": [
+        "kuma",
+        "uptime_kuma",
+        "full",
+        "prodish"
+      ],
+      "image": "louislam/uptime-kuma:1",
+      "build": null,
+      "ports": [
+        "${AI_BEAST_BIND_ADDR:-127.0.0.1}:${PORT_KUMA:-3001}:3001"
+      ],
+      "environment": [],
+      "volumes": [
+        "uptime_kuma_data:/app/data"
+      ],
+      "depends_on": [],
+      "command": null,
+      "restart": "unless-stopped",
+      "source": "extensions/uptime_kuma/compose.fragment.yaml"
     }
   }
 }

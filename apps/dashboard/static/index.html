@@ -202,6 +202,27 @@
       overflow: auto;
     }
 
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 12, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .modal-card {
+      background: linear-gradient(160deg, var(--card), var(--card-2));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      width: min(880px, 92vw);
+      max-height: 80vh;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
     @keyframes rise {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -267,52 +288,65 @@
       </div>
     </section>
 
-    <section class="card" style="--delay: 195ms;">
-      <h3>LLM Models</h3>
-      <div class="row" style="margin-bottom: 12px;">
-        <button class="btn" onclick="refreshModels()">🔄 Scan Models</button>
-        <button class="btn" onclick="showOllamaLibrary()">📦 Ollama Library</button>
-        <button class="btn" onclick="showUrlDownload()">🔗 Download from URL</button>
-        <div class="spacer"></div>
-        <span id="ollamaStatus" class="pill">checking...</span>
-      </div>
-      <div id="urlDownloadPanel" style="display:none; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px;">
-        <div class="muted" style="margin-bottom: 8px;">Download model from URL (Hugging Face, direct links, etc.)</div>
-        <div class="row" style="gap: 8px;">
-          <input id="modelUrl" type="text" class="token-input" placeholder="https://huggingface.co/.../model.gguf" style="flex: 2;">
-          <select id="modelDestination" class="token-input" style="flex: 0 0 120px;">
-            <option value="internal">Internal</option>
-            <option value="external">External</option>
-            <option value="custom">Custom</option>
-          </select>
-          <button class="btn primary" onclick="downloadFromUrl()">Download</button>
-        </div>
-        <input id="customPath" type="text" class="token-input" placeholder="Custom path (if selected)" style="display:none; margin-top: 8px; width: 100%;">
-      </div>
-      <div id="ollamaLibrary" style="display:none; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; max-height: 300px; overflow-y: auto;">
-        <div class="muted" style="margin-bottom: 8px;">Popular Ollama models (click to pull)</div>
-        <div id="ollamaLibraryList" class="row" style="flex-wrap: wrap; gap: 6px;"></div>
-      </div>
-      <div id="downloadProgress" style="display:none; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px;">
-        <div class="row">
-          <span id="downloadName">Downloading...</span>
-          <div class="spacer"></div>
-          <span id="downloadPercent">0%</span>
-        </div>
-        <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 8px;">
-          <div id="downloadBar" style="height: 100%; width: 0%; background: var(--accent); border-radius: 4px; transition: width 0.3s;"></div>
-        </div>
-      </div>
-      <div id="modelList" class="tool-list"></div>
-      <div id="storageInfo" class="muted" style="margin-top: 12px;"></div>
-    </section>
-
     <section class="card" style="--delay: 210ms;">
       <h3>Capabilities</h3>
       <div id="capabilityList" class="tool-list"></div>
     </section>
 
+    <section class="card" style="--delay: 225ms;">
+      <h3>Tools</h3>
+      <div class="tool" style="margin-bottom: 12px;">
+        <div class="tool-header">
+          <div class="tool-title">Tool Catalog</div>
+          <div class="spacer"></div>
+          <span class="pill">missing only</span>
+        </div>
+        <div class="tool-desc">Select uninstalled tools and add/install them in bulk.</div>
+        <select id="toolCatalogSelect" class="token-input" multiple style="min-height: 140px;"></select>
+        <div class="row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
+          <button class="btn" onclick="addSelectedTools()">Add Selected</button>
+          <button class="btn primary" onclick="installSelectedTools()">Add + Install</button>
+        </div>
+      </div>
+      <div class="tool" style="margin-bottom: 12px;">
+        <div class="tool-header">
+          <div class="tool-title">Custom Download URL</div>
+          <div class="spacer"></div>
+          <span class="pill">tar.gz</span>
+        </div>
+        <div class="tool-desc">Register a tool archive by URL, then install it.</div>
+        <div class="row" style="gap: 8px; flex-wrap: wrap;">
+          <input id="customToolName" class="token-input" placeholder="tool name (no spaces)" />
+          <input id="customToolUrl" class="token-input" placeholder="https://.../tool.tar.gz" />
+          <input id="customToolEntrypoint" class="token-input" placeholder="entrypoint (optional)" />
+          <input id="customToolTest" class="token-input" placeholder="test command (optional)" />
+        </div>
+        <div class="row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
+          <button class="btn" onclick="registerCustomTool()">Add Tool</button>
+          <button class="btn primary" onclick="registerAndInstallCustomTool()">Add + Install</button>
+        </div>
+      </div>
+      <div id="toolsList" class="tool-list"></div>
+    </section>
+
     <section class="grid two">
+      <div class="card" style="--delay: 235ms;">
+        <h3>Features</h3>
+        <div class="row" style="margin-bottom: 8px;">
+          <button class="btn" onclick="applyFeatureChanges()">Apply Changes</button>
+          <span class="muted">Runs compose gen + up</span>
+        </div>
+        <div id="featureList" class="tool-list"></div>
+      </div>
+      <div class="card" style="--delay: 235ms;">
+        <h3>Runtime Settings</h3>
+        <div class="tool-desc">Profile + runtime knobs used by startup and compose generation.</div>
+        <div id="settingsList" class="tool-list"></div>
+        <div class="row" style="margin-top: 8px;">
+          <button class="btn" onclick="applyFeatureChanges()">Apply Changes</button>
+          <span class="muted">Regenerate compose + up</span>
+        </div>
+      </div>
       <div class="card" style="--delay: 240ms;">
         <h3>Packs</h3>
         <div id="packList" class="tool-list"></div>
@@ -334,13 +368,87 @@
     </section>
   </div>
 
+  <div id="modal" class="modal" style="display:none;">
+    <div class="modal-card">
+      <div class="row">
+        <div class="tool-title">Console Output</div>
+        <div class="spacer"></div>
+        <button class="btn" onclick="askLlmFromModal()">Ask LLM</button>
+        <button class="btn ghost" onclick="closeModal()">Close</button>
+      </div>
+      <div id="modalBody" class="terminal" style="margin-top: 10px; max-height: 60vh;">...</div>
+    </div>
+  </div>
+
+  <div id="capModal" class="modal" style="display:none;">
+    <div class="modal-card">
+      <div class="row">
+        <div class="tool-title">Capability Details</div>
+        <div class="spacer"></div>
+        <button class="btn ghost" onclick="closeCapModal()">Close</button>
+      </div>
+      <div id="capModalBody" class="terminal" style="margin-top: 10px; max-height: 45vh;">...</div>
+      <div style="margin-top: 12px;">
+        <div class="tool-title" style="font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;">CLI Template</div>
+        <textarea id="capTemplate" class="input" style="min-height: 120px; margin-top: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;"></textarea>
+        <div class="row" style="margin-top: 10px;">
+          <button class="btn" onclick="saveCapabilityTemplate()">Save Template</button>
+          <button class="btn ghost" onclick="askCapabilityTemplate()">Ask LLM (template)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toolModal" class="modal" style="display:none;">
+    <div class="modal-card">
+      <div class="row">
+        <div class="tool-title">Tool Configuration</div>
+        <div class="spacer"></div>
+        <button class="btn ghost" onclick="closeToolModal()">Close</button>
+      </div>
+      <div class="tool-desc" id="toolModalTitle" style="margin-top: 6px;"></div>
+      <div class="row" style="gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+        <input id="toolEntry" class="token-input" placeholder="entrypoint" />
+        <input id="toolArgs" class="token-input" placeholder="args" />
+        <input id="toolTestCmd" class="token-input" placeholder="test command" />
+        <input id="toolTestUrl" class="token-input" placeholder="test URL" />
+        <input id="toolDownloadUrl" class="token-input" placeholder="download URL (tar.gz)" />
+        <input id="toolInstallCmd" class="token-input" placeholder="install command" />
+      </div>
+      <div style="margin-top: 10px;">
+        <div class="tool-title" style="font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;">Env (JSON)</div>
+        <textarea id="toolEnv" class="input" style="min-height: 90px; margin-top: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;"></textarea>
+      </div>
+      <div style="margin-top: 10px;">
+        <div class="tool-title" style="font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;">Config Hint</div>
+        <textarea id="toolConfigHint" class="input" style="min-height: 90px; margin-top: 6px;"></textarea>
+      </div>
+      <div style="margin-top: 10px;">
+        <div class="tool-title" style="font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;">Workflow</div>
+        <textarea id="toolWorkflow" class="input" style="min-height: 90px; margin-top: 6px;"></textarea>
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <button class="btn" onclick="saveToolConfig()">Save Tool</button>
+      </div>
+    </div>
+  </div>
+
 <script>
   const state = {
     token: localStorage.getItem('beast_token') || '',
     config: {},
     packs: [],
     extensions: [],
+    capabilities: [],
+    services: [],
+    tools: [],
+    catalog: [],
+    features: [],
+    settings: [],
     metrics: {},
+    currentCapabilityId: null,
+    currentToolName: null,
+    applyInFlight: false,
   };
 
   const EXT_INFO = {
@@ -425,15 +533,11 @@
     example_segment: { title: 'Example Segment', description: 'Example segment extension.', ports: [], portal: null, api: null },
   };
 
-  const CORE_SERVICES = [
-    { name: 'Open WebUI', port: 'PORT_WEBUI', path: '', api: '/health', desc: 'LLM web interface.' },
-    { name: 'Ollama API', port: 'PORT_OLLAMA', path: '/api/version', api: '/api/version', desc: 'Local model API.' },
-    { name: 'Qdrant', port: 'PORT_QDRANT', path: '', api: '/healthz', desc: 'Vector database.' },
-    { name: 'ComfyUI', port: 'PORT_COMFYUI', path: '', api: '', desc: 'Image pipeline UI.' },
-    { name: 'n8n', port: 'PORT_N8N', path: '', api: '', desc: 'Workflow automation.' },
-    { name: 'JupyterLab', port: 'PORT_JUPYTER', path: '/lab', api: '/api', desc: 'Code runner + notebooks.' },
-    { name: 'Uptime Kuma', port: 'PORT_KUMA', path: '', api: '', desc: 'Status/monitoring UI.' },
-    { name: 'Speech API', port: 'PORT_SPEECH_API', path: '/docs', api: '/docs', desc: 'Local speech (STT/TTS) API.' },
+  const NATIVE_SERVICES = [
+    { name: 'Ollama API', port: 'PORT_OLLAMA', path: '/api/version', api: '/api/version', desc: 'Local model API.', logApp: '' },
+    { name: 'ComfyUI', port: 'PORT_COMFYUI', path: '', api: '', desc: 'Image pipeline UI.', logApp: 'comfyui' },
+    { name: 'Dashboard', port: 'PORT_DASHBOARD', path: '', api: '', desc: 'Admin control panel.', logApp: 'dashboard' },
+    { name: 'Speech API', port: 'PORT_SPEECH_API', path: '/docs', api: '/docs', desc: 'Local speech (STT/TTS) API.', logApp: '' },
   ];
 
   const CAPABILITIES = [
@@ -509,6 +613,140 @@
     return `http://${bind(cfg)}:${p}${suffix}`;
   }
 
+  function setLog(message, openModalFlag = true) {
+    const log = document.getElementById('log');
+    if (log) log.textContent = message;
+    const modal = document.getElementById('modal');
+    const modalBody = document.getElementById('modalBody');
+    if (modalBody) modalBody.textContent = message;
+    if (modal && openModalFlag) {
+      modal.style.display = 'flex';
+    }
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async function askLlmFromModal() {
+    const modalBody = document.getElementById('modalBody');
+    const prompt = (modalBody && modalBody.textContent || '').trim();
+    if (!prompt) {
+      setLog('No output to send to the LLM.');
+      return;
+    }
+    try {
+      const res = await apiPost('/api/llm/analyze', { prompt });
+      if (res.ok) {
+        setLog(res.response || 'LLM returned no content.');
+      } else {
+        setLog(res.error || 'LLM request failed.');
+      }
+    } catch (e) {
+      setLog(`LLM error: ${e}`);
+    }
+  }
+
+  function closeCapModal() {
+    const modal = document.getElementById('capModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function openCapabilityDetails(id) {
+    const caps = state.capabilities.length ? state.capabilities : CAPABILITIES;
+    const cap = caps.find(c => c.id === id);
+    if (!cap) return;
+    state.currentCapabilityId = id;
+    const lines = [];
+    lines.push(`${cap.title || cap.id}`);
+    if (cap.description) lines.push(`\n${cap.description}`);
+    if (cap.notes) lines.push(`\nNotes: ${cap.notes}`);
+    if (cap.webui && cap.webui.category) lines.push(`WebUI: ${cap.webui.category}`);
+    if (cap.ollama && cap.ollama.model) lines.push(`Ollama Model: ${cap.ollama.model}`);
+    if (cap.ollama && cap.ollama.embedding_model) lines.push(`Embedding Model: ${cap.ollama.embedding_model}`);
+    if (cap.packs && cap.packs.length) lines.push(`Packs: ${cap.packs.join(', ')}`);
+    if (cap.extensions && cap.extensions.length) lines.push(`Extensions: ${cap.extensions.join(', ')}`);
+    if (cap.ports && cap.ports.length) lines.push(`Ports: ${cap.ports.map(p => `${p}=${port(state.config, p, '-')}`).join(' | ')}`);
+    if (cap.portal) lines.push(`Portal: ${cap.portal.port ? url(state.config, cap.portal.port, cap.portal.path || '') : (cap.portal.url || '')}`);
+    if (cap.api) lines.push(`API: ${cap.api.port ? url(state.config, cap.api.port, cap.api.path || '') : (cap.api.url || '')}`);
+    if (cap.health) lines.push(`Health: ${cap.health.port ? url(state.config, cap.health.port, cap.health.path || '') : (cap.health.url || '')}`);
+    if (cap.checks && cap.checks.length) {
+      lines.push('\nChecks:');
+      cap.checks.forEach((c, idx) => {
+        const label = c.name || c.type || `check-${idx + 1}`;
+        const detail = c.type === 'http'
+          ? `${c.type} ${c.port || ''}/${c.path || ''}`.trim()
+          : (c.type === 'tool' ? `tool ${c.tool || ''}` : c.type);
+        lines.push(`- ${label}: ${detail}`);
+      });
+    }
+    if (cap.actions && cap.actions.length) {
+      lines.push('\nActions:');
+      cap.actions.forEach((a, idx) => {
+        const label = a.label || `action-${idx + 1}`;
+        const detail = a.type === 'open_url'
+          ? `open ${a.port || ''}/${a.path || ''}`.trim()
+          : (a.type === 'beast_cmd' ? `beast ${a.cmd || ''}` : a.type);
+        lines.push(`- ${label}: ${detail}`);
+      });
+    }
+    lines.push('\nAsk: Use the "Ask LLM" button on this capability card for CLI guidance.');
+    const modalBody = document.getElementById('capModalBody');
+    if (modalBody) modalBody.textContent = lines.join('\n');
+    const templateBox = document.getElementById('capTemplate');
+    if (templateBox) templateBox.value = cap.cli_template || '';
+    const modal = document.getElementById('capModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  async function saveCapabilityTemplate() {
+    const capId = state.currentCapabilityId;
+    if (!capId) {
+      setLog('Missing capability id.');
+      return;
+    }
+    const templateBox = document.getElementById('capTemplate');
+    const template = templateBox ? templateBox.value : '';
+    try {
+      const res = await apiPost('/api/capabilities/template', { id: capId, template });
+      if (res.ok) {
+        const cap = (state.capabilities || []).find(c => c.id === capId);
+        if (cap) cap.cli_template = res.cli_template || template;
+        setLog(`Saved template for ${capId}.`);
+      } else {
+        setLog(res.error || 'Failed to save template.');
+      }
+    } catch (e) {
+      setLog(`Template save error: ${e}`);
+    }
+  }
+
+  async function askCapabilityTemplate() {
+    const capId = state.currentCapabilityId;
+    if (!capId) {
+      setLog('Missing capability id.');
+      return;
+    }
+    const templateBox = document.getElementById('capTemplate');
+    const template = (templateBox ? templateBox.value : '').trim();
+    if (!template) {
+      setLog('No template provided for this capability.');
+      return;
+    }
+    const prompt = `Fill in this CLI template for capability ${capId}. Provide exact commands and brief notes where to run them.\n\n${template}`;
+    try {
+      const res = await apiPost('/api/llm/analyze', { prompt });
+      if (res.ok) {
+        setLog(res.response || 'LLM returned no content.');
+      } else {
+        setLog(res.error || 'LLM request failed.');
+      }
+    } catch (e) {
+      setLog(`LLM error: ${e}`);
+    }
+  }
+
   function saveToken() {
     state.token = document.getElementById('token').value.trim();
     localStorage.setItem('beast_token', state.token);
@@ -540,6 +778,159 @@
     return res.json();
   }
 
+  function toolAvailable(name) {
+    const tool = (state.tools || []).find(t => t.name === name);
+    return tool ? tool.available : false;
+  }
+
+  function toolConfig(name) {
+    return (state.tools || []).find(t => t.name === name);
+  }
+
+  async function loadServices() {
+    const data = await apiGet('/api/services');
+    if (data.ok) {
+      state.services = data.items || [];
+      renderServices();
+    }
+  }
+
+  async function loadTools() {
+    const data = await apiGet('/api/tools/list');
+    if (data.ok) {
+      state.tools = data.items || [];
+      renderCapabilities();
+      renderTools();
+    }
+  }
+
+  async function loadToolCatalog() {
+    const data = await apiGet('/api/tools/catalog');
+    if (data.ok) {
+      state.catalog = (data.items || []).filter(item => !item.available);
+      renderToolCatalog();
+    }
+  }
+
+  async function loadFeatures() {
+    const data = await apiGet('/api/features');
+    if (data.ok) {
+      state.features = data.items || [];
+      renderFeatures();
+    }
+  }
+
+  async function loadSettings() {
+    const data = await apiGet('/api/settings');
+    if (data.ok) {
+      state.settings = data.items || [];
+      renderSettings();
+    }
+  }
+
+  function renderSettings() {
+    const el = document.getElementById('settingsList');
+    if (!el) return;
+    const items = (state.settings || []).map(setting => {
+      const key = setting.key;
+      const desc = setting.description || '';
+      if (setting.type === 'bool') {
+        const enabled = String(setting.value).trim() === '1' || String(setting.value).toLowerCase() === 'true';
+        return `
+          <div class="tool">
+            <div class="tool-header">
+              <div class="tool-title">${key}</div>
+              <div class="spacer"></div>
+              <label class="toggle">
+                <input type="checkbox" ${enabled ? 'checked' : ''} onchange="setSetting('${key}', ${!enabled})">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="tool-desc">${desc}</div>
+          </div>
+        `;
+      }
+      if (setting.type === 'select') {
+        const options = (setting.options || []).map(opt => `<option value="${opt}" ${opt === setting.value ? 'selected' : ''}>${opt}</option>`).join('');
+        return `
+          <div class="tool">
+            <div class="tool-header">
+              <div class="tool-title">${key}</div>
+              <div class="spacer"></div>
+            </div>
+            <div class="tool-desc">${desc}</div>
+            <div class="row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
+              <select id="setting-${key}" class="token-input">${options}</select>
+              <button class="btn ghost" onclick="saveSetting('${key}')">Save</button>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="tool">
+          <div class="tool-header">
+            <div class="tool-title">${key}</div>
+            <div class="spacer"></div>
+          </div>
+          <div class="tool-desc">${desc}</div>
+          <div class="row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
+            <input id="setting-${key}" class="token-input" value="${setting.value || ''}">
+            <button class="btn ghost" onclick="saveSetting('${key}')">Save</button>
+          </div>
+        </div>
+      `;
+    });
+    el.innerHTML = items.join('') || '<div class="muted">No settings found.</div>';
+  }
+
+  function renderFeatures() {
+    const el = document.getElementById('featureList');
+    if (!el) return;
+    const items = (state.features || []).map(feature => {
+      const enabled = feature.bool ? !!feature.enabled : null;
+      const toggle = feature.bool ? `
+        <label class="toggle">
+          <input type="checkbox" ${enabled ? 'checked' : ''} onchange="setFeature('${feature.key}', ${!enabled})">
+          <span class="slider"></span>
+        </label>` : '';
+      const valueInput = !feature.bool ? `
+        <input id="feature-value-${feature.key}" class="token-input" value="${feature.value || ''}" placeholder="value">
+        <button class="btn ghost" onclick="saveFeatureValue('${feature.key}')">Save</button>` : '';
+      const badge = feature.has_override ? '<span class="pill">override</span>' : '';
+      return `
+        <div class="tool">
+          <div class="tool-header">
+            <div class="tool-title">${feature.key}</div>
+            <div class="spacer"></div>
+            ${badge}
+            ${toggle}
+          </div>
+          <div class="tool-desc">${feature.value}</div>
+          ${valueInput ? `<div class="row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">${valueInput}</div>` : ''}
+        </div>
+      `;
+    });
+    el.innerHTML = items.join('') || '<div class="muted">No features found.</div>';
+  }
+
+  function renderToolCatalog() {
+    const select = document.getElementById('toolCatalogSelect');
+    if (!select) return;
+    const options = (state.catalog || []).map(item => {
+      const label = `${item.name}${item.description ? ` — ${item.description}` : ''}`;
+      return `<option value="${item.name}">${label}</option>`;
+    });
+    select.innerHTML = options.join('') || '<option value="" disabled>No missing tools found.</option>';
+  }
+
+  async function loadCapabilities() {
+    const data = await apiGet('/api/capabilities');
+    if (data.ok) {
+      state.capabilities = data.items || [];
+      renderCapabilities();
+    }
+  }
+
   async function refreshAll() {
     try {
       const health = await fetch('/api/health');
@@ -547,7 +938,18 @@
     } catch (e) {
       setHealth(false);
     }
-    await Promise.all([loadConfig(), loadPacks(), loadExtensions(), loadMetrics(), refreshModels()]);
+    await Promise.all([
+      loadConfig(),
+      loadPacks(),
+      loadExtensions(),
+      loadFeatures(),
+      loadSettings(),
+      loadServices(),
+      loadTools(),
+      loadCapabilities(),
+      loadToolCatalog(),
+      loadMetrics()
+    ]);
     renderServices();
     renderCapabilities();
     await checkHealth();
@@ -625,7 +1027,9 @@
   function renderCapabilities() {
     const el = document.getElementById('capabilityList');
     if (!el) return;
-    el.innerHTML = CAPABILITIES.map(cap => {
+    state.capabilityActions = {};
+    const caps = state.capabilities.length ? state.capabilities : CAPABILITIES;
+    el.innerHTML = caps.map(cap => {
       const enabled = capabilityEnabled(cap);
       const portal = typeof cap.portal === 'function' ? cap.portal(state.config) : cap.portal;
       const api = typeof cap.api === 'function' ? cap.api(state.config) : cap.api;
@@ -633,19 +1037,146 @@
       const links = [];
       if (portal) links.push({ label: 'Portal', url: portal });
       if (api) links.push({ label: 'API', url: api });
+      if (cap.webui) {
+        const webuiUrl = url(state.config, 'PORT_WEBUI', cap.webui.path || '');
+        if (webuiUrl) links.push({ label: 'WebUI', url: webuiUrl });
+      }
       const ports = (cap.ports || []).map(key => `${key}=${port(state.config, key, '-')}`);
+      const actions = (cap.actions || []).slice();
+      if (cap.ollama && cap.ollama.model) {
+        const model = cap.ollama.model;
+        if (!actions.some(a => a.type === 'ollama_pull' && a.model === model)) {
+          actions.unshift({ label: `Pull ${model}`, type: 'ollama_pull', model });
+        }
+      }
+      (cap.checks || []).forEach(check => {
+        if (check.type === 'tool' && check.tool && !actions.some(a => a.type === 'tool_run' && a.tool === check.tool)) {
+          actions.push({ label: `Run ${check.tool}`, type: 'tool_run', tool: check.tool, args: check.args || '' });
+        }
+      });
+      (cap.packs || []).forEach(pack => {
+        if (!packEnabled(pack)) {
+          actions.push({ label: `Enable pack: ${pack}`, type: 'pack_enable', pack });
+        }
+      });
+      (cap.extensions || []).forEach(ext => {
+        if (!extensionEnabled(ext)) {
+          const meta = (state.extensions || []).find(e => e.name === ext);
+          if (meta && meta.has_installer === 'true') {
+            actions.push({ label: `Install ext: ${ext}`, type: 'extension_install', extension: ext });
+          } else {
+            actions.push({ label: `Enable ext: ${ext}`, type: 'extension_enable', extension: ext });
+          }
+        }
+      });
+      actions.forEach(action => {
+        if (action.type === 'tool_run' && action.tool && !toolAvailable(action.tool)) {
+          actions.push({ label: `Fetch ${action.tool}`, type: 'tool_install', tool: action.tool });
+        }
+      });
+      state.capabilityActions[cap.id] = actions;
+      const actionsHtml = actions.map((act, idx) => {
+        return `<button class="btn ghost" onclick="handleCapabilityAction('${cap.id}', ${idx})">${act.label}</button>`;
+      }).join('') + `<button class="btn ghost" onclick="askCapability('${cap.id}')">Ask LLM</button>` + `<button class="btn ghost" onclick="openCapabilityDetails('${cap.id}')">Details</button>`;
+      const integrationNotes = [];
+      if (cap.webui && cap.webui.category) integrationNotes.push(`WebUI: ${cap.webui.category}`);
+      if (cap.ollama && cap.ollama.model) integrationNotes.push(`Ollama: ${cap.ollama.model}`);
+      if (cap.ollama && cap.ollama.embedding_model) integrationNotes.push(`Embed: ${cap.ollama.embedding_model}`);
+      const notes = [cap.notes || '', ...integrationNotes].filter(Boolean).join(' • ');
       return toolCard({
         id: `cap-${cap.id}`,
         title: cap.title,
         description: cap.description,
-        notes: cap.notes || '',
+        notes,
         enabled,
         onToggle: `toggleCapability('${cap.id}', ${!enabled})`,
         links,
         ports,
         health,
+        actions: actionsHtml,
       });
     }).join('');
+  }
+
+  async function runToolAction(action) {
+    const payload = {
+      name: action.tool || '',
+      entrypoint: action.entrypoint || '',
+      args: action.args || '',
+      allow: true,
+    };
+    if (!payload.name) {
+      setLog('Tool action missing tool name.');
+      return;
+    }
+    const res = await apiPost('/api/tools/run', payload);
+    const msg = `${(res.cmd || []).join(' ')}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+    setLog(msg || `Ran ${payload.name}.`);
+  }
+
+  async function handleCapabilityAction(capId, idx) {
+    const actions = state.capabilityActions[capId] || [];
+    const action = actions[idx];
+    if (!action) return;
+    if (action.type === 'open_url') {
+      const target = action.port ? url(state.config, action.port, action.path || '') : action.url || '';
+      if (target) window.open(target, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (action.type === 'beast_cmd') {
+      await runCmd(action.cmd);
+      return;
+    }
+    if (action.type === 'tool_run') {
+      await runToolAction(action);
+      return;
+    }
+    if (action.type === 'tool_install') {
+      await installTool(action.tool || '');
+      return;
+    }
+    if (action.type === 'extension_install') {
+      await installExtension(action.extension || '');
+      return;
+    }
+    if (action.type === 'extension_enable') {
+      await toggleExtension(action.extension || '', true);
+      return;
+    }
+    if (action.type === 'pack_enable') {
+      await togglePack(action.pack || '', true);
+      return;
+    }
+    if (action.type === 'ollama_pull') {
+      const model = action.model || '';
+      if (!model) {
+        setLog('Missing Ollama model name.');
+        return;
+      }
+      const res = await apiPost('/api/models/pull', { model });
+      setLog(res.ok ? `Pulled model ${model}` : (res.error || `Failed to pull model ${model}`));
+    }
+  }
+
+  async function askCapability(id) {
+    const caps = state.capabilities.length ? state.capabilities : CAPABILITIES;
+    const cap = caps.find(c => c.id === id);
+    if (!cap) return;
+    const parts = [
+      `Capability: ${cap.title || cap.id}`,
+      cap.description || '',
+      cap.notes || '',
+      `Packs: ${(cap.packs || []).join(', ')}`,
+      `Extensions: ${(cap.extensions || []).join(', ')}`,
+      `Ports: ${(cap.ports || []).join(', ')}`,
+    ].filter(Boolean);
+    const prompt = `${parts.join('\n')}\n\nProvide the exact CLI commands or steps to run this capability locally.`;
+    try {
+      const res = await apiPost('/api/llm/analyze', { prompt });
+      setLog(res.ok ? (res.response || 'LLM returned no content.') : (res.error || 'LLM request failed.'));
+    } catch (e) {
+      setLog(`LLM error: ${e}`);
+    }
   }
 
   function metricRow(label, value) {
@@ -693,10 +1224,7 @@
         renderPathsForm();
       } else {
         setPathsStatus(false, 'error');
-        const log = document.getElementById('log');
-        if (log) {
-          log.textContent = `${res.error || 'Failed to update paths.'}\n${res.stderr || ''}`.trim();
-        }
+        setLog(`${res.error || 'Failed to update paths.'}\n${res.stderr || ''}`.trim());
       }
     } catch (e) {
       setPathsStatus(false, 'error');
@@ -779,23 +1307,86 @@
 
   function renderServices() {
     const el = document.getElementById('serviceList');
-    const items = CORE_SERVICES.map(svc => {
+    const nativeItems = NATIVE_SERVICES.map(svc => {
       const portal = url(state.config, svc.port, svc.path || '');
       const api = svc.api ? url(state.config, svc.port, svc.api) : '';
       const ports = [ `${svc.port}=${port(state.config, svc.port, '-')}` ];
+      const actions = svc.logApp ? `<button class="btn ghost" onclick="fetchAppLogs('${svc.logApp}')">Logs</button>` : '';
       return toolCard({
-        id: `svc-${svc.name}`,
+        id: `svc-native-${svc.name}`,
         title: svc.name,
-        description: svc.desc || 'Core service',
+        description: svc.desc || 'Native service',
         notes: '',
         enabled: true,
         onToggle: '',
         links: [portal ? { label: 'Portal', url: portal } : null, api ? { label: 'API', url: api } : null].filter(Boolean),
         ports,
         readonly: true,
+        actions,
       });
     });
-    el.innerHTML = items.join('');
+
+    const dockerItems = (state.services || []).map(svc => {
+      const ports = (svc.port_keys || []).map(key => `${key}=${port(state.config, key, '-')}`);
+      const portal = (svc.port_keys || [])[0] ? url(state.config, svc.port_keys[0], '') : '';
+      const notes = [svc.tier ? `tier: ${svc.tier}` : '', (svc.profiles || []).length ? `profiles: ${(svc.profiles || []).join(', ')}` : '']
+        .filter(Boolean).join(' • ');
+      const actions = `<button class="btn ghost" onclick="fetchServiceLogs('${svc.name}')">Logs</button>`;
+      return toolCard({
+        id: `svc-${svc.name}`,
+        title: svc.name,
+        description: svc.image || 'Docker service',
+        notes,
+        enabled: true,
+        onToggle: '',
+        links: portal ? [ { label: 'Portal', url: portal } ] : [],
+        ports,
+        readonly: true,
+        actions,
+      });
+    });
+
+    el.innerHTML = [...nativeItems, ...dockerItems].join('');
+  }
+
+  function renderTools() {
+    const el = document.getElementById('toolsList');
+    if (!el) return;
+    const items = (state.tools || []).map(tool => {
+      const available = !!tool.available;
+      const actions = [];
+      if (!available) {
+        actions.push(`<button class="btn" onclick="installTool('${tool.name}')">Install</button>`);
+      }
+      actions.push(`<button class="btn ghost" onclick="openToolConfig('${tool.name}')">Config</button>`);
+      actions.push(`<button class="btn ghost" onclick="runTool('${tool.name}')">Run</button>`);
+      if (tool.test_command || tool.test_url) {
+        actions.push(`<button class="btn ghost" onclick="testTool('${tool.name}')">Test</button>`);
+      }
+      actions.push(`<button class="btn ghost" onclick="askTool('${tool.name}')">Ask LLM</button>`);
+      const notes = tool.runner ? `runner: ${tool.runner}` : '';
+      const description = tool.description || tool.entrypoint || tool.name;
+      const configHint = tool.config_hint ? `<div class="muted">${tool.config_hint}</div>` : '';
+      const argsValue = (tool.args || '');
+      const argInput = `<input id="tool-args-${tool.name}" class="token-input" placeholder="args" value="${argsValue}">`;
+      return `
+        <div id="tool-${tool.name}" class="tool">
+          <div class="tool-header">
+            <div class="tool-title">${tool.name}</div>
+            <div class="spacer"></div>
+            <span class="pill ${available ? 'ok' : 'bad'}">${available ? 'available' : 'missing'}</span>
+          </div>
+          <div class="tool-desc">${description}</div>
+          ${notes ? `<div class="muted">${notes}</div>` : ''}
+          ${configHint}
+          ${argInput}
+          <div class="row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
+            ${actions.join('')}
+          </div>
+        </div>
+      `;
+    });
+    el.innerHTML = items.join('') || '<div class="muted">No tools configured.</div>';
   }
 
   function toolCard({ id, title, description, notes, enabled, onToggle, links, ports, readonly, health, actions }) {
@@ -826,28 +1417,316 @@
     `;
   }
 
-  async function installExtension(name) {
-    const log = document.getElementById('log');
-    log.textContent = `Installing extension: ${name}...`;
+  async function fetchServiceLogs(service) {
+    setLog(`Fetching logs for ${service}...`, false);
     try {
-      const res = await apiPost('/api/extensions/install', { name });
-      log.textContent = `${res.cmd ? res.cmd.join(' ') : 'install'}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
-      await loadExtensions();
+      const res = await apiPost('/api/services/logs', { service, tail: 200 });
+      const out = `${res.cmd ? res.cmd.join(' ') : ''}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+      setLog(out || `No logs for ${service}.`);
     } catch (e) {
-      log.textContent = `Error: ${e}`;
+      setLog(`Error: ${e}`);
     }
   }
 
-  async function toggleExtension(name, enable) {
+  async function fetchAppLogs(app) {
+    setLog(`Fetching logs for ${app}...`, false);
+    try {
+      const res = await apiPost('/api/services/logs', { app, tail: 200 });
+      const out = `${res.cmd ? res.cmd.join(' ') : ''}\n\n${res.stdout || ''}`.trim();
+      setLog(out || `No logs for ${app}.`);
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function installTool(name) {
+    setLog(`Fetching tool: ${name}...`, false);
+    try {
+      const res = await apiPost('/api/tools/install', { name, run_installer: true });
+      const out = `${res.cmd ? res.cmd.join(' ') : ''}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+      setLog(out || `Install finished for ${name}.`);
+      await loadTools();
+      await loadToolCatalog();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function runTool(name) {
+    const input = document.getElementById(`tool-args-${name}`);
+    const args = input ? input.value : '';
+    setLog(`Running ${name}...`, false);
+    try {
+      const res = await apiPost('/api/tools/run', { name, args });
+      const out = `${res.cmd ? res.cmd.join(' ') : ''}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+      setLog(out || `Ran ${name}.`);
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function testTool(name) {
+    setLog(`Testing ${name}...`, false);
+    try {
+      const res = await apiPost('/api/tools/test', { name });
+      const out = `${res.cmd ? res.cmd.join(' ') : ''}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim();
+      setLog(out || `Tested ${name}.`);
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function setFeature(key, enabled) {
+    setLog(`Updating feature ${key}...`, false);
+    try {
+      const res = await apiPost('/api/features/set', { key, value: enabled ? 'true' : 'false' });
+      const out = `${res.merge_stdout || ''}\n${res.sync_stdout || ''}\n${res.merge_stderr || ''}\n${res.sync_stderr || ''}`.trim();
+      setLog(out || `Updated ${key}.`);
+      await loadFeatures();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function saveFeatureValue(key) {
+    const input = document.getElementById(`feature-value-${key}`);
+    const value = input ? input.value : '';
+    setLog(`Updating feature ${key}...`, false);
+    try {
+      const res = await apiPost('/api/features/set', { key, value });
+      const out = `${res.merge_stdout || ''}\n${res.sync_stdout || ''}\n${res.merge_stderr || ''}\n${res.sync_stderr || ''}`.trim();
+      setLog(out || `Updated ${key}.`);
+      await loadFeatures();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function setSetting(key, enabled) {
+    setLog(`Updating ${key}...`, false);
+    try {
+      const res = await apiPost('/api/settings/set', { key, value: enabled ? '1' : '0' });
+      setLog(res.ok ? `Updated ${key}.` : (res.error || 'Failed to update setting.'));
+      await loadSettings();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function saveSetting(key) {
+    const input = document.getElementById(`setting-${key}`);
+    const value = input ? input.value : '';
+    setLog(`Updating ${key}...`, false);
+    try {
+      const res = await apiPost('/api/settings/set', { key, value });
+      setLog(res.ok ? `Updated ${key}.` : (res.error || 'Failed to update setting.'));
+      await loadSettings();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function applyFeatureChanges() {
+    if (state.applyInFlight) {
+      setLog('Apply already running...', false);
+      return;
+    }
+    state.applyInFlight = true;
+    setLog('Applying feature changes...', false);
+    try {
+      await runCmd('compose_gen');
+      await runCmd('up');
+      await loadServices();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    } finally {
+      state.applyInFlight = false;
+    }
+  }
+
+  async function applyAfterToggle() {
+    await applyFeatureChanges();
+  }
+
+  function selectedCatalogTools() {
+    const select = document.getElementById('toolCatalogSelect');
+    if (!select) return [];
+    return Array.from(select.selectedOptions || []).map(opt => opt.value).filter(Boolean);
+  }
+
+  async function addSelectedTools() {
+    const names = selectedCatalogTools();
+    if (!names.length) {
+      setLog('Select one or more tools to add.');
+      return;
+    }
+    setLog(`Adding tools: ${names.join(', ')}...`, false);
+    try {
+      const results = [];
+      for (const name of names) {
+        const res = await apiPost('/api/tools/register', { name, source: 'catalog' });
+        results.push(`${name}: ${res.ok ? 'added' : (res.error || 'error')}`);
+      }
+      setLog(results.join('\n'));
+      await loadTools();
+      await loadToolCatalog();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function installSelectedTools() {
+    const names = selectedCatalogTools();
+    if (!names.length) {
+      setLog('Select one or more tools to install.');
+      return;
+    }
+    setLog(`Installing tools: ${names.join(', ')}...`, false);
+    try {
+      const res = await apiPost('/api/tools/install_bulk', { names, run_installer: true });
+      const lines = (res.items || []).map(item => {
+        const ok = item.ok ? 'ok' : (item.error || 'error');
+        return `${item.name}: ${ok}`;
+      });
+      setLog(lines.join('\n') || 'Install finished.');
+      await loadTools();
+      await loadToolCatalog();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function registerCustomTool() {
+    const name = (document.getElementById('customToolName')?.value || '').trim();
+    const url = (document.getElementById('customToolUrl')?.value || '').trim();
+    const entrypoint = (document.getElementById('customToolEntrypoint')?.value || '').trim();
+    const test_command = (document.getElementById('customToolTest')?.value || '').trim();
+    if (!name || !url) {
+      setLog('Provide both tool name and download URL.');
+      return;
+    }
+    setLog(`Registering ${name}...`, false);
+    try {
+      const res = await apiPost('/api/tools/register', {
+        name,
+        source: 'custom',
+        download_url: url,
+        entrypoint,
+        test_command,
+      });
+      setLog(res.ok ? `Added ${name}.` : (res.error || 'Failed to add tool.'));
+      await loadTools();
+      await loadToolCatalog();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function registerAndInstallCustomTool() {
+    await registerCustomTool();
+    const name = (document.getElementById('customToolName')?.value || '').trim();
+    if (!name) return;
+    await installTool(name);
+  }
+
+  function openToolConfig(name) {
+    const tool = toolConfig(name);
+    if (!tool) return;
+    state.currentToolName = name;
+    document.getElementById('toolModalTitle').textContent = tool.description || name;
+    document.getElementById('toolEntry').value = tool.entrypoint || '';
+    document.getElementById('toolArgs').value = tool.args || '';
+    document.getElementById('toolTestCmd').value = tool.test_command || '';
+    document.getElementById('toolTestUrl').value = tool.test_url || '';
+    document.getElementById('toolDownloadUrl').value = tool.download_url || '';
+    document.getElementById('toolInstallCmd').value = tool.install_command || '';
+    document.getElementById('toolEnv').value = JSON.stringify(tool.env || {}, null, 2);
+    document.getElementById('toolConfigHint').value = tool.config_hint || '';
+    document.getElementById('toolWorkflow').value = tool.workflow || '';
+    const modal = document.getElementById('toolModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeToolModal() {
+    const modal = document.getElementById('toolModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async function saveToolConfig() {
+    const name = state.currentToolName;
+    if (!name) {
+      setLog('Missing tool name.');
+      return;
+    }
+    let env = {};
+    try {
+      env = JSON.parse(document.getElementById('toolEnv').value || '{}');
+    } catch (e) {
+      setLog(`Invalid env JSON: ${e}`);
+      return;
+    }
+    const updates = {
+      entrypoint: document.getElementById('toolEntry').value || '',
+      args: document.getElementById('toolArgs').value || '',
+      test_command: document.getElementById('toolTestCmd').value || '',
+      test_url: document.getElementById('toolTestUrl').value || '',
+      download_url: document.getElementById('toolDownloadUrl').value || '',
+      install_command: document.getElementById('toolInstallCmd').value || '',
+      env,
+      config_hint: document.getElementById('toolConfigHint').value || '',
+      workflow: document.getElementById('toolWorkflow').value || '',
+    };
+    try {
+      const res = await apiPost('/api/tools/update', { name, updates });
+      if (res.ok) {
+        setLog(`Saved tool ${name}.`);
+        closeToolModal();
+        await loadTools();
+        await loadToolCatalog();
+      } else {
+        setLog(res.error || 'Failed to save tool.');
+      }
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function askTool(name) {
+    const tool = toolConfig(name);
+    const prompt = `How do I use ${name}?\nEntry: ${tool?.entrypoint || name}\nArgs: ${tool?.args || ''}\nTest: ${tool?.test_command || tool?.test_url || ''}`.trim();
+    try {
+      const res = await apiPost('/api/llm/analyze', { prompt });
+      setLog(res.ok ? (res.response || 'LLM returned no content.') : (res.error || 'LLM request failed.'));
+    } catch (e) {
+      setLog(`LLM error: ${e}`);
+    }
+  }
+
+  async function installExtension(name) {
+    setLog(`Installing extension: ${name}...`, false);
+    try {
+      const res = await apiPost('/api/extensions/install', { name });
+      setLog(`${res.cmd ? res.cmd.join(' ') : 'install'}\n\n${res.stdout || ''}\n${res.stderr || ''}`.trim());
+      await loadExtensions();
+    } catch (e) {
+      setLog(`Error: ${e}`);
+    }
+  }
+
+  async function toggleExtension(name, enable, skipApply = false) {
     await apiPost('/api/toggle', { kind: 'extension', name, enable });
     await loadExtensions();
     renderCapabilities();
+    if (!skipApply) {
+    }
   }
 
-  async function togglePack(name, enable) {
+  async function togglePack(name, enable, skipApply = false) {
     await apiPost('/api/toggle', { kind: 'pack', name, enable });
     await loadPacks();
     renderCapabilities();
+    if (!skipApply) {
+    }
   }
 
   async function toggleCapability(id, enable) {
@@ -856,12 +1735,12 @@
     if (enable) {
       for (const pack of (cap.packs || [])) {
         if (!packEnabled(pack)) {
-          await togglePack(pack, true);
+          await togglePack(pack, true, true);
         }
       }
       for (const ext of (cap.extensions || [])) {
         if (!extensionEnabled(ext)) {
-          await toggleExtension(ext, true);
+          await toggleExtension(ext, true, true);
         }
       }
       if ((cap.packs || []).includes('speech_stack')) {
@@ -870,7 +1749,7 @@
     } else {
       for (const ext of (cap.extensions || [])) {
         if (extensionEnabled(ext)) {
-          await toggleExtension(ext, false);
+          await toggleExtension(ext, false, true);
         }
       }
       for (const pack of (cap.packs || [])) {
@@ -880,7 +1759,7 @@
           return (other.packs || []).includes(pack);
         });
         if (!stillNeeded && packEnabled(pack)) {
-          await togglePack(pack, false);
+          await togglePack(pack, false, true);
         }
       }
       if ((cap.packs || []).includes('speech_stack')) {
@@ -907,248 +1786,19 @@
   }
 
   async function runCmd(cmd) {
-    const log = document.getElementById('log');
-    log.textContent = `Running: ${cmd}...`;
+    setLog(`Running: ${cmd}...`, false);
     try {
       const res = await fetch(`/api/run?cmd=${encodeURIComponent(cmd)}`, {
         headers: { 'X-Beast-Token': state.token }
       });
       const data = await res.json();
-      log.textContent = `${data.cmd ? data.cmd.join(' ') : cmd}\n\n${data.stdout || ''}\n${data.stderr || ''}`.trim();
+      setLog(`${data.cmd ? data.cmd.join(' ') : cmd}\n\n${data.stdout || ''}\n${data.stderr || ''}`.trim());
     } catch (e) {
-      log.textContent = `Error: ${e}`;
+      setLog(`Error: ${e}`);
     }
-  }
-
-  // LLM Model Management
-  state.models = [];
-  state.ollamaRunning = false;
-  state.availableModels = [];
-  state.activeDownloads = {};
-
-  async function refreshModels() {
-    try {
-      const data = await apiGet('/api/models?force=1');
-      if (data.ok) {
-        state.models = data.models || [];
-        state.ollamaRunning = data.ollama_running;
-        renderModels();
-        updateOllamaStatus();
-      }
-    } catch (e) {
-      console.error('Failed to load models:', e);
-    }
-    await loadStorageInfo();
-  }
-
-  async function loadStorageInfo() {
-    try {
-      const data = await apiGet('/api/models/storage');
-      if (data.ok) {
-        const el = document.getElementById('storageInfo');
-        const s = data.storage;
-        const parts = [];
-        if (s.internal && s.internal.free_human) {
-          parts.push(`Internal: ${s.internal.free_human} free`);
-        }
-        if (s.external && s.external.free_human && s.external.path !== s.internal?.path) {
-          parts.push(`External: ${s.external.free_human} free`);
-        }
-        el.textContent = parts.length ? `Storage: ${parts.join(' | ')}` : '';
-      }
-    } catch (e) {}
-  }
-
-  function updateOllamaStatus() {
-    const el = document.getElementById('ollamaStatus');
-    if (state.ollamaRunning) {
-      el.textContent = 'Ollama: online';
-      el.className = 'pill ok';
-    } else {
-      el.textContent = 'Ollama: offline';
-      el.className = 'pill bad';
-    }
-  }
-
-  function renderModels() {
-    const el = document.getElementById('modelList');
-    if (!state.models.length) {
-      el.innerHTML = '<div class="muted">No models found. Drop GGUF/safetensors files in the models directory or pull from Ollama.</div>';
-      return;
-    }
-    el.innerHTML = state.models.map(m => {
-      const isOllama = m.location === 'ollama';
-      const icon = isOllama ? '🦙' : '📄';
-      const locLabel = m.location.charAt(0).toUpperCase() + m.location.slice(1);
-      const quantLabel = m.quantization ? ` (${m.quantization})` : '';
-      return `
-        <div class="tool">
-          <div class="tool-header">
-            <div class="tool-title">${icon} ${m.name}${quantLabel}</div>
-            <div class="spacer"></div>
-            <span class="pill">${m.size_human}</span>
-            <span class="pill">${locLabel}</span>
-            <button class="btn ghost" onclick="deleteModel('${m.path.replace(/'/g, "\\'")}')">🗑</button>
-          </div>
-          <div class="tool-desc">${m.model_type} | ${m.path}</div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  async function deleteModel(path) {
-    if (!confirm(`Delete model?\n${path}`)) return;
-    try {
-      const res = await apiPost('/api/models/delete', { path });
-      if (res.ok) {
-        await refreshModels();
-      } else {
-        alert('Failed to delete: ' + (res.error || 'Unknown error'));
-      }
-    } catch (e) {
-      alert('Error: ' + e);
-    }
-  }
-
-  async function showOllamaLibrary() {
-    const panel = document.getElementById('ollamaLibrary');
-    const list = document.getElementById('ollamaLibraryList');
-    if (panel.style.display !== 'none') {
-      panel.style.display = 'none';
-      return;
-    }
-    document.getElementById('urlDownloadPanel').style.display = 'none';
-    panel.style.display = 'block';
-    try {
-      const data = await apiGet('/api/models/available');
-      if (data.ok) {
-        state.availableModels = data.models || [];
-        list.innerHTML = state.availableModels.map(m => 
-          `<button class="btn" onclick="pullOllamaModel('${m.name}')" title="${m.desc} (${m.size})">${m.name}</button>`
-        ).join('');
-      }
-    } catch (e) {
-      list.innerHTML = '<div class="muted">Failed to load models</div>';
-    }
-  }
-
-  async function pullOllamaModel(name) {
-    if (!state.ollamaRunning) {
-      alert('Ollama is not running. Start it first.');
-      return;
-    }
-    document.getElementById('ollamaLibrary').style.display = 'none';
-    showDownloadProgress(name, 0);
-    try {
-      const res = await apiPost('/api/models/pull', { model: name });
-      if (res.ok) {
-        hideDownloadProgress();
-        await refreshModels();
-      } else {
-        hideDownloadProgress();
-        alert('Failed to pull: ' + (res.error || 'Unknown error'));
-      }
-    } catch (e) {
-      hideDownloadProgress();
-      alert('Error: ' + e);
-    }
-  }
-
-  function showUrlDownload() {
-    const panel = document.getElementById('urlDownloadPanel');
-    if (panel.style.display !== 'none') {
-      panel.style.display = 'none';
-      return;
-    }
-    document.getElementById('ollamaLibrary').style.display = 'none';
-    panel.style.display = 'block';
-    
-    document.getElementById('modelDestination').onchange = function() {
-      document.getElementById('customPath').style.display = this.value === 'custom' ? 'block' : 'none';
-    };
-  }
-
-  async function downloadFromUrl() {
-    const url = document.getElementById('modelUrl').value.trim();
-    if (!url) {
-      alert('Please enter a URL');
-      return;
-    }
-    const destination = document.getElementById('modelDestination').value;
-    const customPath = document.getElementById('customPath').value.trim();
-    
-    if (destination === 'custom' && !customPath) {
-      alert('Please enter a custom path');
-      return;
-    }
-
-    document.getElementById('urlDownloadPanel').style.display = 'none';
-    const filename = url.split('/').pop().split('?')[0] || 'model.gguf';
-    showDownloadProgress(filename, 0);
-
-    try {
-      const res = await apiPost('/api/models/download', { 
-        url, 
-        destination,
-        custom_path: customPath || undefined
-      });
-      if (res.ok) {
-        // Poll for download progress
-        pollDownloadStatus(res.download_id);
-      } else {
-        hideDownloadProgress();
-        alert('Failed to start download: ' + (res.error || 'Unknown error'));
-      }
-    } catch (e) {
-      hideDownloadProgress();
-      alert('Error: ' + e);
-    }
-  }
-
-  async function pollDownloadStatus(downloadId) {
-    const poll = async () => {
-      try {
-        const data = await apiGet(`/api/models/downloads?id=${downloadId}`);
-        if (data.ok) {
-          const dl = data.downloads;
-          if (dl.status === 'complete') {
-            hideDownloadProgress();
-            await refreshModels();
-            return;
-          } else if (dl.status === 'error') {
-            hideDownloadProgress();
-            alert('Download failed: ' + (dl.error || 'Unknown error'));
-            return;
-          } else {
-            updateDownloadProgress(dl.progress || 0);
-            setTimeout(poll, 1000);
-          }
-        }
-      } catch (e) {
-        hideDownloadProgress();
-      }
-    };
-    poll();
-  }
-
-  function showDownloadProgress(name, percent) {
-    document.getElementById('downloadProgress').style.display = 'block';
-    document.getElementById('downloadName').textContent = `Downloading: ${name}`;
-    updateDownloadProgress(percent);
-  }
-
-  function updateDownloadProgress(percent) {
-    document.getElementById('downloadPercent').textContent = `${Math.round(percent)}%`;
-    document.getElementById('downloadBar').style.width = `${percent}%`;
-  }
-
-  function hideDownloadProgress() {
-    document.getElementById('downloadProgress').style.display = 'none';
   }
 
   refreshAll();
-  // Auto-refresh models every 30 seconds to detect dropped files
-  setInterval(refreshModels, 30000);
 </script>
 </body>
 </html>

@@ -11,8 +11,9 @@ docker_runtime_choice(){
   local want="${DOCKER_RUNTIME:-}"
   if [[ -n "$want" ]]; then
     case "$want" in
+      auto) ;;
       colima|docker_desktop) echo "$want"; return 0 ;;
-      *) warn "Unknown DOCKER_RUNTIME='$want' (use: colima|docker_desktop). Falling back to auto." ;;
+      *) warn "Unknown DOCKER_RUNTIME='$want' (use: colima|docker_desktop). Falling back to auto." >&2 ;;
     esac
   fi
 
@@ -42,11 +43,23 @@ docker_runtime_start_colima(){
   require_cmd docker
 
   if colima status >/dev/null 2>&1; then
+    if docker context inspect colima >/dev/null 2>&1; then
+      local current; current="$(docker context show 2>/dev/null || true)"
+      if [[ "$current" != "colima" ]]; then
+        docker context use colima >/dev/null 2>&1 || true
+      fi
+    fi
     return 0
   fi
 
   # Avoid hardcoding resources; Colima defaults are fine for v17.
   run colima start
+  if docker context inspect colima >/dev/null 2>&1; then
+    local current; current="$(docker context show 2>/dev/null || true)"
+    if [[ "$current" != "colima" ]]; then
+      docker context use colima >/dev/null 2>&1 || true
+    fi
+  fi
 }
 
 docker_runtime_ensure(){
