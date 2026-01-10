@@ -64,6 +64,11 @@ ALLOW = {
     "speech_status": ["speech", "status"],
 }
 
+# Cache for env config to avoid repeated subprocess calls
+_env_cache = None
+_env_cache_mtime = 0
+_env_cache_ttl = 5.0  # seconds
+
 
 def read_token():
     if not TOKEN_FILE.exists():
@@ -73,6 +78,26 @@ def read_token():
 
 
 def load_env_json():
+    """Load environment config with caching to avoid repeated subprocess calls.
+    
+    Cache is invalidated after TTL or if config files are modified.
+    """
+    global _env_cache, _env_cache_mtime
+    
+    # Check if cache is valid
+    current_time = time.time()
+    cache_age = current_time - _env_cache_mtime
+    
+    # Get mtime of config files
+    paths_mtime = PATHS_ENV.stat().st_mtime if PATHS_ENV.exists() else 0
+    ports_mtime = PORTS_ENV.stat().st_mtime if PORTS_ENV.exists() else 0
+    max_config_mtime = max(paths_mtime, ports_mtime)
+    
+    # Return cached value if still valid
+    if _env_cache is not None and cache_age < _env_cache_ttl and max_config_mtime <= _env_cache_mtime:
+        return _env_cache
+    
+    # Load fresh config
     script = f'''
 set -euo pipefail
 set -a
@@ -91,7 +116,13 @@ print(json.dumps({{k: os.environ.get(k) for k in keys}}))
 PY
 '''
     out = subprocess.check_output(["/bin/bash", "-lc", script], text=True)
-    return json.loads(out)
+    result = json.loads(out)
+    
+    # Update cache
+    _env_cache = result
+    _env_cache_mtime = current_time
+    
+    return result
 
 
 def read_env_file(path: Path) -> dict[str, str]:
