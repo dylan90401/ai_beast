@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Resume Data Schema",
+  "description": "Structured schema for parsed resume/CV data",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the resume"
+    },
+    "uploaded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of upload"
+    },
+    "filename": {
+      "type": "string",
+      "description": "Original filename"
+    },
+    "raw_text": {
+      "type": "string",
+      "description": "Full extracted text from document"
+    },
+    "personal_info": {
+      "type": "object",
+      "properties": {
+        "full_name": {"type": "string"},
+        "email": {"type": "string", "format": "email"},
+        "phone": {"type": "string"},
+        "location": {
+          "type": "object",
+          "properties": {
+            "city": {"type": "string"},
+            "state": {"type": "string"},
+            "country": {"type": "string"},
+            "address": {"type": "string"}
+          }
+        },
+        "linkedin": {"type": "string", "format": "uri"},
+        "github": {"type": "string", "format": "uri"},
+        "website": {"type": "string", "format": "uri"},
+        "portfolio": {"type": "string", "format": "uri"}
+      }
+    },
+    "summary": {
+      "type": "string",
+      "description": "Professional summary or objective"
+    },
+    "experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company": {"type": "string"},
+          "position": {"type": "string"},
+          "location": {"type": "string"},
+          "start_date": {"type": "string"},
+          "end_date": {"type": "string"},
+          "current": {"type": "boolean"},
+          "description": {"type": "string"},
+          "responsibilities": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "achievements": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "institution": {"type": "string"},
+          "degree": {"type": "string"},
+          "field_of_study": {"type": "string"},
+          "location": {"type": "string"},
+          "start_date": {"type": "string"},
+          "end_date": {"type": "string"},
+          "gpa": {"type": "string"},
+          "honors": {"type": "string"},
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "properties": {
+        "technical": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "language": {"type": "string"},
+              "proficiency": {"type": "string"}
+            }
+          }
+        },
+        "soft_skills": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "certifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "issuer": {"type": "string"},
+              "date": {"type": "string"},
+              "credential_id": {"type": "string"},
+              "url": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "role": {"type": "string"},
+          "technologies": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "url": {"type": "string", "format": "uri"},
+          "start_date": {"type": "string"},
+          "end_date": {"type": "string"}
+        }
+      }
+    },
+    "awards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "issuer": {"type": "string"},
+          "date": {"type": "string"},
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "publications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "authors": {"type": "array", "items": {"type": "string"}},
+          "publisher": {"type": "string"},
+          "date": {"type": "string"},
+          "url": {"type": "string", "format": "uri"}
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "parsed_at": {"type": "string", "format": "date-time"},
+        "parser_version": {"type": "string"},
+        "model_used": {"type": "string"},
+        "confidence_score": {"type": "number", "minimum": 0, "maximum": 1},
+        "verified": {"type": "boolean"},
+        "verified_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  },
+  "required": ["id", "uploaded_at", "filename"]
+}

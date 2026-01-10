@@ -307,6 +307,40 @@
       <div id="storageInfo" class="muted" style="margin-top: 12px;"></div>
     </section>
 
+    <section class="card" style="--delay: 205ms;">
+      <h3>Resume Parser</h3>
+      <div class="row" style="margin-bottom: 12px;">
+        <button class="btn primary" onclick="showResumeUpload()">📤 Upload Resume</button>
+        <button class="btn" onclick="refreshResumes()">🔄 Refresh List</button>
+        <div class="spacer"></div>
+        <span id="resumeCount" class="pill">0 resumes</span>
+      </div>
+
+      <!-- Upload Modal -->
+      <div id="resumeUploadPanel" style="display:none; margin-bottom: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+        <div class="muted" style="margin-bottom: 8px;">Upload PDF, DOCX, or TXT resume for AI-powered parsing</div>
+        <input type="file" id="resumeFileInput" accept=".pdf,.docx,.doc,.txt" style="margin-bottom: 8px; color: var(--ink);">
+        <div class="row" style="gap: 8px;">
+          <button class="btn primary" onclick="uploadResume()">Parse Resume</button>
+          <button class="btn ghost" onclick="hideResumeUpload()">Cancel</button>
+        </div>
+        <div id="uploadStatus" class="muted" style="margin-top: 8px;"></div>
+      </div>
+
+      <!-- Resume List -->
+      <div id="resumeList" class="tool-list"></div>
+
+      <!-- Resume Detail View -->
+      <div id="resumeDetailPanel" style="display:none; margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; max-height: 500px; overflow-y: auto;">
+        <div class="row" style="margin-bottom: 12px;">
+          <h4 style="margin: 0;">Resume Details</h4>
+          <div class="spacer"></div>
+          <button class="btn ghost" onclick="hideResumeDetail()">✖ Close</button>
+        </div>
+        <div id="resumeDetailContent"></div>
+      </div>
+    </section>
+
     <section class="card" style="--delay: 210ms;">
       <h3>Capabilities</h3>
       <div id="capabilityList" class="tool-list"></div>
@@ -547,7 +581,7 @@
     } catch (e) {
       setHealth(false);
     }
-    await Promise.all([loadConfig(), loadPacks(), loadExtensions(), loadMetrics(), refreshModels()]);
+    await Promise.all([loadConfig(), loadPacks(), loadExtensions(), loadMetrics(), refreshModels(), refreshResumes()]);
     renderServices();
     renderCapabilities();
     await checkHealth();
@@ -1144,6 +1178,248 @@
 
   function hideDownloadProgress() {
     document.getElementById('downloadProgress').style.display = 'none';
+  }
+
+  // Resume Parser functions
+  state.resumes = [];
+  state.currentResume = null;
+
+  function showResumeUpload() {
+    document.getElementById('resumeUploadPanel').style.display = 'block';
+    document.getElementById('uploadStatus').textContent = '';
+  }
+
+  function hideResumeUpload() {
+    document.getElementById('resumeUploadPanel').style.display = 'none';
+    document.getElementById('resumeFileInput').value = '';
+    document.getElementById('uploadStatus').textContent = '';
+  }
+
+  async function uploadResume() {
+    const fileInput = document.getElementById('resumeFileInput');
+    const statusEl = document.getElementById('uploadStatus');
+
+    if (!fileInput.files || !fileInput.files[0]) {
+      statusEl.textContent = 'Please select a file';
+      return;
+    }
+
+    const file = fileInput.files[0];
+    statusEl.textContent = 'Reading file...';
+
+    try {
+      // Read file as base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Content = e.target.result.split(',')[1];
+        statusEl.textContent = 'Uploading and parsing (this may take 30-60 seconds)...';
+
+        try {
+          const res = await apiPost('/api/resume/upload', {
+            filename: file.name,
+            content: base64Content
+          });
+
+          if (res.ok) {
+            statusEl.textContent = 'Resume parsed successfully!';
+            hideResumeUpload();
+            await refreshResumes();
+            // Show the parsed resume
+            if (res.resume) {
+              viewResumeDetail(res.resume);
+            }
+          } else {
+            statusEl.textContent = 'Error: ' + (res.error || 'Unknown error');
+          }
+        } catch (err) {
+          statusEl.textContent = 'Upload failed: ' + err.message;
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      statusEl.textContent = 'Error reading file: ' + err.message;
+    }
+  }
+
+  async function refreshResumes() {
+    try {
+      const data = await apiGet('/api/resume/list');
+      if (data.ok) {
+        state.resumes = data.resumes || [];
+        renderResumes();
+        updateResumeCount();
+      }
+    } catch (e) {
+      console.error('Failed to load resumes:', e);
+    }
+  }
+
+  function updateResumeCount() {
+    const el = document.getElementById('resumeCount');
+    const count = state.resumes.length;
+    el.textContent = `${count} resume${count !== 1 ? 's' : ''}`;
+  }
+
+  function renderResumes() {
+    const el = document.getElementById('resumeList');
+    if (!state.resumes.length) {
+      el.innerHTML = '<div class="muted">No resumes uploaded yet. Upload a resume to get started.</div>';
+      return;
+    }
+
+    el.innerHTML = state.resumes.map(resume => {
+      const name = resume.name || 'Unknown';
+      const email = resume.email || '';
+      const date = new Date(resume.uploaded_at).toLocaleDateString();
+      return `
+        <div class="tool">
+          <div class="tool-header">
+            <div class="tool-title">👤 ${name}</div>
+            <div class="spacer"></div>
+            <button class="btn" onclick="viewResume('${resume.id}')">View</button>
+            <button class="btn ghost" onclick="deleteResume('${resume.id}')">🗑</button>
+          </div>
+          <div class="tool-desc">${email ? email + ' | ' : ''}Uploaded: ${date}</div>
+          <div class="muted">File: ${resume.filename}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function viewResume(resumeId) {
+    try {
+      const data = await apiGet(`/api/resume/${resumeId}`);
+      if (data.ok && data.resume) {
+        viewResumeDetail(data.resume);
+      } else {
+        alert('Failed to load resume');
+      }
+    } catch (e) {
+      alert('Error: ' + e.message);
+    }
+  }
+
+  function viewResumeDetail(resume) {
+    state.currentResume = resume;
+    const panel = document.getElementById('resumeDetailPanel');
+    const content = document.getElementById('resumeDetailContent');
+
+    const personal = resume.personal_info || {};
+    const experience = resume.experience || [];
+    const education = resume.education || [];
+    const skills = resume.skills || {};
+    const projects = resume.projects || [];
+
+    let html = '<div style="display: grid; gap: 16px;">';
+
+    // Personal Info
+    html += '<div><strong>Personal Information</strong>';
+    html += `<div class="muted" style="margin-top: 4px;">Name: ${personal.full_name || 'N/A'}</div>`;
+    html += `<div class="muted">Email: ${personal.email || 'N/A'}</div>`;
+    html += `<div class="muted">Phone: ${personal.phone || 'N/A'}</div>`;
+    if (personal.location) {
+      const loc = personal.location;
+      html += `<div class="muted">Location: ${[loc.city, loc.state, loc.country].filter(Boolean).join(', ') || 'N/A'}</div>`;
+    }
+    if (personal.linkedin) html += `<div class="muted">LinkedIn: <a href="${personal.linkedin}" class="link" target="_blank">${personal.linkedin}</a></div>`;
+    if (personal.github) html += `<div class="muted">GitHub: <a href="${personal.github}" class="link" target="_blank">${personal.github}</a></div>`;
+    html += '</div>';
+
+    // Summary
+    if (resume.summary) {
+      html += `<div><strong>Summary</strong><div class="muted" style="margin-top: 4px;">${resume.summary}</div></div>`;
+    }
+
+    // Experience
+    if (experience.length) {
+      html += '<div><strong>Experience</strong>';
+      experience.forEach(exp => {
+        html += '<div style="margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--accent);">';
+        html += `<div style="font-weight: 600;">${exp.position || 'Position'} at ${exp.company || 'Company'}</div>`;
+        html += `<div class="muted">${exp.start_date || ''} - ${exp.current ? 'Present' : exp.end_date || ''}</div>`;
+        if (exp.location) html += `<div class="muted">${exp.location}</div>`;
+        if (exp.description) html += `<div class="muted" style="margin-top: 4px;">${exp.description}</div>`;
+        if (exp.responsibilities && exp.responsibilities.length) {
+          html += '<ul style="margin: 4px 0; padding-left: 20px;">';
+          exp.responsibilities.forEach(r => html += `<li class="muted">${r}</li>`);
+          html += '</ul>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Education
+    if (education.length) {
+      html += '<div><strong>Education</strong>';
+      education.forEach(edu => {
+        html += '<div style="margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--accent-2);">';
+        html += `<div style="font-weight: 600;">${edu.degree || 'Degree'} in ${edu.field_of_study || 'Field'}</div>`;
+        html += `<div class="muted">${edu.institution || 'Institution'}</div>`;
+        html += `<div class="muted">${edu.start_date || ''} - ${edu.end_date || ''}</div>`;
+        if (edu.gpa) html += `<div class="muted">GPA: ${edu.gpa}</div>`;
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Skills
+    if (skills.technical && skills.technical.length) {
+      html += '<div><strong>Technical Skills</strong>';
+      html += `<div class="muted" style="margin-top: 4px;">${skills.technical.join(', ')}</div>`;
+      html += '</div>';
+    }
+
+    // Projects
+    if (projects.length) {
+      html += '<div><strong>Projects</strong>';
+      projects.forEach(proj => {
+        html += '<div style="margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--ok);">';
+        html += `<div style="font-weight: 600;">${proj.name || 'Project'}</div>`;
+        if (proj.description) html += `<div class="muted">${proj.description}</div>`;
+        if (proj.technologies && proj.technologies.length) {
+          html += `<div class="muted" style="margin-top: 4px;">Tech: ${proj.technologies.join(', ')}</div>`;
+        }
+        if (proj.url) html += `<div class="muted"><a href="${proj.url}" class="link" target="_blank">${proj.url}</a></div>`;
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Metadata
+    html += '<div style="border-top: 1px solid var(--border); padding-top: 8px;">';
+    html += '<strong>Metadata</strong>';
+    html += `<div class="muted">Parsed at: ${new Date(resume.metadata?.parsed_at).toLocaleString()}</div>`;
+    html += `<div class="muted">Model: ${resume.metadata?.model_used || 'Unknown'}</div>`;
+    html += `<div class="muted">Verified: ${resume.metadata?.verified ? 'Yes' : 'No'}</div>`;
+    html += '</div>';
+
+    html += '</div>';
+
+    content.innerHTML = html;
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideResumeDetail() {
+    document.getElementById('resumeDetailPanel').style.display = 'none';
+    state.currentResume = null;
+  }
+
+  async function deleteResume(resumeId) {
+    if (!confirm('Are you sure you want to delete this resume?')) return;
+
+    try {
+      const res = await apiPost(`/api/resume/${resumeId}/delete`, {});
+      if (res.ok) {
+        await refreshResumes();
+        hideResumeDetail();
+      } else {
+        alert('Failed to delete: ' + (res.error || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Error: ' + e.message);
+    }
   }
 
   refreshAll();

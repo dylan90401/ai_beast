@@ -351,6 +351,32 @@ def get_llm_manager():
     return _llm_manager
 
 
+# Resume Parser singleton
+_resume_parser = None
+
+
+def get_resume_parser():
+    global _resume_parser
+    if _resume_parser is None:
+        try:
+            from modules.resume import ResumeParser
+            cfg = load_env_json()
+            ollama_host = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
+            model = os.environ.get("RESUME_PARSER_MODEL", "llama3.2:latest")
+            storage_dir = cfg.get("DATA_DIR", str(BASE_DIR / "data")) + "/resumes"
+            _resume_parser = ResumeParser(
+                ollama_host=ollama_host,
+                model=model,
+                storage_dir=storage_dir
+            )
+        except ImportError:
+            return None
+        except Exception as e:
+            print(f"[dashboard] Failed to init resume parser: {e}", file=sys.stderr)
+            return None
+    return _resume_parser
+
+
 class Handler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         p = urlparse(path).path
@@ -487,6 +513,33 @@ class Handler(SimpleHTTPRequestHandler):
                 download_id = qs.get("id", [None])[0]
                 status = mgr.get_download_status(download_id)
                 return self._json(200, {"ok": True, "downloads": status})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        # Resume API - List all resumes
+        if p.path == "/api/resume/list":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            parser = get_resume_parser()
+            if not parser:
+                return self._json(500, {"ok": False, "error": "Resume parser not available"})
+            try:
+                resumes = parser.list_resumes()
+                return self._json(200, {"ok": True, "resumes": resumes})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        # Resume API - Get specific resume
+        if p.path.startswith("/api/resume/") and not p.path.endswith("/list"):
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            parser = get_resume_parser()
+            if not parser:
+                return self._json(500, {"ok": False, "error": "Resume parser not available"})
+            try:
+                resume_id = p.path.split("/")[-1]
+                resume_data = parser.load_resume(resume_id)
+                if resume_data is None:
+                    return self._json(404, {"ok": False, "error": "Resume not found"})
+                return self._json(200, {"ok": True, "resume": resume_data})
             except Exception as ex:
                 return self._json(500, {"ok": False, "error": str(ex)})
         return super().do_GET()
@@ -640,6 +693,74 @@ class Handler(SimpleHTTPRequestHandler):
                 loc = loc_map.get(destination, ModelLocation.INTERNAL)
                 result = mgr.move_model(src_path, loc, custom_path)
                 return self._json(200, result)
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        # Resume API - Upload and parse
+        if p.path == "/api/resume/upload":
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            parser = get_resume_parser()
+            if not parser:
+                return self._json(500, {"ok": False, "error": "Resume parser not available"})
+            try:
+                import tempfile
+                import base64
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body)
+                filename = data.get("filename", "resume.pdf")
+                file_content_b64 = data.get("content")
+                if not file_content_b64:
+                    return self._json(400, {"ok": False, "error": "Missing file content"})
+                # Decode base64 content
+                file_content = base64.b64decode(file_content_b64)
+                # Save to temp file
+                suffix = Path(filename).suffix or ".pdf"
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    tmp.write(file_content)
+                    tmp_path = tmp.name
+                try:
+                    # Parse resume
+                    resume_data = parser.parse_resume(tmp_path, save=True)
+                    return self._json(200, {"ok": True, "resume": resume_data})
+                finally:
+                    # Clean up temp file
+                    Path(tmp_path).unlink(missing_ok=True)
+            except Exception as ex:
+                import traceback
+                traceback.print_exc()
+                return self._json(500, {"ok": False, "error": str(ex)})
+        # Resume API - Update resume
+        if p.path.startswith("/api/resume/") and p.path.count("/") == 3:
+            resume_id = p.path.split("/")[-1]
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            parser = get_resume_parser()
+            if not parser:
+                return self._json(500, {"ok": False, "error": "Resume parser not available"})
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length).decode("utf-8") if length else "{}"
+                data = json.loads(body)
+                resume_data = parser.update_resume(resume_id, data)
+                if resume_data is None:
+                    return self._json(404, {"ok": False, "error": "Resume not found"})
+                return self._json(200, {"ok": True, "resume": resume_data})
+            except Exception as ex:
+                return self._json(500, {"ok": False, "error": str(ex)})
+        # Resume API - Delete resume
+        if p.path.startswith("/api/resume/") and p.path.endswith("/delete"):
+            if not self._auth():
+                return self._json(401, {"ok": False, "error": "Unauthorized"})
+            parser = get_resume_parser()
+            if not parser:
+                return self._json(500, {"ok": False, "error": "Resume parser not available"})
+            try:
+                resume_id = p.path.split("/")[-2]
+                success = parser.delete_resume(resume_id)
+                if not success:
+                    return self._json(404, {"ok": False, "error": "Resume not found"})
+                return self._json(200, {"ok": True})
             except Exception as ex:
                 return self._json(500, {"ok": False, "error": str(ex)})
         return self._json(404, {"ok": False, "error": "not found"})
