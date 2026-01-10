@@ -33,7 +33,11 @@ def resolve_base_dir():
     here = Path(__file__).resolve()
     # Walk upward until we find a project root indicator (beast dir, pyproject.toml, or .git)
     for p in [here] + list(here.parents):
-        if (p / 'beast').exists() or (p / 'pyproject.toml').exists() or (p / '.git').exists():
+        if (
+            (p / "beast").exists()
+            or (p / "pyproject.toml").exists()
+            or (p / ".git").exists()
+        ):
             return p
     # Fallback for legacy layout
     return here.parents[2]
@@ -95,7 +99,11 @@ def load_env_json():
     max_config_mtime = max(paths_mtime, ports_mtime)
 
     # Return cached value if still valid
-    if _env_cache is not None and cache_age < _env_cache_ttl and max_config_mtime <= _env_cache_mtime:
+    if (
+        _env_cache is not None
+        and cache_age < _env_cache_ttl
+        and max_config_mtime <= _env_cache_mtime
+    ):
         return _env_cache
 
     # Load fresh config
@@ -188,7 +196,9 @@ def list_extensions() -> list[dict[str, str]]:
         desc = ""
         readme = d / "README.md"
         if readme.exists():
-            for line in readme.read_text(encoding="utf-8", errors="replace").splitlines():
+            for line in readme.read_text(
+                encoding="utf-8", errors="replace"
+            ).splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
@@ -466,7 +476,9 @@ def ollama_analyze(prompt: str, model: str | None, cfg: dict) -> tuple[int, dict
     model_name = model or cfg.get("AI_BEAST_OLLAMA_MODEL") or cfg.get("OLLAMA_MODEL")
     if not model_name:
         return 400, {"ok": False, "error": "missing model (set AI_BEAST_OLLAMA_MODEL)"}
-    payload = json.dumps({"model": model_name, "prompt": prompt, "stream": False}).encode("utf-8")
+    payload = json.dumps(
+        {"model": model_name, "prompt": prompt, "stream": False}
+    ).encode("utf-8")
     try:
         req = urllib.request.Request(
             f"{base}/api/generate",
@@ -476,7 +488,11 @@ def ollama_analyze(prompt: str, model: str | None, cfg: dict) -> tuple[int, dict
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode("utf-8") or "{}")
-        return 200, {"ok": True, "response": data.get("response", ""), "model": model_name}
+        return 200, {
+            "ok": True,
+            "response": data.get("response", ""),
+            "model": model_name,
+        }
     except urllib.error.HTTPError as exc:
         return 500, {"ok": False, "error": str(exc)}
     except Exception as exc:
@@ -585,7 +601,12 @@ def update_paths(payload: dict) -> tuple[int, dict]:
         return 400, {"ok": False, "error": "Invalid payload"}
 
     current = read_env_file(PATHS_ENV)
-    guts_raw = payload.get("guts_dir") or current.get("GUTS_DIR") or current.get("BASE_DIR") or str(BASE_DIR)
+    guts_raw = (
+        payload.get("guts_dir")
+        or current.get("GUTS_DIR")
+        or current.get("BASE_DIR")
+        or str(BASE_DIR)
+    )
     heavy_raw = payload.get("heavy_dir") or current.get("HEAVY_DIR") or str(BASE_DIR)
 
     ok, guts_dir = _sanitize_path(guts_raw, "GUTS_DIR")
@@ -718,7 +739,9 @@ class Handler(SimpleHTTPRequestHandler):
                             "enabled": enabled,
                             "desc": meta.get("desc", ""),
                             "notes": meta.get("notes", ""),
-                            "extensions": (meta.get("docker") or {}).get("extensions", []),
+                            "extensions": (meta.get("docker") or {}).get(
+                                "extensions", []
+                            ),
                         }
                     )
                 return self._json(200, {"ok": True, "items": items})
@@ -892,7 +915,12 @@ class Handler(SimpleHTTPRequestHandler):
                 if not kind or not name:
                     return self._json(400, {"ok": False, "error": "missing kind/name"})
                 if kind == "extension":
-                    cmd = ["extensions", "enable" if enable else "disable", name, "--apply"]
+                    cmd = [
+                        "extensions",
+                        "enable" if enable else "disable",
+                        name,
+                        "--apply",
+                    ]
                 elif kind == "pack":
                     cmd = ["packs", "enable" if enable else "disable", name, "--apply"]
                 else:
@@ -929,7 +957,9 @@ class Handler(SimpleHTTPRequestHandler):
                 if source == "catalog":
                     entry = catalog_lookup(name)
                     if not entry:
-                        return self._json(404, {"ok": False, "error": "tool not found in catalog"})
+                        return self._json(
+                            404, {"ok": False, "error": "tool not found in catalog"}
+                        )
                     code, obj = update_tool_config(name, entry)
                     return self._json(code, obj)
                 payload = {
@@ -988,7 +1018,13 @@ class Handler(SimpleHTTPRequestHandler):
                             update_tool_config(name, entry)
                             cfg[name] = entry
                         else:
-                            results.append({"name": name, "ok": False, "error": "missing tool config"})
+                            results.append(
+                                {
+                                    "name": name,
+                                    "ok": False,
+                                    "error": "missing tool config",
+                                }
+                            )
                             continue
                     code, obj = install_tool(name, run_installer)
                     results.append({"name": name, "status": code, **obj})
@@ -1004,9 +1040,15 @@ class Handler(SimpleHTTPRequestHandler):
                 data = json.loads(body)
                 key = (data.get("key") or "").strip()
                 value = str(data.get("value", "")).strip()
-                allowed = {"AI_BEAST_PROFILE", "AI_BEAST_PROFILE_SERVICES", "DOCKER_RUNTIME"}
+                allowed = {
+                    "AI_BEAST_PROFILE",
+                    "AI_BEAST_PROFILE_SERVICES",
+                    "DOCKER_RUNTIME",
+                }
                 if key not in allowed:
-                    return self._json(400, {"ok": False, "error": "unsupported setting"})
+                    return self._json(
+                        400, {"ok": False, "error": "unsupported setting"}
+                    )
                 path = BASE_DIR / "config" / "ai-beast.env"
                 if not path.exists():
                     path.write_text("", encoding="utf-8")
@@ -1091,7 +1133,10 @@ class Handler(SimpleHTTPRequestHandler):
                 tail = int(data.get("tail", 200))
                 if app:
                     output = get_logs_for_app(str(app), tail)
-                    return self._json(200, {"ok": True, "stdout": output, "cmd": ["read_log", str(app)]})
+                    return self._json(
+                        200,
+                        {"ok": True, "stdout": output, "cmd": ["read_log", str(app)]},
+                    )
                 if service:
                     code, obj = docker_service_logs(str(service), tail)
                     return self._json(code, obj)

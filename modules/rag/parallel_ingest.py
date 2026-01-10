@@ -53,6 +53,7 @@ logger = get_logger(__name__)
 
 class IngestionStatus(Enum):
     """Status of an ingestion task."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     SUCCESS = "success"
@@ -63,6 +64,7 @@ class IngestionStatus(Enum):
 @dataclass
 class IngestionTask:
     """Represents a document ingestion task."""
+
     doc_path: Path
     metadata: dict[str, Any] = field(default_factory=dict)
     priority: int = 0
@@ -75,6 +77,7 @@ class IngestionTask:
 @dataclass
 class IngestionResult:
     """Result of document ingestion."""
+
     doc_path: Path
     status: IngestionStatus
     chunks_created: int = 0
@@ -105,6 +108,7 @@ class IngestionResult:
 @dataclass
 class BatchStats:
     """Statistics for a batch ingestion run."""
+
     total_files: int = 0
     successful: int = 0
     failed: int = 0
@@ -155,18 +159,52 @@ class ParallelIngestor:
 
     # Default file extensions to process
     DEFAULT_EXTENSIONS = {
-        ".txt", ".md", ".rst", ".json", ".yaml", ".yml",
-        ".py", ".js", ".ts", ".java", ".c", ".cpp", ".h",
-        ".html", ".css", ".xml", ".csv", ".log",
+        ".txt",
+        ".md",
+        ".rst",
+        ".json",
+        ".yaml",
+        ".yml",
+        ".py",
+        ".js",
+        ".ts",
+        ".java",
+        ".c",
+        ".cpp",
+        ".h",
+        ".html",
+        ".css",
+        ".xml",
+        ".csv",
+        ".log",
     }
 
     # Extensions to skip
     SKIP_EXTENSIONS = {
-        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".ico",
-        ".mp3", ".mp4", ".wav", ".avi", ".mov",
-        ".zip", ".tar", ".gz", ".rar", ".7z",
-        ".exe", ".dll", ".so", ".dylib",
-        ".bin", ".dat", ".db", ".sqlite",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".ico",
+        ".mp3",
+        ".mp4",
+        ".wav",
+        ".avi",
+        ".mov",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".rar",
+        ".7z",
+        ".exe",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".bin",
+        ".dat",
+        ".db",
+        ".sqlite",
     }
 
     def __init__(
@@ -216,6 +254,7 @@ class ParallelIngestor:
         if self._embedder is None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._embedder = SentenceTransformer(self.embedding_model)
                 logger.info(f"Loaded embedding model: {self.embedding_model}")
             except ImportError as exc:
@@ -230,12 +269,12 @@ class ParallelIngestor:
         if self._qdrant_client is None:
             try:
                 from qdrant_client import QdrantClient
+
                 self._qdrant_client = QdrantClient(url=self.qdrant_url)
                 logger.info(f"Connected to Qdrant: {self.qdrant_url}")
             except ImportError as exc:
                 raise ImportError(
-                    "qdrant-client required. "
-                    "Install: pip install qdrant-client"
+                    "qdrant-client required. Install: pip install qdrant-client"
                 ) from exc
         return self._qdrant_client
 
@@ -283,7 +322,7 @@ class ParallelIngestor:
                 f"File {path} exceeds max size, truncating "
                 f"({len(data)} > {self.max_file_bytes})"
             )
-            data = data[:self.max_file_bytes]
+            data = data[: self.max_file_bytes]
 
         # Try encodings in order
         for enc in ("utf-8", "utf-8-sig", "latin-1", "cp1252"):
@@ -439,11 +478,13 @@ class ParallelIngestor:
                     "total_chunks": len(chunks),
                     **task.metadata,
                 }
-                points.append(PointStruct(
-                    id=point_id,
-                    vector=vector,
-                    payload=payload,
-                ))
+                points.append(
+                    PointStruct(
+                        id=point_id,
+                        vector=vector,
+                        payload=payload,
+                    )
+                )
 
             # Upsert points
             client.upsert(
@@ -454,10 +495,7 @@ class ParallelIngestor:
 
             duration = time.time() - start_time
 
-            logger.debug(
-                f"Ingested {path.name}: "
-                f"{len(chunks)} chunks, {duration:.2f}s"
-            )
+            logger.debug(f"Ingested {path.name}: {len(chunks)} chunks, {duration:.2f}s")
 
             return IngestionResult(
                 doc_path=path,
@@ -504,10 +542,7 @@ class ParallelIngestor:
         start_time = time.time()
 
         # Create coroutines
-        coroutines = [
-            self._ingest_single(task, collection)
-            for task in tasks
-        ]
+        coroutines = [self._ingest_single(task, collection) for task in tasks]
 
         # Process with progress tracking
         results: list[IngestionResult] = []
@@ -586,8 +621,7 @@ class ParallelIngestor:
 
             # Skip hidden files
             if skip_hidden and (
-                path.name.startswith(".") or
-                any(p.startswith(".") for p in path.parts)
+                path.name.startswith(".") or any(p.startswith(".") for p in path.parts)
             ):
                 continue
 
@@ -612,10 +646,12 @@ class ParallelIngestor:
                 **(metadata or {}),
             }
 
-            tasks.append(IngestionTask(
-                doc_path=path,
-                metadata=task_metadata,
-            ))
+            tasks.append(
+                IngestionTask(
+                    doc_path=path,
+                    metadata=task_metadata,
+                )
+            )
 
         if not tasks:
             logger.warning(f"No files found to ingest in {directory}")
@@ -716,12 +752,14 @@ def parallel_ingest_directory_sync(
     Returns:
         BatchStats with results
     """
-    return asyncio.run(parallel_ingest_directory(
-        directory,
-        collection=collection,
-        max_workers=max_workers,
-        **kwargs,
-    ))
+    return asyncio.run(
+        parallel_ingest_directory(
+            directory,
+            collection=collection,
+            max_workers=max_workers,
+            **kwargs,
+        )
+    )
 
 
 # Make ParallelIngestor usable as async context manager

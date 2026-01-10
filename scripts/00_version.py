@@ -27,11 +27,13 @@ def get_version():
     except subprocess.CalledProcessError:
         return "0.0.0"
 
+
 def update_version(new_version):
     """Update version in VERSION file."""
     version_file = Path("VERSION")
     version_file.write_text(new_version)
     print(f"Updated version to {new_version}")
+
 
 def generate_changelog():
     """Generate changelog from git history."""
@@ -65,6 +67,7 @@ def generate_changelog():
         return "\n".join(changelog)
     except subprocess.CalledProcessError:
         return "No changelog available"
+
 
 def main():
     """Main version management function."""
@@ -105,6 +108,7 @@ def main():
         print(f"Bumped version to {new_version}")
     else:
         print(f"Unknown action: {action}")
+
 
 if __name__ == "__main__":
     main()

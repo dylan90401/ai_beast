@@ -26,22 +26,24 @@ from pathlib import Path
 
 class ModelLocation(Enum):
     """Where models are stored."""
-    INTERNAL = "internal"   # BASE_DIR/models/llm
-    EXTERNAL = "external"   # HEAVY_DIR/models/llm (if different)
-    OLLAMA = "ollama"       # Managed by Ollama
-    CUSTOM = "custom"       # User-specified path
+
+    INTERNAL = "internal"  # BASE_DIR/models/llm
+    EXTERNAL = "external"  # HEAVY_DIR/models/llm (if different)
+    OLLAMA = "ollama"  # Managed by Ollama
+    CUSTOM = "custom"  # User-specified path
 
 
 @dataclass
 class ModelInfo:
     """Model metadata."""
+
     name: str
     path: str
     size_bytes: int = 0
     size_human: str = ""
     location: ModelLocation = ModelLocation.INTERNAL
     model_type: str = "unknown"  # gguf, safetensors, ollama
-    quantization: str = ""       # Q4_K_M, Q8_0, etc.
+    quantization: str = ""  # Q4_K_M, Q8_0, etc.
     modified: float = 0.0
     sha256: str = ""
     source_url: str = ""
@@ -134,11 +136,19 @@ class LLMManager:
                     env_vars[k] = v
 
         self.heavy_dir = Path(env_vars.get("HEAVY_DIR", str(self.base_dir)))
-        self.models_dir = Path(env_vars.get("MODELS_DIR", str(self.base_dir / "models")))
-        self.llm_models_dir = Path(env_vars.get("LLM_MODELS_DIR", str(self.models_dir / "llm")))
-        self.ollama_models_dir = Path(env_vars.get("OLLAMA_MODELS", str(self.llm_models_dir / "ollama")))
+        self.models_dir = Path(
+            env_vars.get("MODELS_DIR", str(self.base_dir / "models"))
+        )
+        self.llm_models_dir = Path(
+            env_vars.get("LLM_MODELS_DIR", str(self.models_dir / "llm"))
+        )
+        self.ollama_models_dir = Path(
+            env_vars.get("OLLAMA_MODELS", str(self.llm_models_dir / "ollama"))
+        )
         self.cache_dir = Path(env_vars.get("CACHE_DIR", str(self.base_dir / "cache")))
-        self.llm_cache_dir = Path(env_vars.get("LLM_CACHE_DIR", str(self.cache_dir / "llm")))
+        self.llm_cache_dir = Path(
+            env_vars.get("LLM_CACHE_DIR", str(self.cache_dir / "llm"))
+        )
 
         # Ensure directories exist
         for d in [self.models_dir, self.llm_models_dir, self.llm_cache_dir]:
@@ -151,7 +161,11 @@ class LLMManager:
     def scan_local_models(self, force: bool = False) -> list[ModelInfo]:
         """Scan for local model files (GGUF, safetensors, etc.)."""
         if not force and (time.time() - self._cache_time) < self._cache_ttl:
-            return [m for m in self._model_cache.values() if m.location != ModelLocation.OLLAMA]
+            return [
+                m
+                for m in self._model_cache.values()
+                if m.location != ModelLocation.OLLAMA
+            ]
 
         models = []
         scan_dirs = [self.llm_models_dir, self.models_dir]
@@ -198,7 +212,9 @@ class LLMManager:
     # Ollama Integration
     # -------------------------------------------------------------------------
 
-    def _ollama_api(self, endpoint: str, method: str = "GET", data: dict | None = None) -> dict:
+    def _ollama_api(
+        self, endpoint: str, method: str = "GET", data: dict | None = None
+    ) -> dict:
         """Call Ollama API."""
         url = f"{self.OLLAMA_HOST}/api/{endpoint}"
         headers = {"Content-Type": "application/json"}
@@ -252,7 +268,9 @@ class LLMManager:
 
         return models
 
-    def pull_ollama_model(self, model_name: str, callback: Callable[[dict], None] | None = None) -> dict:
+    def pull_ollama_model(
+        self, model_name: str, callback: Callable[[dict], None] | None = None
+    ) -> dict:
         """Pull a model from Ollama registry."""
         # For streaming, we need to handle NDJSON
         url = f"{self.OLLAMA_HOST}/api/pull"
@@ -295,8 +313,16 @@ class LLMManager:
             {"name": "mixtral:8x7b", "desc": "Mixtral 8x7B MoE", "size": "26GB"},
             {"name": "codellama:7b", "desc": "Code Llama 7B", "size": "3.8GB"},
             {"name": "codellama:34b", "desc": "Code Llama 34B", "size": "19GB"},
-            {"name": "deepseek-coder:6.7b", "desc": "DeepSeek Coder 6.7B", "size": "3.8GB"},
-            {"name": "deepseek-coder-v2:16b", "desc": "DeepSeek Coder V2 16B", "size": "8.9GB"},
+            {
+                "name": "deepseek-coder:6.7b",
+                "desc": "DeepSeek Coder 6.7B",
+                "size": "3.8GB",
+            },
+            {
+                "name": "deepseek-coder-v2:16b",
+                "desc": "DeepSeek Coder V2 16B",
+                "size": "8.9GB",
+            },
             {"name": "phi3:mini", "desc": "Microsoft Phi-3 Mini", "size": "2.3GB"},
             {"name": "phi3:medium", "desc": "Microsoft Phi-3 Medium", "size": "7.9GB"},
             {"name": "gemma2:9b", "desc": "Google Gemma 2 9B", "size": "5.5GB"},
@@ -305,7 +331,11 @@ class LLMManager:
             {"name": "qwen2.5:72b", "desc": "Alibaba Qwen 2.5 72B", "size": "41GB"},
             {"name": "command-r:35b", "desc": "Cohere Command R 35B", "size": "20GB"},
             {"name": "nomic-embed-text", "desc": "Nomic Embed Text", "size": "274MB"},
-            {"name": "mxbai-embed-large", "desc": "MixedBread Embed Large", "size": "670MB"},
+            {
+                "name": "mxbai-embed-large",
+                "desc": "MixedBread Embed Large",
+                "size": "670MB",
+            },
             {"name": "all-minilm", "desc": "All-MiniLM-L6-v2", "size": "45MB"},
         ]
 
@@ -382,31 +412,37 @@ class LLMManager:
 
                             progress = (downloaded / total * 100) if total else 0
                             with self._download_lock:
-                                self._downloads[download_id].update({
-                                    "progress": progress,
-                                    "downloaded": downloaded,
-                                    "total": total,
-                                    "status": "downloading",
-                                })
+                                self._downloads[download_id].update(
+                                    {
+                                        "progress": progress,
+                                        "downloaded": downloaded,
+                                        "total": total,
+                                        "status": "downloading",
+                                    }
+                                )
 
                             if callback:
-                                callback({
-                                    "progress": progress,
-                                    "downloaded": downloaded,
-                                    "total": total,
-                                    "downloaded_human": _human_size(downloaded),
-                                    "total_human": _human_size(total),
-                                })
+                                callback(
+                                    {
+                                        "progress": progress,
+                                        "downloaded": downloaded,
+                                        "total": total,
+                                        "downloaded_human": _human_size(downloaded),
+                                        "total_human": _human_size(total),
+                                    }
+                                )
 
                 # Move to final location
                 shutil.move(str(temp_path), str(dest_path))
 
                 with self._download_lock:
-                    self._downloads[download_id].update({
-                        "progress": 100,
-                        "status": "complete",
-                        "path": str(dest_path),
-                    })
+                    self._downloads[download_id].update(
+                        {
+                            "progress": 100,
+                            "status": "complete",
+                            "path": str(dest_path),
+                        }
+                    )
 
                 # Invalidate cache
                 self._cache_time = 0
@@ -416,10 +452,12 @@ class LLMManager:
 
             except Exception as e:
                 with self._download_lock:
-                    self._downloads[download_id].update({
-                        "status": "error",
-                        "error": str(e),
-                    })
+                    self._downloads[download_id].update(
+                        {
+                            "status": "error",
+                            "error": str(e),
+                        }
+                    )
                 if temp_path.exists():
                     temp_path.unlink()
                 if callback:
@@ -490,7 +528,9 @@ class LLMManager:
                         "total_human": _human_size(stat.total),
                         "used_human": _human_size(stat.used),
                         "free_human": _human_size(stat.free),
-                        "percent_used": round(stat.used / stat.total * 100, 1) if stat.total else 0,
+                        "percent_used": round(stat.used / stat.total * 100, 1)
+                        if stat.total
+                        else 0,
                     }
                 except OSError:
                     info[name] = {"path": str(path), "error": "Cannot read"}
@@ -498,7 +538,9 @@ class LLMManager:
                 info[name] = {"path": str(path), "exists": False}
         return info
 
-    def move_model(self, src_path: str, destination: ModelLocation, custom_path: str | None = None) -> dict:
+    def move_model(
+        self, src_path: str, destination: ModelLocation, custom_path: str | None = None
+    ) -> dict:
         """Move a model to a different location."""
         src = Path(src_path)
         if not src.exists():

@@ -51,6 +51,7 @@ try:
         FileSystemEventHandler,
     )
     from watchdog.observers import Observer
+
     WATCHDOG_AVAILABLE = True
 except ImportError:
     WATCHDOG_AVAILABLE = False
@@ -66,6 +67,7 @@ logger = get_logger(__name__)
 
 class WatchEventType(Enum):
     """Types of file system events we care about."""
+
     CREATED = "created"
     MODIFIED = "modified"
     DELETED = "deleted"
@@ -75,6 +77,7 @@ class WatchEventType(Enum):
 @dataclass
 class WatchEvent:
     """Represents a file system watch event."""
+
     event_type: WatchEventType
     path: Path
     is_directory: bool
@@ -91,11 +94,22 @@ class WatchEvent:
 @dataclass
 class WatchConfig:
     """Configuration for file system watching."""
+
     patterns: set[str] = field(default_factory=lambda: set())
-    ignore_patterns: set[str] = field(default_factory=lambda: {
-        "*.tmp", "*.swp", "*.lock", ".DS_Store", "*.pyc",
-        "*.pyo", "__pycache__", ".git", ".gitignore", "*.log"
-    })
+    ignore_patterns: set[str] = field(
+        default_factory=lambda: {
+            "*.tmp",
+            "*.swp",
+            "*.lock",
+            ".DS_Store",
+            "*.pyc",
+            "*.pyo",
+            "__pycache__",
+            ".git",
+            ".gitignore",
+            "*.log",
+        }
+    )
     recursive: bool = True
     debounce_seconds: float = 0.5
     case_sensitive: bool = True
@@ -157,6 +171,7 @@ class CacheInvalidationHandler(FileSystemEventHandler):
     def _matches_pattern(self, name: str, pattern: str) -> bool:
         """Check if name matches a glob pattern."""
         import fnmatch
+
         if self.config.case_sensitive:
             return fnmatch.fnmatch(name, pattern)
         return fnmatch.fnmatch(name.lower(), pattern.lower())
@@ -175,9 +190,7 @@ class CacheInvalidationHandler(FileSystemEventHandler):
 
             # Schedule new timer
             timer = threading.Timer(
-                self.config.debounce_seconds,
-                self._fire_event,
-                args=[path]
+                self.config.debounce_seconds, self._fire_event, args=[path]
             )
             self._debounce_timers[path] = timer
             timer.start()
@@ -335,8 +348,7 @@ class FileSystemWatcher:
             self._handlers.append((path, handler))
 
         logger.info(
-            f"Watching {path} (recursive={recursive}, "
-            f"patterns={patterns or 'all'})"
+            f"Watching {path} (recursive={recursive}, patterns={patterns or 'all'})"
         )
 
     def unwatch(self, path: Path | str):
@@ -619,9 +631,7 @@ class CacheManager:
                 cache = self._caches.get(cache_key, {})
                 stats["size"] = len(cache)
                 stats["hit_rate"] = (
-                    stats["hits"] / stats["gets"]
-                    if stats["gets"] > 0
-                    else 0.0
+                    stats["hits"] / stats["gets"] if stats["gets"] > 0 else 0.0
                 )
                 return stats
 
@@ -662,15 +672,15 @@ class ModelCacheManager:
     """
 
     MODEL_PATTERNS = {
-        "*.gguf",      # GGML/GGUF models
-        "*.bin",       # PyTorch/generic binary
+        "*.gguf",  # GGML/GGUF models
+        "*.bin",  # PyTorch/generic binary
         "*.safetensors",  # SafeTensors format
-        "*.onnx",      # ONNX models
-        "*.pt",        # PyTorch
-        "*.pth",       # PyTorch
-        "*.h5",        # Keras/TensorFlow
-        "*.pb",        # TensorFlow protobuf
-        "config.json", # Model config
+        "*.onnx",  # ONNX models
+        "*.pt",  # PyTorch
+        "*.pth",  # PyTorch
+        "*.h5",  # Keras/TensorFlow
+        "*.pb",  # TensorFlow protobuf
+        "config.json",  # Model config
         "tokenizer.json",  # Tokenizer
     }
 

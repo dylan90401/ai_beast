@@ -65,6 +65,7 @@ class CacheEntry:
     Tracks creation time, access patterns, and estimated size
     for intelligent cache management.
     """
+
     key: str
     value: Any
     created_at: datetime = field(default_factory=datetime.now)
@@ -97,6 +98,7 @@ class CacheEntry:
 @dataclass
 class CacheStats:
     """Cache statistics for monitoring and debugging."""
+
     hits: int = 0
     misses: int = 0
     evictions: int = 0
@@ -128,8 +130,7 @@ class CacheStats:
             "size_mb": round(self.size_bytes / (1024 * 1024), 2),
             "entry_count": self.entry_count,
             "oldest_entry_seconds": (
-                self.oldest_entry_age.total_seconds()
-                if self.oldest_entry_age else None
+                self.oldest_entry_age.total_seconds() if self.oldest_entry_age else None
             ),
         }
 
@@ -486,8 +487,7 @@ class RequestCache:
 
         with self._lock:
             to_remove = [
-                key for key in self._cache.keys()
-                if fnmatch.fnmatch(key, pattern)
+                key for key in self._cache.keys() if fnmatch.fnmatch(key, pattern)
             ]
 
             for key in to_remove:
@@ -550,6 +550,7 @@ class RequestCache:
             def get_user_data(user_id):
                 return fetch_user(user_id)
         """
+
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
             @wraps(func)
             def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -581,7 +582,8 @@ class RequestCache:
 
             # Attach cache control methods
             wrapper.cache_key = lambda *a, **kw: (
-                key_func(*a, **kw) if key_func
+                key_func(*a, **kw)
+                if key_func
                 else self._make_key(func.__name__, a, kw, key_prefix)
             )
             wrapper.cache_invalidate = lambda *a, **kw: self.delete(
@@ -603,6 +605,7 @@ class RequestCache:
 
         Similar to cached() but for async functions.
         """
+
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
             @wraps(func)
             async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -750,10 +753,9 @@ def get_embedding_cache() -> RequestCache:
     """
     global _embedding_cache
     if _embedding_cache is None:
-        cache_dir = Path(os.environ.get(
-            "AI_BEAST_CACHE_DIR",
-            Path.home() / ".cache" / "ai_beast"
-        ))
+        cache_dir = Path(
+            os.environ.get("AI_BEAST_CACHE_DIR", Path.home() / ".cache" / "ai_beast")
+        )
         _embedding_cache = RequestCache(
             max_entries=10000,
             max_size_bytes=500 * 1024 * 1024,  # 500 MB
@@ -776,10 +778,9 @@ def get_ollama_cache() -> RequestCache:
     """
     global _ollama_cache
     if _ollama_cache is None:
-        cache_dir = Path(os.environ.get(
-            "AI_BEAST_CACHE_DIR",
-            Path.home() / ".cache" / "ai_beast"
-        ))
+        cache_dir = Path(
+            os.environ.get("AI_BEAST_CACHE_DIR", Path.home() / ".cache" / "ai_beast")
+        )
         _ollama_cache = RequestCache(
             max_entries=1000,
             max_size_bytes=100 * 1024 * 1024,  # 100 MB
@@ -802,10 +803,9 @@ def get_api_cache() -> RequestCache:
     """
     global _api_cache
     if _api_cache is None:
-        cache_dir = Path(os.environ.get(
-            "AI_BEAST_CACHE_DIR",
-            Path.home() / ".cache" / "ai_beast"
-        ))
+        cache_dir = Path(
+            os.environ.get("AI_BEAST_CACHE_DIR", Path.home() / ".cache" / "ai_beast")
+        )
         _api_cache = RequestCache(
             max_entries=500,
             max_size_bytes=50 * 1024 * 1024,  # 50 MB

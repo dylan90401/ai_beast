@@ -22,6 +22,7 @@ class CLI:
         print(f"Config directory: {self.config_dir}")
         return 0
 
+
 ROOT = Path(os.environ.get("BEAST_ROOT", Path(__file__).resolve().parents[1]))
 REGISTRY = ROOT / "packs" / "registry.json"
 COMPOSE_BASE = ROOT / "compose" / "base.yml"

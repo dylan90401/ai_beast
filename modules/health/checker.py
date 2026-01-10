@@ -47,6 +47,7 @@ logger = get_logger(__name__)
 # Optional HTTP client
 try:
     import httpx
+
     HTTPX_AVAILABLE = True
 except ImportError:
     HTTPX_AVAILABLE = False
@@ -54,6 +55,7 @@ except ImportError:
 
 class HealthStatus(Enum):
     """Health status levels."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -78,6 +80,7 @@ class HealthCheck:
     Contains status, timing, and detailed information about
     the health check performed.
     """
+
     name: str
     status: HealthStatus
     message: str = ""
@@ -325,7 +328,8 @@ class OllamaHealthChecker(HTTPHealthChecker):
                 # Check for required models
                 if self.required_models:
                     missing = [
-                        m for m in self.required_models
+                        m
+                        for m in self.required_models
                         if m not in model_names and f"{m}:latest" not in model_names
                     ]
                     if missing:
@@ -401,7 +405,9 @@ class QdrantHealthChecker(HTTPHealthChecker):
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(f"{self.base_url}/collections")
                 data = response.json()
-                collections = [c["name"] for c in data.get("result", {}).get("collections", [])]
+                collections = [
+                    c["name"] for c in data.get("result", {}).get("collections", [])
+                ]
 
                 result.details["collections"] = collections
                 result.details["collection_count"] = len(collections)
@@ -754,9 +760,11 @@ class SystemHealthChecker:
         Returns:
             Dict with overall status and individual check results
         """
-        checkers = self.checkers if include_non_critical else [
-            c for c in self.checkers if c.critical
-        ]
+        checkers = (
+            self.checkers
+            if include_non_critical
+            else [c for c in self.checkers if c.critical]
+        )
 
         if not checkers:
             return {
@@ -780,18 +788,21 @@ class SystemHealthChecker:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Health check failed with exception: {result}")
-                checks.append(HealthCheck(
-                    name=checkers[i].name,
-                    status=HealthStatus.UNKNOWN,
-                    message=f"Check failed: {result}",
-                    details={"error": str(result)},
-                ))
+                checks.append(
+                    HealthCheck(
+                        name=checkers[i].name,
+                        status=HealthStatus.UNKNOWN,
+                        message=f"Check failed: {result}",
+                        details={"error": str(result)},
+                    )
+                )
             else:
                 checks.append(result)
 
         # Determine overall status
         critical_checks = [
-            check for check, checker in zip(checks, checkers, strict=True)
+            check
+            for check, checker in zip(checks, checkers, strict=True)
             if checker.critical
         ]
 
@@ -804,11 +815,15 @@ class SystemHealthChecker:
             overall = HealthStatus.HEALTHY
             message = "All services healthy"
         elif any(s == HealthStatus.UNHEALTHY for s in statuses):
-            unhealthy = [c.name for c in critical_checks if c.status == HealthStatus.UNHEALTHY]
+            unhealthy = [
+                c.name for c in critical_checks if c.status == HealthStatus.UNHEALTHY
+            ]
             overall = HealthStatus.UNHEALTHY
             message = f"Unhealthy services: {', '.join(unhealthy)}"
         elif any(s == HealthStatus.DEGRADED for s in statuses):
-            degraded = [c.name for c in critical_checks if c.status == HealthStatus.DEGRADED]
+            degraded = [
+                c.name for c in critical_checks if c.status == HealthStatus.DEGRADED
+            ]
             overall = HealthStatus.DEGRADED
             message = f"Degraded services: {', '.join(degraded)}"
         else:
@@ -868,25 +883,31 @@ def create_default_checker(
     checker.add_checker(RedisHealthChecker(host=redis_host, port=redis_port))
 
     # WebUI check (optional)
-    checker.add_checker(HTTPHealthChecker(
-        name="webui",
-        url="http://localhost:3000/health",
-        critical=False,
-    ))
+    checker.add_checker(
+        HTTPHealthChecker(
+            name="webui",
+            url="http://localhost:3000/health",
+            critical=False,
+        )
+    )
 
     # System resource checks
     if base_dir:
-        checker.add_checker(DiskSpaceHealthChecker(
-            name="disk_base",
-            path=base_dir,
-        ))
+        checker.add_checker(
+            DiskSpaceHealthChecker(
+                name="disk_base",
+                path=base_dir,
+            )
+        )
 
         models_dir = base_dir / "heavy" / "llms"
         if models_dir.exists():
-            checker.add_checker(DiskSpaceHealthChecker(
-                name="disk_models",
-                path=models_dir,
-            ))
+            checker.add_checker(
+                DiskSpaceHealthChecker(
+                    name="disk_models",
+                    path=models_dir,
+                )
+            )
 
     # Memory check
     checker.add_checker(MemoryHealthChecker())
@@ -911,10 +932,7 @@ async def quick_health_check(
 
     if services:
         # Filter to requested services
-        checker.checkers = [
-            c for c in checker.checkers
-            if c.name in services
-        ]
+        checker.checkers = [c for c in checker.checkers if c.name in services]
 
     return await checker.check_all()
 

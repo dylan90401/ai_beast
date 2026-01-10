@@ -87,7 +87,9 @@ def load_tools_config(base: Path | None = None) -> dict[str, Any]:
         return {"version": 1, "tools": {}}
 
 
-def save_tool_config(name: str, config: dict[str, Any], base: Path | None = None) -> dict[str, Any]:
+def save_tool_config(
+    name: str, config: dict[str, Any], base: Path | None = None
+) -> dict[str, Any]:
     base = base or _base_dir()
     path = _config_path(base)
     data = load_tools_config(base)
@@ -136,7 +138,9 @@ def extract_all_tools(base: Path | None = None) -> tuple[int, dict[str, Any]]:
     return 200, {"ok": True, "items": items}
 
 
-def download_tool_archive(name: str, url: str, base: Path | None = None) -> tuple[int, dict[str, Any]]:
+def download_tool_archive(
+    name: str, url: str, base: Path | None = None
+) -> tuple[int, dict[str, Any]]:
     base = base or _base_dir()
     name = (name or "").strip()
     url = (url or "").strip()
@@ -164,12 +168,19 @@ def download_tool_archive(name: str, url: str, base: Path | None = None) -> tupl
                     archive.unlink(missing_ok=True)
                     return 400, {"ok": False, "error": "download too large (max 2GB)"}
                 f.write(chunk)
-        return 200, {"ok": True, "name": name, "path": str(archive), "bytes": archive.stat().st_size}
+        return 200, {
+            "ok": True,
+            "name": name,
+            "path": str(archive),
+            "bytes": archive.stat().st_size,
+        }
     except Exception as exc:
         return 500, {"ok": False, "error": str(exc)}
 
 
-def update_tool_config(name: str, updates: dict[str, Any], base: Path | None = None) -> tuple[int, dict[str, Any]]:
+def update_tool_config(
+    name: str, updates: dict[str, Any], base: Path | None = None
+) -> tuple[int, dict[str, Any]]:
     base = base or _base_dir()
     name = (name or "").strip()
     if not name:
@@ -271,7 +282,9 @@ def run_tool(
             "stderr": p.stderr[-20000:],
             "cmd": cmd_parts,
         }
-        get_metadata_db().record_event("tool_run", name, {"mode": mode, "ok": result["ok"]})
+        get_metadata_db().record_event(
+            "tool_run", name, {"mode": mode, "ok": result["ok"]}
+        )
         return 200, result
     except Exception as exc:
         logger.warning("Tool run failed", exc_info=exc)
@@ -312,7 +325,9 @@ def run_tool_test(name: str, base: Path | None = None) -> tuple[int, dict[str, A
         return 500, {"ok": False, "error": str(exc)}
 
 
-def install_tool(name: str, run_installer: bool, base: Path | None = None) -> tuple[int, dict[str, Any]]:
+def install_tool(
+    name: str, run_installer: bool, base: Path | None = None
+) -> tuple[int, dict[str, Any]]:
     base = base or _base_dir()
     cfg = load_tools_config(base).get("tools", {}).get(name)
     if not cfg:
@@ -349,7 +364,10 @@ def install_tool(name: str, run_installer: bool, base: Path | None = None) -> tu
         tools_dir = _tools_dir(base)
         archive = tools_dir / f"{name}.tar.gz"
         if not archive.exists():
-            return 400, {"ok": False, "error": "no installer configured (set download_url or install_command)"}
+            return 400, {
+                "ok": False,
+                "error": "no installer configured (set download_url or install_command)",
+            }
     code, obj = extract_tool(name, base)
     if code != 200:
         return code, obj

@@ -16,7 +16,11 @@ def resolve_base_dir():
     here = Path(__file__).resolve()
     # Walk upward until we find a project root indicator (beast dir, pyproject.toml, or .git)
     for p in [here] + list(here.parents):
-        if (p / 'beast').exists() or (p / 'pyproject.toml').exists() or (p / '.git').exists():
+        if (
+            (p / "beast").exists()
+            or (p / "pyproject.toml").exists()
+            or (p / ".git").exists()
+        ):
             return p
     # Fallback for legacy layout
     return here.parents[2]
@@ -140,7 +144,9 @@ def list_extensions() -> list[dict[str, str]]:
         desc = ""
         readme = d / "README.md"
         if readme.exists():
-            for line in readme.read_text(encoding="utf-8", errors="replace").splitlines():
+            for line in readme.read_text(
+                encoding="utf-8", errors="replace"
+            ).splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
@@ -262,7 +268,12 @@ def update_paths(payload: dict) -> tuple[int, dict]:
         return 400, {"ok": False, "error": "Invalid payload"}
 
     current = read_env_file(PATHS_ENV)
-    guts_raw = payload.get("guts_dir") or current.get("GUTS_DIR") or current.get("BASE_DIR") or str(BASE_DIR)
+    guts_raw = (
+        payload.get("guts_dir")
+        or current.get("GUTS_DIR")
+        or current.get("BASE_DIR")
+        or str(BASE_DIR)
+    )
     heavy_raw = payload.get("heavy_dir") or current.get("HEAVY_DIR") or str(BASE_DIR)
 
     ok, guts_dir = _sanitize_path(guts_raw, "GUTS_DIR")
@@ -395,7 +406,9 @@ class Handler(SimpleHTTPRequestHandler):
                             "enabled": enabled,
                             "desc": meta.get("desc", ""),
                             "notes": meta.get("notes", ""),
-                            "extensions": (meta.get("docker") or {}).get("extensions", []),
+                            "extensions": (meta.get("docker") or {}).get(
+                                "extensions", []
+                            ),
                         }
                     )
                 return self._json(200, {"ok": True, "items": items})
@@ -469,7 +482,12 @@ class Handler(SimpleHTTPRequestHandler):
                 if not kind or not name:
                     return self._json(400, {"ok": False, "error": "missing kind/name"})
                 if kind == "extension":
-                    cmd = ["extensions", "enable" if enable else "disable", name, "--apply"]
+                    cmd = [
+                        "extensions",
+                        "enable" if enable else "disable",
+                        name,
+                        "--apply",
+                    ]
                 elif kind == "pack":
                     cmd = ["packs", "enable" if enable else "disable", name, "--apply"]
                 else:

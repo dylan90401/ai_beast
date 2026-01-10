@@ -192,7 +192,7 @@ class ConnectionPool:
         # Background cleanup
         self._cleanup_interval = min(
             self.config.max_idle_time.total_seconds() / 2,
-            60  # Max 1 minute
+            60,  # Max 1 minute
         )
         self._last_cleanup = time.time()
 
@@ -607,10 +607,7 @@ class PoolManager:
     def stats(self) -> dict[str, dict[str, Any]]:
         """Get statistics for all pools."""
         with self._lock:
-            return {
-                str(path): pool.stats()
-                for path, pool in self._pools.items()
-            }
+            return {str(path): pool.stats() for path, pool in self._pools.items()}
 
     def __enter__(self):
         return self

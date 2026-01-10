@@ -13,7 +13,9 @@ class Container:
         self._providers: dict[str, Callable[[], Any]] = {}
         self._singletons: dict[str, Any] = {}
 
-    def register(self, name: str, provider: Callable[[], Any], *, singleton: bool = True) -> None:
+    def register(
+        self, name: str, provider: Callable[[], Any], *, singleton: bool = True
+    ) -> None:
         self._providers[name] = (provider, singleton)
 
     def resolve(self, name: str) -> Any:

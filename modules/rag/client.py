@@ -3,6 +3,7 @@
 
 Provides reusable client management and collection operations.
 """
+
 import os
 
 
@@ -16,8 +17,7 @@ def get_qdrant_url() -> str:
 def get_default_model() -> str:
     """Get default embedding model from environment or default."""
     return os.environ.get(
-        "QDRANT_EMBED_MODEL",
-        "sentence-transformers/all-MiniLM-L6-v2"
+        "QDRANT_EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
     )
 
 
@@ -57,6 +57,7 @@ class QdrantManager:
         """Lazy-loaded Qdrant client."""
         if self._client is None:
             from qdrant_client import QdrantClient
+
             self._client = QdrantClient(url=self.url)
         return self._client
 
@@ -65,6 +66,7 @@ class QdrantManager:
         """Lazy-loaded embedding model."""
         if self._embedder is None:
             from sentence_transformers import SentenceTransformer
+
             self._embedder = SentenceTransformer(self.model)
         return self._embedder
 
@@ -246,7 +248,7 @@ class QdrantManager:
         # Batch upsert
         batch_size = 100
         for i in range(0, len(points), batch_size):
-            batch = points[i:i + batch_size]
+            batch = points[i : i + batch_size]
             self.client.upsert(collection_name=collection, points=batch)
 
         return ids

@@ -85,6 +85,7 @@ class RateLimitConfig:
         burst: Allow bursting above limit (for token bucket)
         key_prefix: Prefix for storage keys
     """
+
     requests: int = 100
     window: float = 60.0  # seconds
     burst: int = 0  # Additional burst allowance
@@ -100,6 +101,7 @@ class RateLimitConfig:
 @dataclass
 class RateLimitInfo:
     """Information about current rate limit status."""
+
     allowed: bool
     remaining: int
     limit: int
@@ -113,7 +115,11 @@ class RateLimitInfo:
             "X-RateLimit-Limit": str(self.limit),
             "X-RateLimit-Remaining": str(max(0, self.remaining)),
             "X-RateLimit-Reset": str(int(self.reset_time)),
-            **({"Retry-After": str(int(self.retry_after) + 1)} if not self.allowed else {}),
+            **(
+                {"Retry-After": str(int(self.retry_after) + 1)}
+                if not self.allowed
+                else {}
+            ),
         }
 
 
@@ -154,6 +160,7 @@ class StorageBackend(ABC):
 @dataclass
 class StorageEntry:
     """Entry in in-memory storage."""
+
     value: Any
     expires_at: float | None = None
 
@@ -229,14 +236,15 @@ class InMemoryStorage(StorageBackend):
         with self._lock:
             now = time.time()
             expired_keys = [
-                key for key, entry in self._data.items()
-                if entry.is_expired()
+                key for key, entry in self._data.items() if entry.is_expired()
             ]
             for key in expired_keys:
                 del self._data[key]
             self._last_cleanup = now
             if expired_keys:
-                logger.debug(f"Cleaned up {len(expired_keys)} expired rate limit entries")
+                logger.debug(
+                    f"Cleaned up {len(expired_keys)} expired rate limit entries"
+                )
 
     def _maybe_cleanup(self):
         """Run cleanup if interval has elapsed."""
@@ -276,6 +284,7 @@ class RedisStorage(StorageBackend):
                 if self._client is None:
                     try:
                         import redis
+
                         self._client = redis.from_url(self._url, db=self._db)
                     except ImportError as err:
                         raise RuntimeError(
@@ -426,10 +435,7 @@ class TokenBucketLimiter(RateLimiter):
 
         # Calculate tokens to add
         elapsed = now - last_refill
-        new_tokens = min(
-            self.capacity,
-            tokens + (elapsed * self.refill_rate)
-        )
+        new_tokens = min(self.capacity, tokens + (elapsed * self.refill_rate))
 
         # Update storage
         self.storage.set(bucket_key, new_tokens)
@@ -562,8 +568,7 @@ class SlidingWindowLimiter(RateLimiter):
 
         # Clean old timestamps
         self._timestamps[key] = [
-            ts for ts in self._timestamps[key]
-            if ts > window_start
+            ts for ts in self._timestamps[key] if ts > window_start
         ]
 
         return len(self._timestamps[key])
@@ -800,6 +805,7 @@ def rate_limit(
         async def api_endpoint(request):
             return process_request(request)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         limiter = get_rate_limiter(
             func.__name__,
@@ -814,6 +820,7 @@ def rate_limit(
             return "default"
 
         if asyncio.iscoroutinefunction(func):
+
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
                 key = get_key(*args, **kwargs)
@@ -833,8 +840,10 @@ def rate_limit(
                     )
 
                 return await func(*args, **kwargs)
+
             return async_wrapper
         else:
+
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
                 key = get_key(*args, **kwargs)
@@ -851,6 +860,7 @@ def rate_limit(
                     )
 
                 return func(*args, **kwargs)
+
             return sync_wrapper
 
     return decorator

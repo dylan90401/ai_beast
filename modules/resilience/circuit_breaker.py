@@ -57,6 +57,7 @@ class CircuitState(Enum):
     - OPEN: Failing, requests are blocked
     - HALF_OPEN: Testing if service recovered
     """
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -89,6 +90,7 @@ class CircuitBreakerConfig:
         half_open_max_calls: Max concurrent calls in half-open state
         exclude_exceptions: Exceptions that don't count as failures
     """
+
     failure_threshold: int = 5
     success_threshold: int = 3
     timeout: float = 30.0
@@ -107,6 +109,7 @@ class CircuitBreakerConfig:
 @dataclass
 class CircuitBreakerStats:
     """Statistics for circuit breaker monitoring."""
+
     total_calls: int = 0
     successful_calls: int = 0
     failed_calls: int = 0
@@ -131,14 +134,10 @@ class CircuitBreakerStats:
                 else 0.0
             ),
             "last_failure_time": (
-                self.last_failure_time.isoformat()
-                if self.last_failure_time
-                else None
+                self.last_failure_time.isoformat() if self.last_failure_time else None
             ),
             "last_success_time": (
-                self.last_success_time.isoformat()
-                if self.last_success_time
-                else None
+                self.last_success_time.isoformat() if self.last_success_time else None
             ),
             "consecutive_failures": self.consecutive_failures,
             "consecutive_successes": self.consecutive_successes,
@@ -524,9 +523,7 @@ class CircuitBreakerRegistry:
         """
         with self._lock:
             if breaker.name in self._breakers:
-                logger.warning(
-                    f"Replacing existing circuit breaker: {breaker.name}"
-                )
+                logger.warning(f"Replacing existing circuit breaker: {breaker.name}")
             self._breakers[breaker.name] = breaker
             return breaker
 
@@ -594,10 +591,7 @@ class CircuitBreakerRegistry:
         Returns:
             Dict mapping names to status dicts
         """
-        return {
-            name: breaker.status()
-            for name, breaker in self._breakers.items()
-        }
+        return {name: breaker.status() for name, breaker in self._breakers.items()}
 
     def list_names(self) -> list[str]:
         """Get list of all breaker names."""
@@ -677,14 +671,18 @@ def circuit_breaker(
         breaker = get_circuit_breaker(breaker_name, config, fallback)
 
         if asyncio.iscoroutinefunction(func):
+
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
                 return await breaker.call_async(func, *args, **kwargs)
+
             return async_wrapper
         else:
+
             @wraps(func)
             def sync_wrapper(*args, **kwargs):
                 return breaker.call(func, *args, **kwargs)
+
             return sync_wrapper
 
     return decorator
