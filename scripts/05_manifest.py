@@ -60,10 +60,14 @@ def generate_manifest(base_dir, output_file):
 
             file_path = os.path.join(root, file)
 
-            # Calculate SHA256 hash
+            # Calculate SHA256 hash using chunk-based reading for efficiency
             try:
+                sha256_hash = hashlib.sha256()
                 with open(file_path, 'rb') as f:
-                    file_hash = hashlib.sha256(f.read()).hexdigest()
+                    # Read file in chunks to avoid loading large files into memory
+                    for chunk in iter(lambda: f.read(8192), b''):
+                        sha256_hash.update(chunk)
+                file_hash = sha256_hash.hexdigest()
 
                 # Get relative path
                 rel_path = os.path.relpath(file_path, base_dir)
