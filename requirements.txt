@@ -13,9 +13,6 @@ websockets>=10.0
 ruff>=0.0.241
 ollama>=0.1.0
 
-# Resume parsing
-pypdf>=3.17.0
-python-docx>=1.1.0
 
 # Optional: Better YAML parsing
 # ruamel.yaml>=0.17.0
