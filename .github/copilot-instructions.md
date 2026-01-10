@@ -88,7 +88,7 @@ Ask for **one** missing output at a time:
 ## App-specific notes (quick reference)
 - apps/dashboard:
   - Dashboard is the central WebUI control panel at `apps/dashboard/` exposing all capabilities, tools, packs, extensions, and settings.
-  - All security tools (OSINT, SIGINT, OFFSEC, DEFCOM) are accessible through dashboard UI with LLM integration.
+  - All security tools (OSINT, SIGINT, OFFSEC, DEFCON) are accessible through dashboard UI with LLM integration.
   - Tool catalog (`config/resources/tool_catalog.json`) and capabilities (`config/resources/capabilities.json`) are auto-rendered.
   - Dashboard binds to `PORT_DASHBOARD` (default 8787) and requires token auth (`config/secrets/dashboard_token.txt`).
   - API endpoints: `/api/tools/*`, `/api/capabilities`, `/api/llm/analyze` for LLM integration.
@@ -102,7 +102,7 @@ Ask for **one** missing output at a time:
   - Model conversion scripts and README live under `apps/whispercpp/whisper.cpp/`; include model conversion commands in docs when changing model handling.
 - modules/rag:
   - RAG ingestion expects qdrant running; include `pip install -r modules/rag/requirements.txt` and `./bin/beast rag ingest --apply` in verification steps.
-- Security Tools (OSINT/SIGINT/OFFSEC/DEFCOM):
+- Security Tools (OSINT/SIGINT/OFFSEC/DEFCON):
   - All security capabilities are defined in `config/resources/capabilities.json` with 200+ tools catalogued.
   - Tool registry: `modules/tools/registry.py` manages tool lifecycle (install, test, run).
   - Capability registry: `modules/capabilities/registry.py` validates and checks capability health.
