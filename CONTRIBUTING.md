@@ -27,8 +27,8 @@ make dev-setup
 # Option B: Manual venv setup
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt
-pip install -r requirements.txt
+./.venv/bin/python -m pip install -r requirements-dev.txt
+./.venv/bin/python -m pip install -r requirements.txt
 ```
 
 ### 3. Verify installation

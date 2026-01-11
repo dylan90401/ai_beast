@@ -150,20 +150,39 @@ fi
 
 # Check 8: Python packages
 log_info "[8/8] Checking Python packages..."
-REQUIRED_PACKAGES=(pytest ruff pyyaml)
+PY_CHECK="$BASE_DIR/.venv/bin/python"
+if [[ ! -x "$PY_CHECK" ]]; then
+  PY_CHECK="python3"
+fi
+
 MISSING_PACKAGES=()
 
-for pkg in "${REQUIRED_PACKAGES[@]}"; do
-  if python3 -c "import ${pkg//-/_}" 2>/dev/null; then
-    [[ ${VERBOSE:-0} -eq 1 ]] && log_success "$pkg"
-  else
-    MISSING_PACKAGES+=("$pkg")
-    log_warn "$pkg: not installed"
-  fi
-done
+# pytest
+if "$PY_CHECK" -c "import pytest" 2>/dev/null; then
+  [[ ${VERBOSE:-0} -eq 1 ]] && log_success "pytest"
+else
+  MISSING_PACKAGES+=("pytest")
+  log_warn "pytest: not installed"
+fi
+
+# ruff (CLI module is available via -m, but it may not be importable)
+if "$PY_CHECK" -m ruff --version >/dev/null 2>&1; then
+  [[ ${VERBOSE:-0} -eq 1 ]] && log_success "ruff"
+else
+  MISSING_PACKAGES+=("ruff")
+  log_warn "ruff: not installed"
+fi
+
+# pyyaml (import name is yaml)
+if "$PY_CHECK" -c "import yaml" 2>/dev/null; then
+  [[ ${VERBOSE:-0} -eq 1 ]] && log_success "pyyaml"
+else
+  MISSING_PACKAGES+=("pyyaml")
+  log_warn "pyyaml: not installed"
+fi
 
 if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
-  log_info "Install with: pip install ${MISSING_PACKAGES[*]}"
+  log_info "Install with: $PY_CHECK -m pip install ${MISSING_PACKAGES[*]}"
 fi
 
 log_info ""

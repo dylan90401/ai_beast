@@ -6,8 +6,8 @@ Goal: guarantee the repo is buildable from a clean checkout.
 - `./bin/beast preflight --verbose`
 - `docker compose config`
 - `shellcheck -x bin/* scripts/*.sh scripts/lib/*.sh`
-- `python -m ruff check .`
-- `python -m pytest -q`
+- `./.venv/bin/python -m ruff check .` (fallback: `python3 -m ruff check .`)
+- `./.venv/bin/python -m pytest -q` (fallback: `python3 -m pytest -q`)
 
 ### Construct-if-missing
 If the repo lacks a convenient runner, create/maintain:

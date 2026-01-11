@@ -1,6 +1,9 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := check
 
+# Prefer repo-local venv if present; fall back to system python3.
+PY := $(shell if [ -x ./.venv/bin/python ]; then echo ./.venv/bin/python; else echo python3; fi)
+
 .PHONY: check lint fmt test compose-validate preflight doctor help
 .PHONY: verify extensions-list packs-list compose-gen compose-render
 .PHONY: up down logs status clean install dev profile
@@ -49,7 +52,7 @@ doctor:
 	./bin/beast doctor --verbose
 
 verify:
-	python scripts/00_verify_stack.py --verbose
+	$(PY) scripts/00_verify_stack.py --verbose
 
 check: preflight compose-validate lint test
 
@@ -58,21 +61,21 @@ check: preflight compose-validate lint test
 # ──────────────────────────────────────────────────────────────────────────────
 
 lint:
-	python -m ruff check .
+	$(PY) -m ruff check .
 	shellcheck -x bin/* scripts/*.sh scripts/lib/*.sh 2>/dev/null || true
 
 fmt:
-	python -m ruff format .
+	$(PY) -m ruff format .
 
 test:
-	python -m pytest -q
+	$(PY) -m pytest -q
 
 dev:
 	./bin/beast up --profile lite
 
 install:
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt
+	$(PY) -m pip install -r requirements.txt
+	$(PY) -m pip install -r requirements-dev.txt
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Docker/Compose targets

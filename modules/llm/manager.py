@@ -10,13 +10,16 @@ Features:
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
 import re
 import shutil
+import socket
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -343,6 +346,84 @@ class LLMManager:
     # URL Download
     # -------------------------------------------------------------------------
 
+    @staticmethod
+    def _validate_download_url(url: str) -> tuple[bool, str]:
+        """Validate a download URL to reduce SSRF risk.
+
+        Policy:
+        - Only allow http/https
+        - Block localhost and loopback
+        - Block private/link-local/reserved/multicast/unspecified IPs
+        - Reject URLs containing credentials (user:pass@host)
+
+        Returns:
+            (is_valid, error_message)
+        """
+        try:
+            parsed = urllib.parse.urlparse(url)
+        except Exception as e:
+            return False, f"Invalid URL: {e}"
+
+        if parsed.scheme not in ("http", "https"):
+            return False, f"Invalid scheme '{parsed.scheme}' (only http/https allowed)"
+
+        if parsed.username or parsed.password:
+            return False, "URL credentials not allowed"
+
+        hostname = (parsed.hostname or "").strip().lower()
+        if not hostname:
+            return False, "URL missing host"
+
+        blocked_hostnames = {
+            "localhost",
+            "0.0.0.0",
+            "127.0.0.1",
+            "::1",
+            "169.254.169.254",  # cloud metadata
+            "metadata.google.internal",
+        }
+        if hostname in blocked_hostnames or hostname.endswith(".localhost"):
+            return False, f"Host not allowed: {hostname}"
+
+        def _ip_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+            return any(
+                (
+                    ip.is_private,
+                    ip.is_loopback,
+                    ip.is_link_local,
+                    ip.is_reserved,
+                    ip.is_multicast,
+                    ip.is_unspecified,
+                )
+            )
+
+        # If hostname is an IP literal, validate directly.
+        try:
+            ip = ipaddress.ip_address(hostname)
+            if _ip_blocked(ip):
+                return False, f"IP not allowed: {ip}"
+            return True, ""
+        except ValueError:
+            pass
+
+        # If hostname resolves to internal IPs, block.
+        try:
+            infos = socket.getaddrinfo(hostname, None)
+            for _family, _type, _proto, _canonname, sockaddr in infos:
+                ip_str = sockaddr[0]
+                try:
+                    ip = ipaddress.ip_address(ip_str)
+                except ValueError:
+                    continue
+                if _ip_blocked(ip):
+                    return False, f"Host resolves to internal IP: {ip}"
+        except OSError:
+            # DNS unavailable / unresolvable host: don't fail-open on scheme/localhost checks,
+            # but allow callers to attempt download in environments without DNS.
+            pass
+
+        return True, ""
+
     def download_from_url(
         self,
         url: str,
@@ -350,6 +431,7 @@ class LLMManager:
         destination: ModelLocation = ModelLocation.INTERNAL,
         custom_path: str | None = None,
         callback: Callable[[dict], None] | None = None,
+        max_size_bytes: int = 50 * 1024 * 1024 * 1024,  # 50GB
     ) -> dict:
         """Download a model from URL.
 
@@ -363,15 +445,35 @@ class LLMManager:
         Returns:
             dict with 'ok', 'path', 'error' keys
         """
+        valid, error = self._validate_download_url(url)
+        if not valid:
+            return {"ok": False, "error": error}
+
+        parsed = urllib.parse.urlparse(url)
+
         # Determine filename
         if not filename:
-            filename = url.split("/")[-1].split("?")[0]
+            filename = Path(urllib.parse.unquote(parsed.path or "")).name
             if not filename:
                 filename = f"model_{int(time.time())}.gguf"
 
+        # Sanitize filename (prevent path traversal and illegal characters)
+        filename = Path(filename).name
+        filename = re.sub(r'[<>:"|?*\\]', "_", filename)
+        if filename.startswith("."):
+            filename = "_" + filename[1:]
+
+        if not any(filename.lower().endswith(ext) for ext in self.MODEL_EXTENSIONS):
+            return {
+                "ok": False,
+                "error": f"Invalid file extension for '{filename}'. Allowed: {sorted(self.MODEL_EXTENSIONS)}",
+            }
+
         # Determine destination path
-        if destination == ModelLocation.CUSTOM and custom_path:
-            dest_dir = Path(custom_path)
+        if destination == ModelLocation.CUSTOM:
+            if not custom_path:
+                return {"ok": False, "error": "custom_path is required when destination=CUSTOM"}
+            dest_dir = Path(custom_path).expanduser()
         elif destination == ModelLocation.EXTERNAL:
             dest_dir = self.heavy_dir / "models" / "llm"
         else:
@@ -400,6 +502,10 @@ class LLMManager:
 
                 with urllib.request.urlopen(req, timeout=60) as resp:
                     total = int(resp.headers.get("Content-Length", 0))
+                    if total and total > max_size_bytes:
+                        raise RuntimeError(
+                            f"File too large: {total} bytes (max: {max_size_bytes})"
+                        )
                     downloaded = 0
 
                     with open(temp_path, "wb") as f:
@@ -409,6 +515,11 @@ class LLMManager:
                                 break
                             f.write(chunk)
                             downloaded += len(chunk)
+
+                            if downloaded > max_size_bytes:
+                                raise RuntimeError(
+                                    f"Download exceeded size limit: {max_size_bytes}"
+                                )
 
                             progress = (downloaded / total * 100) if total else 0
                             with self._download_lock:
@@ -492,20 +603,33 @@ class LLMManager:
 
     def delete_local_model(self, path: str) -> dict:
         """Delete a local model file."""
-        fp = Path(path)
-        if not fp.exists():
-            return {"ok": False, "error": "File not found"}
+        requested = Path(path).expanduser()
+        try:
+            resolved = requested.resolve(strict=True)
+        except (OSError, RuntimeError) as e:
+            return {"ok": False, "error": f"Invalid path: {e}"}
+
+        if requested.is_symlink():
+            return {"ok": False, "error": "Refusing to delete symlink"}
+
+        if not resolved.is_file():
+            return {"ok": False, "error": "Path is not a file"}
 
         # Safety check: only delete from known model directories
-        allowed_parents = [self.llm_models_dir, self.models_dir, self.heavy_dir]
-        if not any(str(fp).startswith(str(p)) for p in allowed_parents):
+        allowed_parents = [
+            self.llm_models_dir.resolve(),
+            self.models_dir.resolve(),
+            (self.heavy_dir / "models" / "llm").resolve(),
+        ]
+        if not any(resolved.is_relative_to(parent) for parent in allowed_parents):
             return {"ok": False, "error": "Path not in allowed model directories"}
 
         try:
-            fp.unlink()
-            self._model_cache.pop(str(fp), None)
+            resolved.unlink()
+            self._model_cache.pop(str(requested), None)
+            self._model_cache.pop(str(resolved), None)
             self._cache_time = 0
-            return {"ok": True, "path": str(fp)}
+            return {"ok": True, "path": str(resolved)}
         except OSError as e:
             return {"ok": False, "error": str(e)}
 
