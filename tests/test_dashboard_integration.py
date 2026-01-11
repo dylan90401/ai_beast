@@ -13,6 +13,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add project root to path
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
@@ -36,12 +38,15 @@ MIN_SECURITY_CAPABILITIES = 10
 MIN_SECURITY_TOOLS = 20
 
 
-def test_capabilities_loaded():
+@pytest.fixture
+def capabilities():
+    """Load capabilities for testing."""
+    return list_capabilities()
+
+
+def test_capabilities_loaded(capabilities):
     """Test that capabilities are loaded correctly."""
-    capabilities = list_capabilities()
     assert len(capabilities) > 0, "No capabilities loaded"
-    print(f"✓ Loaded {len(capabilities)} capabilities")
-    return capabilities
 
 
 def test_security_capabilities_present(capabilities):
@@ -75,8 +80,6 @@ def test_security_capabilities_present(capabilities):
     for expected in expected_caps:
         assert expected in cap_ids, f"Missing expected capability: {expected}"
         print(f"✓ Found required capability: {expected}")
-
-    return security_caps
 
 
 def test_capability_structure(capabilities):
@@ -148,13 +151,8 @@ def test_tool_catalog():
 
 def test_dashboard_imports():
     """Test that dashboard can be imported successfully."""
-    try:
-        import apps.dashboard.dashboard  # noqa: F401
-        print("✓ Dashboard imports successful")
-        return True
-    except ImportError as e:
-        print(f"✗ Dashboard import failed: {e}")
-        return False
+    import apps.dashboard.dashboard  # noqa: F401
+    # If we get here, import was successful
 
 
 def test_capability_health_checks():
