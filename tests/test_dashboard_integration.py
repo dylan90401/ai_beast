@@ -13,13 +13,13 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add project root to path
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
-from modules.capabilities.registry import list_capabilities
-from modules.tools.registry import load_tools_config
-
+from modules.capabilities.registry import list_capabilities  # noqa: E402
 
 # Security-related keywords for identifying security capabilities
 SECURITY_KEYWORDS = [
@@ -38,12 +38,15 @@ MIN_SECURITY_CAPABILITIES = 10
 MIN_SECURITY_TOOLS = 20
 
 
-def test_capabilities_loaded():
+@pytest.fixture
+def capabilities():
+    """Load capabilities for testing."""
+    return list_capabilities()
+
+
+def test_capabilities_loaded(capabilities):
     """Test that capabilities are loaded correctly."""
-    capabilities = list_capabilities()
     assert len(capabilities) > 0, "No capabilities loaded"
-    print(f"✓ Loaded {len(capabilities)} capabilities")
-    return capabilities
 
 
 def test_security_capabilities_present(capabilities):
@@ -78,8 +81,6 @@ def test_security_capabilities_present(capabilities):
         assert expected in cap_ids, f"Missing expected capability: {expected}"
         print(f"✓ Found required capability: {expected}")
 
-    return security_caps
-
 
 def test_capability_structure(capabilities):
     """Test that capabilities have required fields."""
@@ -89,7 +90,7 @@ def test_capability_structure(capabilities):
         for field in required_fields:
             assert field in cap, f"Capability {cap.get('id', 'unknown')} missing field: {field}"
 
-    print(f"✓ All capabilities have required fields")
+    print("✓ All capabilities have required fields")
 
 
 def test_security_capability_details():
@@ -150,18 +151,8 @@ def test_tool_catalog():
 
 def test_dashboard_imports():
     """Test that dashboard can be imported successfully."""
-    try:
-        from apps.dashboard.dashboard import (
-            load_env_json,
-            list_capabilities,
-            load_tools_config,
-            catalog_items
-        )
-        print("✓ Dashboard imports successful")
-        return True
-    except ImportError as e:
-        print(f"✗ Dashboard import failed: {e}")
-        return False
+    import apps.dashboard.dashboard  # noqa: F401
+    # If we get here, import was successful
 
 
 def test_capability_health_checks():
@@ -197,7 +188,7 @@ def run_all_tests():
 
         # Test 2: Security capabilities present
         print("\nTest 2: Verifying security capabilities...")
-        security_caps = test_security_capabilities_present(capabilities)
+        test_security_capabilities_present(capabilities)
 
         # Test 3: Capability structure
         print("\nTest 3: Validating capability structure...")
