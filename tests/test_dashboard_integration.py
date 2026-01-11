@@ -17,9 +17,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
-from modules.capabilities.registry import list_capabilities
-from modules.tools.registry import load_tools_config
-
+from modules.capabilities.registry import list_capabilities  # noqa: E402
 
 # Security-related keywords for identifying security capabilities
 SECURITY_KEYWORDS = [
@@ -89,7 +87,7 @@ def test_capability_structure(capabilities):
         for field in required_fields:
             assert field in cap, f"Capability {cap.get('id', 'unknown')} missing field: {field}"
 
-    print(f"✓ All capabilities have required fields")
+    print("✓ All capabilities have required fields")
 
 
 def test_security_capability_details():
@@ -151,12 +149,7 @@ def test_tool_catalog():
 def test_dashboard_imports():
     """Test that dashboard can be imported successfully."""
     try:
-        from apps.dashboard.dashboard import (
-            load_env_json,
-            list_capabilities,
-            load_tools_config,
-            catalog_items
-        )
+        import apps.dashboard.dashboard  # noqa: F401
         print("✓ Dashboard imports successful")
         return True
     except ImportError as e:
@@ -197,7 +190,7 @@ def run_all_tests():
 
         # Test 2: Security capabilities present
         print("\nTest 2: Verifying security capabilities...")
-        security_caps = test_security_capabilities_present(capabilities)
+        test_security_capabilities_present(capabilities)
 
         # Test 3: Capability structure
         print("\nTest 3: Validating capability structure...")

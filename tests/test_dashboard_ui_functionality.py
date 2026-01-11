@@ -11,10 +11,9 @@ This test validates that:
 
 import json
 import sys
-import time
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 
 # Add project root to path
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -63,11 +62,11 @@ def test_capabilities_endpoint(token):
             assert data.get('ok') is True, "Capabilities endpoint failed"
             items = data.get('items', [])
             assert len(items) > 0, "No capabilities returned"
-            
+
             # Check for security capabilities
             security_caps = [
                 cap for cap in items
-                if any(keyword in cap.get('id', '').lower() 
+                if any(keyword in cap.get('id', '').lower()
                       for keyword in ['osint', 'sigint', 'offsec', 'defcon', 'security'])
             ]
             print(f"✓ Capabilities endpoint OK ({len(items)} total, {len(security_caps)} security)")
@@ -87,7 +86,7 @@ def test_tools_catalog_endpoint(token):
             assert data.get('ok') is True, "Tools catalog endpoint failed"
             items = data.get('items', [])
             assert len(items) >= 0, "Tools catalog not accessible"
-            
+
             # Count security tools
             security_tools = [
                 tool for tool in items
@@ -177,14 +176,14 @@ def test_llm_endpoint(token, config):
             ollama_req = Request(f"http://127.0.0.1:{ollama_port}/api/version")
             with urlopen(ollama_req, timeout=3) as resp:
                 ollama_ok = True
-        except:
+        except (URLError, HTTPError):
             ollama_ok = False
-        
+
         if not ollama_ok:
             print("⚠ Ollama not running (LLM features unavailable)")
-            print(f"  Start with: ollama serve")
+            print("  Start with: ollama serve")
             return True  # Don't fail test, just warn
-        
+
         # Test LLM analyze endpoint
         req = Request(
             "http://127.0.0.1:8787/api/llm/analyze",
@@ -220,57 +219,57 @@ def load_token():
 def run_ui_functionality_tests():
     """Run all UI functionality tests."""
     print("\n=== Dashboard UI Functionality Tests ===\n")
-    
+
     # Load token
     token = load_token()
     if not token:
         print("\n⚠ Cannot run authenticated tests without token")
         print("  Generate token: echo $(openssl rand -hex 32) > config/secrets/dashboard_token.txt")
         return False
-    
-    print(f"✓ Dashboard token loaded\n")
-    
+
+    print("✓ Dashboard token loaded\n")
+
     # Test 1: Health check (no auth required)
     print("Test 1: Dashboard health check...")
     if not test_dashboard_health():
         print("\n✗ Dashboard not running. Start with:")
         print("  ./bin/beast dashboard")
         return False
-    
+
     print("\nTest 2: Configuration endpoint...")
     ok, config = test_config_endpoint(token)
     if not ok:
         return False
-    
+
     print("\nTest 3: Capabilities endpoint...")
     if not test_capabilities_endpoint(token):
         return False
-    
+
     print("\nTest 4: Tools catalog endpoint...")
     if not test_tools_catalog_endpoint(token):
         return False
-    
+
     print("\nTest 5: Packs endpoint...")
     if not test_packs_endpoint(token):
         return False
-    
+
     print("\nTest 6: Extensions endpoint...")
     if not test_extensions_endpoint(token):
         return False
-    
+
     print("\nTest 7: Metrics endpoint...")
     if not test_metrics_endpoint(token):
         return False
-    
+
     print("\nTest 8: Services endpoint...")
     if not test_services_endpoint(token):
         return False
-    
+
     print("\nTest 9: LLM integration...")
     test_llm_endpoint(token, config)
-    
+
     print("\n=== All UI Functionality Tests Passed ✓ ===\n")
-    
+
     print("Dashboard WebUI is accessible at:")
     port = config.get('PORT_DASHBOARD', '8787')
     print(f"  http://127.0.0.1:{port}")
@@ -284,7 +283,7 @@ def run_ui_functionality_tests():
     print("  ✓ System metrics")
     print("  ✓ Service monitoring")
     print("  ✓ LLM integration (if Ollama running)")
-    
+
     return True
 
 
