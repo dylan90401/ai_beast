@@ -25,8 +25,8 @@ When your changes touch code/config/compose, your result must pass:
 1) `./bin/beast preflight --verbose`
 2) `docker compose config` (or the rendered compose output if that is the repo’s standard)
 3) `shellcheck -x bin/* scripts/*.sh scripts/lib/*.sh`
-4) `python -m ruff check .`
-5) `python -m pytest -q`
+4) `./.venv/bin/python -m ruff check .` (fallback: `python3 -m ruff check .`)
+5) `./.venv/bin/python -m pytest -q` (fallback: `python3 -m pytest -q`)
 
 If a check is not applicable (e.g., docker not installed), you must:
 - state the reason,
@@ -60,6 +60,7 @@ Ask for **one** missing output at a time:
 - `./bin/beast preflight --verbose`
 - `docker compose config`
 - last ~80 lines of `./bin/beast logs <service> -f`
+
 
 ## Output format (in chat)
 1) Summary

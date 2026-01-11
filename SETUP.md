@@ -203,7 +203,7 @@ If Python can't find modules:
 
 ```bash
 # Install in editable mode
-pip install -e .
+./.venv/bin/python -m pip install -e .
 
 # Or add to PYTHONPATH
 export PYTHONPATH="$PWD:$PYTHONPATH"
@@ -215,8 +215,8 @@ If tests fail due to missing dependencies:
 
 ```bash
 # Install all dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+./.venv/bin/python -m pip install -r requirements.txt
+./.venv/bin/python -m pip install -r requirements-dev.txt
 ```
 
 ### Shellcheck Errors After Patching

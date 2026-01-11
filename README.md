@@ -64,7 +64,8 @@ pipx install pytest
 # Option 3: Manual setup with venv
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt
+./.venv/bin/python -m pip install -r requirements.txt
+./.venv/bin/python -m pip install -r requirements-dev.txt
 
 # Install shellcheck for shell script linting
 brew install shellcheck
@@ -86,6 +87,7 @@ make tools-security
 # Collect diagnostics (metrics, disk usage, etc.)
 make tools-diagnostics
 # Or directly: python3 tools/cli.py diagnostics
+
 ```
 
 See [tools/README.md](tools/README.md) and [docs/FEATURE_CATALOG.md](docs/FEATURE_CATALOG.md) for complete feature inventory.
